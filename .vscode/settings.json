@@ -1,5 +1,8 @@
 {
+    "files.associations": {
+        "*.ui": "xml"
+    },
     "cSpell.words": [
         "gpointer"
-    ]
+    ],
 }
