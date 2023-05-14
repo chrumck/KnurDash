@@ -145,6 +145,9 @@
 			"isCMake" : true,
 			"isExternal" : true,
 			"path" : "/usr/share/cmake-3.18/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"path" : "main.ui"
 		}
 	],
 	"kind" : "cmakeFiles",
