@@ -134,40 +134,17 @@
 		{
 			"isCMake" : true,
 			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/CTest.cmake"
+			"path" : "/usr/share/cmake-3.18/Modules/FindPkgConfig.cmake"
 		},
 		{
 			"isCMake" : true,
 			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/CTestUseLaunchers.cmake"
+			"path" : "/usr/share/cmake-3.18/Modules/FindPackageHandleStandardArgs.cmake"
 		},
 		{
 			"isCMake" : true,
 			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/CTestTargets.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/DartConfiguration.tcl.in"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/CPack.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/CPackComponent.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Templates/CPackConfig.cmake.in"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Templates/CPackConfig.cmake.in"
+			"path" : "/usr/share/cmake-3.18/Modules/FindPackageMessage.cmake"
 		}
 	],
 	"kind" : "cmakeFiles",
