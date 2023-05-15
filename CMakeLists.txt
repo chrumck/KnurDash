@@ -13,7 +13,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
 add_executable(${PROJECT_TARGET} main.c)
-configure_file(main.ui main.ui)
+configure_file(${PROJECT_TARGET}.ui ${PROJECT_TARGET}.ui)
 
 target_include_directories(${PROJECT_TARGET} PRIVATE ${GTK3_INCLUDE_DIRS})
 target_link_directories(${PROJECT_TARGET} PRIVATE ${GTK3_LIBRARY_DIRS})

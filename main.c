@@ -5,19 +5,31 @@ static void print_hello(GtkWidget* widget, gpointer   data)
     g_print("Hello World\n");
 }
 
+void shutDown(GtkWidget* widget, GdkEventButton* event, gpointer user_data)
+{
+    if (event->type != GDK_DOUBLE_BUTTON_PRESS) return;
+
+#ifdef NDEBUG
+    system("sudo shutdown now");
+#else
+    gtk_main_quit();
+#endif
+
+
+}
+
 int main(int argc, char* argv[])
 {
     gtk_init(&argc, &argv);
 
     GError* error = NULL;
     GtkBuilder* builder = gtk_builder_new();
-    char dirNameBuffer[PATH_MAX + 1];
-    const char* linkName = "/proc/self/exe";
-    const int ret = readlink(linkName, dirNameBuffer, PATH_MAX);
 
-    printf(dirNameBuffer);
+    char uiFileName[PATH_MAX + 1];
+    const int ret = readlink("/proc/self/exe", uiFileName, PATH_MAX);
+    strcat(uiFileName, ".ui");
 
-    if (gtk_builder_add_from_file(builder, "./main.ui", &error) == 0)
+    if (gtk_builder_add_from_file(builder, uiFileName, &error) == 0)
     {
         g_printerr("Error loading file: %s\n", error->message);
         g_clear_error(&error);
@@ -35,7 +47,8 @@ int main(int argc, char* argv[])
     g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
 
     button = gtk_builder_get_object(builder, "quit");
-    g_signal_connect(button, "clicked", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(button, "button-press-event", G_CALLBACK(shutDown), NULL);
+
 
     gtk_main();
 
