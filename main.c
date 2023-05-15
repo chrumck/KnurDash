@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     GError* error = NULL;
     GtkBuilder* builder = gtk_builder_new();
 
-    char uiFileName[PATH_MAX + 1];
+    char uiFileName[PATH_MAX + NAME_MAX];
     const int ret = readlink("/proc/self/exe", uiFileName, PATH_MAX);
     strcat(uiFileName, ".ui");
 

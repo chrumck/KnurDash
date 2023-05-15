@@ -18,7 +18,7 @@
 					]
 				}
 			],
-			"name" : "Release",
+			"name" : "Debug",
 			"projects" : 
 			[
 				{
@@ -38,7 +38,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "KnurDash::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-KnurDash-Release-4eed7e5694a8ac046220.json",
+					"jsonFile" : "target-KnurDash-Debug-9f2bb4592bfedb4227da.json",
 					"name" : "KnurDash",
 					"projectIndex" : 0
 				}
