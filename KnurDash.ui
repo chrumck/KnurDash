@@ -3,10 +3,11 @@
   <object id="window" class="GtkWindow">
     <property name="visible">True</property>
     <property name="title">KnurDash</property>
+    <property name="border-width">10</property>
+    <property name="resizable">False</property>
     <property name="default-width">800</property>
     <property name="default-height">480</property>
-    <property name="resizable">False</property>
-    <property name="border-width">10</property>
+    <property name="decorated">False</property>
     <child>
       <object id="grid" class="GtkGrid">
         <property name="visible">True</property>

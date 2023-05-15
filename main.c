@@ -37,6 +37,8 @@ int main(int argc, char* argv[])
     }
 
     GObject* window = gtk_builder_get_object(builder, "window");
+    gtk_window_fullscreen(GTK_WINDOW(window));
+
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     GObject* button = gtk_builder_get_object(builder, "button1");

@@ -3,6 +3,7 @@
         "*.ui": "xml",
     },
     "cSpell.words": [
+        "fullscreen",
         "gboolean",
         "gpointer",
         "printerr"
