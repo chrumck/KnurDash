@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    /* Connect signal handlers to the constructed widgets. */
     GObject* window = gtk_builder_get_object(builder, "window");
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
@@ -48,7 +47,6 @@ int main(int argc, char* argv[])
 
     button = gtk_builder_get_object(builder, "quit");
     g_signal_connect(button, "button-press-event", G_CALLBACK(shutDown), NULL);
-
 
     gtk_main();
 

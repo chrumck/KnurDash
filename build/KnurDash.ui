@@ -1,7 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <object id="window" class="GtkWindow">
     <property name="visible">True</property>
-    <property name="title">Grid</property>
+    <property name="title">KnurDash</property>
+    <property name="default-width">800</property>
+    <property name="default-height">480</property>
+    <property name="resizable">False</property>
     <property name="border-width">10</property>
     <child>
       <object id="grid" class="GtkGrid">

@@ -1,6 +1,6 @@
 {
     "files.associations": {
-        "*.ui": "xml"
+        "*.ui": "xml",
     },
     "cSpell.words": [
         "gboolean",
