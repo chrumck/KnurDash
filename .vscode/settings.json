@@ -3,6 +3,7 @@
         "*.ui": "xml"
     },
     "cSpell.words": [
-        "gpointer"
+        "gpointer",
+        "printerr"
     ],
 }
