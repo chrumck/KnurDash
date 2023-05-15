@@ -7,15 +7,16 @@ static void print_hello(GtkWidget* widget, gpointer   data)
 
 int main(int argc, char* argv[])
 {
-    GtkBuilder* builder;
-    GObject* window;
-    GObject* button;
-    GError* error = NULL;
-
     gtk_init(&argc, &argv);
 
-    /* Construct a GtkBuilder instance and load our UI description */
-    builder = gtk_builder_new();
+    GError* error = NULL;
+    GtkBuilder* builder = gtk_builder_new();
+    char dirNameBuffer[PATH_MAX + 1];
+    const char* linkName = "/proc/self/exe";
+    const int ret = readlink(linkName, dirNameBuffer, PATH_MAX);
+
+    printf(dirNameBuffer);
+
     if (gtk_builder_add_from_file(builder, "./main.ui", &error) == 0)
     {
         g_printerr("Error loading file: %s\n", error->message);
@@ -24,10 +25,10 @@ int main(int argc, char* argv[])
     }
 
     /* Connect signal handlers to the constructed widgets. */
-    window = gtk_builder_get_object(builder, "window");
+    GObject* window = gtk_builder_get_object(builder, "window");
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    button = gtk_builder_get_object(builder, "button1");
+    GObject* button = gtk_builder_get_object(builder, "button1");
     g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
 
     button = gtk_builder_get_object(builder, "button2");
