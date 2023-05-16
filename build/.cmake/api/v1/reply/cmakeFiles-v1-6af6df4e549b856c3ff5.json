@@ -148,6 +148,9 @@
 		},
 		{
 			"path" : "KnurDash.ui"
+		},
+		{
+			"path" : "KnurDash.css"
 		}
 	],
 	"kind" : "cmakeFiles",

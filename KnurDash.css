@@ -1,0 +1,48 @@
+window {
+    background: black;
+    color: #f7f7f7;
+    font-family: "Piboto";
+}
+
+.gaugeFrame {
+    margin: 3px;
+    border: 1px solid;
+    border-radius: 8px;
+}
+
+.gaugeFrameLabel {
+    font-size: 16px;
+}
+
+.mainGauge {
+    font-size: 65px;
+}
+
+.subGauge {
+    font-size: 45px;
+}
+
+.notify {
+    color: #59b2ff;
+}
+
+.warning {
+    color: #ffaa00;
+}
+
+.alert {
+    background: red;
+    color: black;
+}
+
+button {
+    margin: 16px;
+    background: #2b2b2b;
+    color: #f7f7f7;
+    font-size: 25px;
+}
+
+button:active {
+    background: red;
+    transition-duration: 0ms;
+}

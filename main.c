@@ -5,9 +5,8 @@ static void print_hello(GtkWidget* widget, gpointer   data)
     g_print("Hello World\n");
 }
 
-void shutDown(GtkWidget* widget, GdkEventButton* event, gpointer user_data)
+void shutDown(GtkWidget* widget, gpointer user_data)
 {
-    if (event->type != GDK_DOUBLE_BUTTON_PRESS) return;
 
 #ifdef NDEBUG
     system("sudo shutdown now");
@@ -22,14 +21,35 @@ int main(int argc, char* argv[])
 {
     gtk_init(&argc, &argv);
 
+
+    char exeFilePath[PATH_MAX + 5];
+    readlink("/proc/self/exe", exeFilePath, PATH_MAX);
+
+    char cssFilePath[PATH_MAX + NAME_MAX];
+    strcpy(cssFilePath, exeFilePath);
+    strcat(cssFilePath, ".css");
+
     GError* error = NULL;
+
+    GtkCssProvider* cssProvider = gtk_css_provider_new();
+    if (gtk_css_provider_load_from_path(cssProvider, cssFilePath, &error) == 0)
+    {
+        g_printerr("Error loading file: %s\n", error->message);
+        g_clear_error(&error);
+        return 1;
+    }
+
+    GdkScreen* screen = gdk_screen_get_default();
+    gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+
+    char uiFilePath[PATH_MAX + NAME_MAX];
+    strcpy(uiFilePath, exeFilePath);
+    strcat(uiFilePath, ".ui");
+
+    g_print(uiFilePath);
+
     GtkBuilder* builder = gtk_builder_new();
-
-    char uiFileName[PATH_MAX + NAME_MAX];
-    const int ret = readlink("/proc/self/exe", uiFileName, PATH_MAX);
-    strcat(uiFileName, ".ui");
-
-    if (gtk_builder_add_from_file(builder, uiFileName, &error) == 0)
+    if (gtk_builder_add_from_file(builder, uiFilePath, &error) == 0)
     {
         g_printerr("Error loading file: %s\n", error->message);
         g_clear_error(&error);
@@ -37,18 +57,16 @@ int main(int argc, char* argv[])
     }
 
     GObject* window = gtk_builder_get_object(builder, "window");
+
     gtk_window_fullscreen(GTK_WINDOW(window));
 
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    GObject* button = gtk_builder_get_object(builder, "button1");
+    GObject* button = gtk_builder_get_object(builder, "resetMinMax");
     g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
 
-    button = gtk_builder_get_object(builder, "button2");
-    g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
-
-    button = gtk_builder_get_object(builder, "quit");
-    g_signal_connect(button, "button-press-event", G_CALLBACK(shutDown), NULL);
+    button = gtk_builder_get_object(builder, "turnOff");
+    g_signal_connect(button, "clicked", G_CALLBACK(shutDown), NULL);
 
     gtk_main();
 
