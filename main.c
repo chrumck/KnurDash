@@ -11,8 +11,10 @@ static void setBrightness(gboolean isUp)
     const unsigned char increment = 32;
 
     const int fd = open("/sys/class/backlight/10-0045/brightness", O_RDWR);
+    if (fd < 0) return;
+
     char brString[10];
-    read(fd, brString, 10);
+    read(fd, brString, sizeof(brString));
 
     int br;
     sscanf(brString, "%d", &br);
