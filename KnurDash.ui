@@ -10,12 +10,14 @@
     <property name="default-height">480</property>
     <property name="hide-titlebar-when-maximized">True</property>
     <property name="decorated">False</property>
+
     <child>
       <object class="GtkGrid">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="row-homogeneous">True</property>
         <property name="column-homogeneous">True</property>
+
         <child>
           <object class="GtkFrame" id="oilTempFrame">
             <property name="visible">True</property>
@@ -52,6 +54,7 @@
             <property name="top-attach">0</property>
           </packing>
         </child>
+
         <child>
           <object class="GtkFrame" id="oilTempMinMaxFrame">
             <property name="visible">True</property>
@@ -115,6 +118,7 @@
             <property name="top-attach">1</property>
           </packing>
         </child>
+
         <child>
           <object class="GtkFrame" id="oilPressFrame">
             <property name="visible">True</property>
@@ -151,6 +155,7 @@
             <property name="top-attach">0</property>
           </packing>
         </child>
+
         <child>
           <object class="GtkFrame" id="oilPressMinMaxFrame">
             <property name="visible">True</property>
@@ -214,6 +219,7 @@
             <property name="top-attach">1</property>
           </packing>
         </child>
+
         <child>
           <object class="GtkButton" id="resetMinMax">
             <property name="label" translatable="yes">Reset Min / Max</property>
@@ -228,6 +234,78 @@
             <property name="top-attach">0</property>
           </packing>
         </child>
+
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="homogeneous">True</property>
+            <child>
+              <object class="GtkButton" id="brightnessDown">
+                <!-- <property name="label" translatable="yes">Brightness
+Down</property> -->
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="focus-on-click">False</property>
+                <property name="receives-default">False</property>
+                <property name="relief">none</property>
+                <property name="always-show-image">True</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="justify">center</property>
+                    <property name="label">Brightness
+Down</property>
+                    <property name="visible">1</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="brightnessUp">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="focus-on-click">False</property>
+                <property name="receives-default">False</property>
+                <property name="relief">none</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="justify">center</property>
+                    <property name="label">Brightness
+Up</property>
+                    <property name="visible">1</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left-attach">2</property>
+            <property name="top-attach">1</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="orientation">vertical</property>
+          </object>
+          <packing>
+            <property name="left-attach">2</property>
+            <property name="top-attach">2</property>
+          </packing>
+        </child>
+
         <child>
           <object class="GtkButton" id="turnOff">
             <property name="label" translatable="yes">Turn Off</property>
@@ -240,18 +318,6 @@
           <packing>
             <property name="left-attach">2</property>
             <property name="top-attach">3</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="orientation">vertical</property>
-          </object>
-          <packing>
-            <property name="left-attach">2</property>
-            <property name="top-attach">1</property>
-            <property name="height">2</property>
           </packing>
         </child>
       </object>

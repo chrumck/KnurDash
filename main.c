@@ -1,3 +1,4 @@
+#include<fcntl.h> 
 #include <gtk/gtk.h>
 
 static void print_hello(GtkWidget* widget, gpointer   data)
@@ -5,16 +6,36 @@ static void print_hello(GtkWidget* widget, gpointer   data)
     g_print("Hello World\n");
 }
 
-void shutDown(GtkWidget* widget, gpointer user_data)
+static void setBrightness(gboolean isUp)
 {
+    const unsigned char increment = 32;
 
+    const int fd = open("/sys/class/backlight/10-0045/brightness", O_RDWR);
+    char brString[10];
+    read(fd, brString, 10);
+
+    int br;
+    sscanf(brString, "%d", &br);
+
+    br += isUp == TRUE ? increment : -increment;
+    br = br > 255 ? 255 : br < 0 ? 0 : br;
+
+    sprintf(brString, "%d\n", br);
+    write(fd, brString, strlen(brString));
+
+    close(fd);
+}
+
+static void setBrightnessDown() { setBrightness(FALSE); }
+static void setBrightnessUp() { setBrightness(TRUE); }
+
+static void shutDown(GtkWidget* widget, gpointer user_data)
+{
 #ifdef NDEBUG
     system("sudo shutdown now");
 #else
     gtk_main_quit();
 #endif
-
-
 }
 
 int main(int argc, char* argv[])
@@ -46,8 +67,6 @@ int main(int argc, char* argv[])
     strcpy(uiFilePath, exeFilePath);
     strcat(uiFilePath, ".ui");
 
-    g_print(uiFilePath);
-
     GtkBuilder* builder = gtk_builder_new();
     if (gtk_builder_add_from_file(builder, uiFilePath, &error) == 0)
     {
@@ -64,6 +83,12 @@ int main(int argc, char* argv[])
 
     GObject* button = gtk_builder_get_object(builder, "resetMinMax");
     g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
+
+    button = gtk_builder_get_object(builder, "brightnessDown");
+    g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessDown), NULL);
+
+    button = gtk_builder_get_object(builder, "brightnessUp");
+    g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessUp), NULL);
 
     button = gtk_builder_get_object(builder, "turnOff");
     g_signal_connect(button, "clicked", G_CALLBACK(shutDown), NULL);

@@ -6,6 +6,7 @@
         "fullscreen",
         "gboolean",
         "gpointer",
+        "guint",
         "printerr"
     ],
 }
