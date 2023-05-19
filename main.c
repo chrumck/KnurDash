@@ -1,30 +1,7 @@
-#include<fcntl.h> 
+#define G_LOG_USE_STRUCTURED
 #include <gtk/gtk.h>
 
-static void setBrightness(gboolean isUp)
-{
-    const unsigned char increment = 32;
-
-    const int fd = open("/sys/class/backlight/10-0045/brightness", O_RDWR);
-    if (fd < 0) return;
-
-    char brString[10];
-    read(fd, brString, sizeof(brString));
-
-    int br;
-    sscanf(brString, "%d", &br);
-
-    br += isUp == TRUE ? increment : -increment;
-    br = br > 255 ? 255 : br < 0 ? 0 : br;
-
-    sprintf(brString, "%d\n", br);
-    write(fd, brString, strlen(brString));
-
-    close(fd);
-}
-
-static void setBrightnessDown() { setBrightness(FALSE); }
-static void setBrightnessUp() { setBrightness(TRUE); }
+#include "brightness.c"
 
 static void shutDown(GtkWidget* widget, gpointer user_data)
 {
