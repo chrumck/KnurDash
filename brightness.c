@@ -5,36 +5,37 @@
 
 static void setBrightness(gboolean isUp)
 {
-    const int fd = open(BRIGHTNESS_SYSTEM_PATH, O_RDWR);
-    if (fd < 0)
+    const int fileDesc = open(BRIGHTNESS_SYSTEM_PATH, O_RDWR);
+    if (fileDesc < 0)
     {
         g_warning("Could not access " BRIGHTNESS_SYSTEM_PATH);
         return;
     }
 
-    char brString[10];
-    int result = read(fd, brString, sizeof(brString));
-    if (result < 0) {
+    char brightnessString[10];
+    const int readResult = read(fileDesc, brightnessString, sizeof(brightnessString));
+    if (readResult < 0) {
         g_warning("Could not read " BRIGHTNESS_SYSTEM_PATH);
-        close(fd);
+        close(fileDesc);
         return;
     }
 
-    int br;
-    sscanf(brString, "%d", &br);
+    int brightness;
+    sscanf(brightnessString, "%d", &brightness);
 
-    br += isUp == TRUE ? BRIGHTNESS_INCREMENT : -BRIGHTNESS_INCREMENT;
-    br = br > 255 ? 255 : br < 0 ? 0 : br;
+    brightness += isUp == TRUE ? BRIGHTNESS_INCREMENT : -BRIGHTNESS_INCREMENT;
+    brightness = brightness > 255 ? 255 : brightness < 0 ? 0 : brightness;
 
-    sprintf(brString, "%d\n", br);
+    sprintf(brightnessString, "%d\n", brightness);
 
-    result = write(fd, brString, strlen(brString));
-    if (result < 0) {
+    const int writeResult = write(fileDesc, brightnessString, strlen(brightnessString));
+    if (writeResult < 0) {
         g_warning("Could not write " BRIGHTNESS_SYSTEM_PATH);
     }
 
-    close(fd);
+    close(fileDesc);
 }
 
 static void setBrightnessDown() { setBrightness(FALSE); }
+
 static void setBrightnessUp() { setBrightness(TRUE); }
