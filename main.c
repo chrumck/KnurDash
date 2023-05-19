@@ -2,6 +2,7 @@
 #include <gtk/gtk.h>
 
 #include "brightness.c"
+#include "sensors.c"
 
 static void shutDown(GtkWidget* widget, gpointer user_data)
 {
@@ -63,6 +64,8 @@ int main(int argc, char* argv[])
 
     button = gtk_builder_get_object(builder, "turnOff");
     g_signal_connect(button, "clicked", G_CALLBACK(shutDown), NULL);
+
+    g_thread_new("readAnalogSensors", readAnalogSensors, builder);
 
     gtk_main();
 
