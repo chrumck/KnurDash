@@ -1,11 +1,6 @@
 #include<fcntl.h> 
 #include <gtk/gtk.h>
 
-static void print_hello(GtkWidget* widget, gpointer   data)
-{
-    g_print("Hello World\n");
-}
-
 static void setBrightness(gboolean isUp)
 {
     const unsigned char increment = 32;
@@ -83,10 +78,7 @@ int main(int argc, char* argv[])
 
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    GObject* button = gtk_builder_get_object(builder, "resetMinMax");
-    g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
-
-    button = gtk_builder_get_object(builder, "brightnessDown");
+    GObject* button = gtk_builder_get_object(builder, "brightnessDown");
     g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessDown), NULL);
 
     button = gtk_builder_get_object(builder, "brightnessUp");
