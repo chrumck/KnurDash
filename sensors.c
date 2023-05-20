@@ -1,6 +1,9 @@
 #include <gtk/gtk.h>
 #include <pigpiod_if2.h>
 
+#include "dataContracts.h"
+#include "helpers.c"
+
 static gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = (WorkerData*)data;
 
@@ -27,20 +30,24 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
     g_message("Sensor worker started");
 
-    guint8 buf[4] = { 0, 0, 0, 0 };
+    guint8 buf[3] = { 0, 0, 0 };
     guint32 temp;
     guint8 config = 0;
 
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->isShuttingDown == FALSE) {
-        g_usleep(100000);
+        g_usleep(1000000);
 
-        int bytesRead = i2c_read_block_data(pi, adc, 0x00, buf);
-        if (bytesRead < 0)  g_error("Could not read adc bytes", bytesRead);
+        int bytesRead = i2c_read_device(pi, adc, buf, 3);
+        if (bytesRead != 3)  g_warning("Could not read adc bytes: %d", bytesRead);
 
 
         temp = buf[0] << 8 | buf[1];
         config = buf[2];
+
+        gint32 result = sign_extend32(temp, 12);
+        // g_message("Read %d", result);
+
 
 
     }

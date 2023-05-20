@@ -1,3 +1,6 @@
+#ifndef dataContracts_h
+#define dataContracts_h
+
 #include <gtk/gtk.h>
 
 struct _WorkerData {
@@ -9,3 +12,5 @@ struct _WorkerData {
 };
 
 typedef struct _WorkerData WorkerData;
+
+#endif
