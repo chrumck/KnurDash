@@ -1,5 +1,5 @@
 #include <gtk/gtk.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 static gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = (WorkerData*)data;
@@ -19,7 +19,8 @@ static gpointer sensorWorkerLoop(gpointer data) {
     double oilPressMinValue = DBL_MAX;
     double oilPressMaxValue = DBL_MAX;
 
-    if (gpioInitialise() < 0)  g_error("Could not initialize GPIO");
+    int pi = pigpio_start(NULL, NULL);
+    if (pi < 0)  g_error("Could not connect to pigpiod");
 
     g_message("Sensor worker started");
 
@@ -34,7 +35,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
     g_message("Sensor worker shutting down");
 
-    gpioTerminate();
+    pigpio_stop(pi);
 
     workerData->isSensorWorkerRunning = FALSE;
 

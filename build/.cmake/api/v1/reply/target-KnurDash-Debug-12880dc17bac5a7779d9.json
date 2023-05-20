@@ -231,7 +231,7 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "/usr/lib/libpigpio.so",
+				"fragment" : "/usr/lib/libpigpiod_if2.so",
 				"role" : "libraries"
 			}
 		],

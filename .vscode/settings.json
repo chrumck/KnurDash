@@ -12,6 +12,7 @@
         "gpointer",
         "guint",
         "pigpio",
+        "pigpiod",
         "printerr"
     ],
 }

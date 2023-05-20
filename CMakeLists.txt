@@ -13,11 +13,11 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
 find_path(pigpio_INCLUDE_DIR 
-	NAMES pigpio.h pigpiod_if.h pigpiod_if2.h
+	NAMES pigpiod_if2.h
 	HINTS /usr/include)
 
-find_library(pigpio_LIBRARY 
-	NAMES libpigpio.so
+find_library(pigpiod_if2_LIBRARY 
+	NAMES libpigpiod_if2.so
 	HINTS /usr/lib)
 
 set(pigpio_INCLUDE_DIRS ${pigpio_INCLUDE_DIR})
@@ -35,4 +35,4 @@ configure_file(${PROJECT_TARGET}.css ${PROJECT_TARGET}.css)
 target_include_directories(${PROJECT_TARGET} PRIVATE ${GTK3_INCLUDE_DIRS} ${pigpio_INCLUDE_DIR})
 target_link_directories(${PROJECT_TARGET} PRIVATE ${GTK3_LIBRARY_DIRS} )
 target_compile_options(${PROJECT_TARGET} PRIVATE ${GTK3_CFLAGS_OTHER} )
-target_link_libraries(${PROJECT_TARGET} PRIVATE ${GTK3_LIBRARIES} ${pigpio_LIBRARY})
+target_link_libraries(${PROJECT_TARGET} PRIVATE ${GTK3_LIBRARIES} ${pigpiod_if2_LIBRARY})

@@ -1722,18 +1722,6 @@
 			"value" : "/usr/lib/libpigpiod_if2.so"
 		},
 		{
-			"name" : "pigpiod_if_LIBRARY",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Path to a library."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "/usr/lib/libpigpiod_if.so"
-		},
-		{
 			"name" : "pkgcfg_lib_GTK3_atk-1.0",
 			"properties" : 
 			[
