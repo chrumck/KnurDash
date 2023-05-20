@@ -1,12 +1,17 @@
 {
     "files.associations": {
+        "*.sql": "plsql",
+        "*.cr6": "plaintext",
         "*.ui": "xml",
+        "pigpio.h": "c"
     },
     "cSpell.words": [
         "fullscreen",
         "gboolean",
+        "gpio",
         "gpointer",
         "guint",
+        "pigpio",
         "printerr"
     ],
 }

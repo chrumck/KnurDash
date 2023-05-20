@@ -1190,6 +1190,18 @@
 			"value" : "[/usr/bin/pkg-config][v0.29.2()]"
 		},
 		{
+			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_pigpio",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Details about finding pigpio"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "[/usr/include][/usr/lib/libpigpio.so][/usr/lib/libpigpiod_if.so][/usr/lib/libpigpiod_if2.so][v()]"
+		},
+		{
 			"name" : "GTK3_CFLAGS",
 			"properties" : 
 			[
@@ -1672,6 +1684,54 @@
 			],
 			"type" : "INTERNAL",
 			"value" : "1"
+		},
+		{
+			"name" : "pigpio_INCLUDE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a file."
+				}
+			],
+			"type" : "PATH",
+			"value" : "/usr/include"
+		},
+		{
+			"name" : "pigpio_LIBRARY",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a library."
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "/usr/lib/libpigpio.so"
+		},
+		{
+			"name" : "pigpiod_if2_LIBRARY",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a library."
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "/usr/lib/libpigpiod_if2.so"
+		},
+		{
+			"name" : "pigpiod_if_LIBRARY",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a library."
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "/usr/lib/libpigpiod_if.so"
 		},
 		{
 			"name" : "pkgcfg_lib_GTK3_atk-1.0",

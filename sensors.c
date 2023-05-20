@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 
+#include <pigpio.h>
+
 gpointer readAnalogSensors(gpointer data) {
     GtkBuilder* builder = (GtkBuilder*)data;
 
@@ -16,6 +18,10 @@ gpointer readAnalogSensors(gpointer data) {
     double oilPressValue = DBL_MAX;
     double oilPressMinValue = DBL_MAX;
     double oilPressMaxValue = DBL_MAX;
+
+    // if (gpioInitialise() < 0) {
+    //     g_error("Could not initialize pigpio");
+    // }
 
 
     while (TRUE) {
