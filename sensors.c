@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <pigpiod_if2.h>
+#include <pigpio.h>
 
 static gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = (WorkerData*)data;
@@ -21,6 +22,13 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
     int pi = pigpio_start(NULL, NULL);
     if (pi < 0)  g_error("Could not connect to pigpiod");
+
+    int adcHandle = i2cOpen(1, 0xaa, 0);
+    if (adcHandle < 0) {
+        g_warning("Could not connect to ADC", adcHandle);
+        pigpio_stop(pi);
+        return NULL;
+    }
 
     g_message("Sensor worker started");
 

@@ -11,7 +11,9 @@ int main(int argc, char* argv[])
 
 
     char exeFilePath[PATH_MAX + 5];
-    readlink("/proc/self/exe", exeFilePath, PATH_MAX);
+    readlink("/proc/self/exe", exeFilePath, sizeof(exeFilePath));
+
+    g_message(exeFilePath);
 
     char cssFilePath[PATH_MAX + NAME_MAX + 5];
     sprintf(cssFilePath, "%s%s", exeFilePath, ".css");
