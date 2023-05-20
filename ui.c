@@ -1,4 +1,7 @@
+#include <gtk/gtk.h>
 #include<fcntl.h> 
+
+#include "dataContracts.h"
 
 #define BRIGHTNESS_SYSTEM_PATH "/sys/class/backlight/10-0045/brightness"
 #define BRIGHTNESS_INCREMENT 32
