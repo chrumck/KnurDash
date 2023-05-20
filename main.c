@@ -5,17 +5,14 @@
 #include "brightness.c"
 #include "sensors.c"
 
-static void shutDown(GtkWidget* widget, gpointer data)
+static void shutDown(gpointer data)
 {
-    gtk_widget_set_sensitive(widget, FALSE);
-    gtk_button_set_label(GTK_BUTTON(widget), "Turning Off...");
-
     WorkerData* workerData = (WorkerData*)data;
     workerData->isShuttingDown = TRUE;
 
     while (workerData->isSensorWorkerRunning == TRUE) {
-        g_usleep(100000);
         while (gtk_events_pending()) gtk_main_iteration();
+        g_usleep(100000);
     }
 
 #ifdef NDEBUG
@@ -24,6 +21,16 @@ static void shutDown(GtkWidget* widget, gpointer data)
     gtk_main_quit();
 #endif
 }
+
+static void buttonShutDown(GtkWidget* button, gpointer data) {
+
+    gtk_widget_set_sensitive(button, FALSE);
+    gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
+
+    shutDown(data);
+}
+
+static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
 
 int main(int argc, char* argv[])
 {
@@ -69,7 +76,7 @@ int main(int argc, char* argv[])
     WorkerData workerData = { .builder = builder, .isShuttingDown = FALSE, .isSensorWorkerRunning = FALSE };
     GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
 
-    g_signal_connect(window, "destroy", G_CALLBACK(shutDown), &workerData);
+    g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
 
     GObject* button = gtk_builder_get_object(builder, "brightnessDown");
     g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessDown), NULL);
@@ -78,7 +85,7 @@ int main(int argc, char* argv[])
     g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessUp), NULL);
 
     button = gtk_builder_get_object(builder, "turnOff");
-    g_signal_connect(button, "clicked", G_CALLBACK(shutDown), &workerData);
+    g_signal_connect(button, "clicked", G_CALLBACK(buttonShutDown), &workerData);
 
     gtk_main();
 
