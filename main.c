@@ -5,17 +5,20 @@
 #include "ui.c"
 #include "sensors.c"
 
+#define EXE_FILE_PATH_LENGTH PATH_MAX + 5
+#define UI_FILE_PATH_LENGTH PATH_MAX + NAME_MAX + 5
+
 int main(int argc, char* argv[])
 {
     gtk_init(&argc, &argv);
 
 
-    char exeFilePath[PATH_MAX + 5];
-    readlink("/proc/self/exe", exeFilePath, sizeof(exeFilePath));
+    char exeFilePath[EXE_FILE_PATH_LENGTH] = "";
+    readlink("/proc/self/exe", exeFilePath, EXE_FILE_PATH_LENGTH);
 
     g_message(exeFilePath);
 
-    char cssFilePath[PATH_MAX + NAME_MAX + 5];
+    char cssFilePath[UI_FILE_PATH_LENGTH] = "";
     sprintf(cssFilePath, "%s%s", exeFilePath, ".css");
 
     GError* error = NULL;
@@ -30,7 +33,7 @@ int main(int argc, char* argv[])
     GdkScreen* screen = gdk_screen_get_default();
     gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
-    char uiFilePath[PATH_MAX + NAME_MAX + 5];
+    char uiFilePath[UI_FILE_PATH_LENGTH] = "";
     sprintf(uiFilePath, "%s%s", exeFilePath, ".ui");
 
     GtkBuilder* builder = gtk_builder_new();

@@ -1199,7 +1199,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/usr/include][/usr/lib/libpigpio.so][v()]"
+			"value" : "[/usr/include][/usr/lib/libpigpiod_if2.so][v()]"
 		},
 		{
 			"name" : "GTK3_CFLAGS",
