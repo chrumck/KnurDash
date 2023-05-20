@@ -2,35 +2,8 @@
 #include <gtk/gtk.h>
 
 #include "dataContracts.h"
-#include "brightness.c"
+#include "ui.c"
 #include "sensors.c"
-
-static void shutDown(gpointer data)
-{
-    WorkerData* workerData = (WorkerData*)data;
-    workerData->isShuttingDown = TRUE;
-
-    while (workerData->isSensorWorkerRunning == TRUE) {
-        while (gtk_events_pending()) gtk_main_iteration();
-        g_usleep(100000);
-    }
-
-#ifdef NDEBUG
-    system("sudo shutdown now");
-#else
-    gtk_main_quit();
-#endif
-}
-
-static void buttonShutDown(GtkWidget* button, gpointer data) {
-
-    gtk_widget_set_sensitive(button, FALSE);
-    gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
-
-    shutDown(data);
-}
-
-static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
 
 int main(int argc, char* argv[])
 {
