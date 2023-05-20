@@ -3,7 +3,7 @@
         "*.sql": "plsql",
         "*.cr6": "plaintext",
         "*.ui": "xml",
-        "pigpio.h": "c"
+        "*.h": "c"
     },
     "cSpell.words": [
         "fullscreen",

@@ -19,9 +19,9 @@ gpointer readAnalogSensors(gpointer data) {
     double oilPressMinValue = DBL_MAX;
     double oilPressMaxValue = DBL_MAX;
 
-    // if (gpioInitialise() < 0) {
-    //     g_error("Could not initialize pigpio");
-    // }
+    if (gpioInitialise() < 0) {
+        g_error("Could not initialize pigpio");
+    }
 
 
     while (TRUE) {
