@@ -20,28 +20,34 @@ static gpointer sensorWorkerLoop(gpointer data) {
     double oilPressMaxValue = DBL_MAX;
 
     int pi = pigpio_start(NULL, NULL);
-    if (pi < 0)  g_error("Could not connect to pigpiod");
+    if (pi < 0)  g_error("Could not connect to pigpiod", pi);
+
+    int adc = i2c_open(pi, 1, 0x6e, 0);
+    if (adc < 0)  g_error("Could not get adc handle", adc);
 
     g_message("Sensor worker started");
 
+    guint8 buf[4] = { 0, 0, 0, 0 };
+    guint32 temp;
+    guint8 config = 0;
+
     workerData->isSensorWorkerRunning = TRUE;
-    int adc = -1;
-
     while (workerData->isShuttingDown == FALSE) {
-        if (adc < 0) adc = i2c_open(pi, 1, 0x6e, 0);
-        if (adc < 0) {
-            g_warning("Could not connect to ADC", adc);
-            continue;;
-        }
-
-
-
         g_usleep(100000);
+
+        int bytesRead = i2c_read_block_data(pi, adc, 0x00, buf);
+        if (bytesRead < 0)  g_error("Could not read adc bytes", bytesRead);
+
+
+        temp = buf[0] << 8 | buf[1];
+        config = buf[2];
+
+
     }
 
     g_message("Sensor worker shutting down");
 
-    if (adc >= 0) i2c_close(pi, adc);
+    i2c_close(pi, adc);
     pigpio_stop(pi);
 
     workerData->isSensorWorkerRunning = FALSE;
