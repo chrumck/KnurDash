@@ -39,3 +39,4 @@ static gpointer sensorWorkerLoop(gpointer data) {
     workerData->isSensorWorkerRunning = FALSE;
 
     return NULL;
+}
