@@ -1,8 +1,11 @@
 #include <gtk/gtk.h>
 #include <pigpiod_if2.h>
-
 #include "dataContracts.h"
 #include "helpers.c"
+
+static void readChannel(guint8 channel) {
+
+}
 
 static gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = (WorkerData*)data;
@@ -15,13 +18,6 @@ static gpointer sensorWorkerLoop(gpointer data) {
     const GObject* oilPressMinLabel = gtk_builder_get_object(workerData->builder, "oilPressMin");
     const GObject* oilPressMaxLabel = gtk_builder_get_object(workerData->builder, "oilPressMax");
 
-    double oilTempValue = DBL_MAX;
-    double oilTempMinValue = DBL_MAX;
-    double oilTempMaxValue = DBL_MAX;
-    double oilPressValue = DBL_MAX;
-    double oilPressMinValue = DBL_MAX;
-    double oilPressMaxValue = DBL_MAX;
-
     int pi = pigpio_start(NULL, NULL);
     if (pi < 0)  g_error("Could not connect to pigpiod", pi);
 
@@ -31,7 +27,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
     g_message("Sensor worker starting");
 
     guint8 buf[3] = { 0, 0, 0 };
-    guint32 temp;
+    guint32 temp = 0;
     guint8 config = 0;
 
     workerData->isSensorWorkerRunning = TRUE;
