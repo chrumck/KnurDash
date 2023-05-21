@@ -233,6 +233,11 @@
 				"backtrace" : 2,
 				"fragment" : "/usr/lib/libpigpiod_if2.so",
 				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-lm",
+				"role" : "libraries"
 			}
 		],
 		"language" : "C"

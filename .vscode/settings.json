@@ -9,6 +9,7 @@
         "DEADBAND",
         "fullscreen",
         "gboolean",
+        "gdouble",
         "gint",
         "gpio",
         "gpointer",

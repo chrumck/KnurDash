@@ -64,13 +64,12 @@ static void readChannel(const ReadChannelArgs* args) {
 static gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = (WorkerData*)data;
 
-
-    const GObject* oilTempLabel = gtk_builder_get_object(workerData->builder, "oilTemp");
-    const GObject* oilTempMinLabel = gtk_builder_get_object(workerData->builder, "oilTempMin");
-    const GObject* oilTempMaxLabel = gtk_builder_get_object(workerData->builder, "oilTempMax");
-    const GObject* oilPressLabel = gtk_builder_get_object(workerData->builder, "oilPress");
-    const GObject* oilPressMinLabel = gtk_builder_get_object(workerData->builder, "oilPressMin");
-    const GObject* oilPressMaxLabel = gtk_builder_get_object(workerData->builder, "oilPressMax");
+    GtkLabel* oilTempLabel = GTK_LABEL(gtk_builder_get_object(workerData->builder, "oilTemp"));
+    GtkLabel* oilTempMinLabel = GTK_LABEL(gtk_builder_get_object(workerData->builder, "oilTempMin"));
+    GtkLabel* oilTempMaxLabel = GTK_LABEL(gtk_builder_get_object(workerData->builder, "oilTempMax"));
+    GtkLabel* oilPressLabel = GTK_LABEL(gtk_builder_get_object(workerData->builder, "oilPress"));
+    GtkLabel* oilPressMinLabel = GTK_LABEL(gtk_builder_get_object(workerData->builder, "oilPressMin"));
+    GtkLabel* oilPressMaxLabel = GTK_LABEL(gtk_builder_get_object(workerData->builder, "oilPressMax"));
 
     int pi = pigpio_start(NULL, NULL);
     if (pi < 0)  g_error("Could not connect to pigpiod: %d", pi);
@@ -78,13 +77,15 @@ static gpointer sensorWorkerLoop(gpointer data) {
     int adc = i2c_open(pi, 1, 0x6e, 0);
     if (adc < 0)  g_error("Could not get adc handle %d", adc);
 
-    g_message("Sensor worker starting");
 
+    const ReadChannelArgs oilTempArgs = getOilTempArgs(pi, adc, oilTempLabel);
+
+    g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->isShuttingDown == FALSE) {
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
 
-        readChannel(&((ReadChannelArgs) { .pi = pi, .adc = adc, .channel = ADC_CHANNEL_OIL_TEMP, .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX, }));
+        readChannel(&oilTempArgs);
     }
 
     g_message("Sensor worker shutting down");
