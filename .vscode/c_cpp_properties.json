@@ -4,6 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "/usr/include/linux",
                 "/usr/include/gtk-3.0",
                 "/usr/include/glib-2.0",
                 "/usr/lib/arm-linux-gnueabihf/glib-2.0/include",
@@ -11,7 +12,7 @@
                 "/usr/include/harfbuzz",
                 "/usr/include/cairo",
                 "/usr/include/gdk-pixbuf-2.0",
-                "/usr/include/atk-1.0"
+                "/usr/include/atk-1.0",
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
