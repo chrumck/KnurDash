@@ -6,6 +6,7 @@
         "*.h": "c"
     },
     "cSpell.words": [
+        "DEADBAND",
         "fullscreen",
         "gboolean",
         "gint",

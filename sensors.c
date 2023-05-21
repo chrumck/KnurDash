@@ -2,12 +2,16 @@
 #include <pigpiod_if2.h>
 #include "dataContracts.h"
 #include "helpers.c"
+#include "sensorConversions.c"
 
-#define FAULTY_READING_LABEL "---"
+#define SENSOR_WORKER_LOOP_INTERVAL 100000
 
+#define FAULTY_READING_LABEL "--"
 #define ADC_DEFAULT_CONFIG 0x10
 #define ADC_SWITCH_CHANNEL_SLEEP 5000
 #define ADC_CHANNEL_MASK 0x60
+#define ADC_READING_DEADBAND 10
+
 #define ADC_GET_CHANNEL_VALUE(config) (((config) & ADC_CHANNEL_MASK) >> 5)
 #define ADC_GET_CHANNEL_BITS(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
 
@@ -20,7 +24,7 @@ static void readChannel(const ReadChannelArgs* args) {
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | ADC_GET_CHANNEL_BITS(args->channel);
     guint8 writeResult = i2c_write_byte(args->pi, args->adc, newConfig);
-    if (writeResult != 3) {
+    if (writeResult < 0) {
         HANDLE_FAULT();
         g_warning("Could not write config to adc: %d", writeResult);
         return;
@@ -45,7 +49,9 @@ static void readChannel(const ReadChannelArgs* args) {
     guint32 temp = buf[0] << 8 | buf[1];
     gint32 raw = sign_extend32(temp, 12);
 
-    if (raw < args->rawMin || raw > args->rawMax) {
+    if ((isFaulty[args->channel] == FALSE && (raw < args->rawMin || raw > args->rawMax)) ||
+        (isFaulty[args->channel] == TRUE && (raw < args->rawMin + ADC_READING_DEADBAND
+            || raw > args->rawMax - ADC_READING_DEADBAND))) {
         HANDLE_FAULT();
         g_warning("Raw value out of bounds: %d", raw);
         return;
@@ -76,9 +82,9 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->isShuttingDown == FALSE) {
-        g_usleep(100000);
+        g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
 
-        readChannel(&((ReadChannelArgs) { .pi = pi, .adc = adc, .channel = 0, .rawMin = 30, .rawMax = 1850, }));
+        readChannel(&((ReadChannelArgs) { .pi = pi, .adc = adc, .channel = ADC_CHANNEL_OIL_TEMP, .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX, }));
     }
 
     g_message("Sensor worker shutting down");
