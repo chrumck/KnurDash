@@ -3,8 +3,56 @@
 #include "dataContracts.h"
 #include "helpers.c"
 
-static void readChannel(guint8 channel) {
+#define FAULTY_READING_LABEL "---"
 
+#define ADC_DEFAULT_CONFIG 0x10
+#define ADC_SWITCH_CHANNEL_SLEEP 5000
+#define ADC_CHANNEL_MASK 0x60
+#define ADC_GET_CHANNEL_VALUE(config) (((config) & ADC_CHANNEL_MASK) >> 5)
+#define ADC_GET_CHANNEL_BITS(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
+
+#define HANDLE_FAULT() if (isFaulty[args->channel] == TRUE) return; \
+                              gtk_label_set_label(args->label, FAULTY_READING_LABEL); \
+                              isFaulty[args->channel] = TRUE;
+
+static void readChannel(const ReadChannelArgs* args) {
+    static gboolean isFaulty[3];
+
+    guint8 newConfig = ADC_DEFAULT_CONFIG | ADC_GET_CHANNEL_BITS(args->channel);
+    guint8 writeResult = i2c_write_byte(args->pi, args->adc, newConfig);
+    if (writeResult != 3) {
+        HANDLE_FAULT();
+        g_warning("Could not write config to adc: %d", writeResult);
+        return;
+    }
+
+    g_usleep(ADC_SWITCH_CHANNEL_SLEEP);
+
+    guint8 buf[3];
+    guint8 readResult = i2c_read_device(args->pi, args->adc, buf, 3);
+    if (readResult != 3) {
+        HANDLE_FAULT();
+        g_warning("Could not read adc bytes: %d", readResult);
+        return;
+    }
+
+    if (ADC_GET_CHANNEL_VALUE(buf[2]) != args->channel) {
+        HANDLE_FAULT();
+        g_warning("Channel received does not match required: %d", args->channel);
+        return;
+    }
+
+    guint32 temp = buf[0] << 8 | buf[1];
+    gint32 raw = sign_extend32(temp, 12);
+
+    if (raw < args->rawMin || raw > args->rawMax) {
+        HANDLE_FAULT();
+        g_warning("Raw value out of bounds: %d", raw);
+        return;
+    }
+
+    gtk_label_set_label(args->label, args->convert(raw));
+    isFaulty[args->channel] = FALSE;
 }
 
 static gpointer sensorWorkerLoop(gpointer data) {
@@ -19,37 +67,18 @@ static gpointer sensorWorkerLoop(gpointer data) {
     const GObject* oilPressMaxLabel = gtk_builder_get_object(workerData->builder, "oilPressMax");
 
     int pi = pigpio_start(NULL, NULL);
-    if (pi < 0)  g_error("Could not connect to pigpiod", pi);
+    if (pi < 0)  g_error("Could not connect to pigpiod: %d", pi);
 
     int adc = i2c_open(pi, 1, 0x6e, 0);
-    if (adc < 0)  g_error("Could not get adc handle", adc);
+    if (adc < 0)  g_error("Could not get adc handle %d", adc);
 
     g_message("Sensor worker starting");
-
-    guint8 buf[3] = { 0, 0, 0 };
-    guint32 temp = 0;
-    guint8 config = 0;
 
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->isShuttingDown == FALSE) {
         g_usleep(100000);
 
-        int bytesRead = i2c_read_device(pi, adc, buf, 3);
-        if (bytesRead != 3) {
-            g_warning("Could not read adc bytes: %d", bytesRead);
-            continue;
-        }
-
-
-
-        temp = buf[0] << 8 | buf[1];
-        config = buf[2];
-
-        gint32 result = sign_extend32(temp, 12);
-        g_message("Read %d", result);
-
-
-
+        readChannel(&((ReadChannelArgs) { .pi = pi, .adc = adc, .channel = 0, rawMin = 30, .rawMax = 1850, }));
     }
 
     g_message("Sensor worker shutting down");
