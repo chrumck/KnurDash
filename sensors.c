@@ -78,7 +78,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
     while (workerData->isShuttingDown == FALSE) {
         g_usleep(100000);
 
-        readChannel(&((ReadChannelArgs) { .pi = pi, .adc = adc, .channel = 0, rawMin = 30, .rawMax = 1850, }));
+        readChannel(&((ReadChannelArgs) { .pi = pi, .adc = adc, .channel = 0, .rawMin = 30, .rawMax = 1850, }));
     }
 
     g_message("Sensor worker shutting down");
