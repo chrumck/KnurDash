@@ -1,8 +1,9 @@
 #include <gtk/gtk.h>
 #include <pigpiod_if2.h>
+
 #include "dataContracts.h"
 #include "helpers.c"
-#include "sensorConversions.c"
+#include "sensorProps.c"
 
 #define SENSOR_WORKER_LOOP_INTERVAL 100000
 
@@ -11,6 +12,7 @@
 #define ADC_SWITCH_CHANNEL_SLEEP 5000
 #define ADC_CHANNEL_MASK 0x60
 #define ADC_READING_DEADBAND 10
+#define V_IN 3350
 
 #define ADC_GET_CHANNEL_VALUE(config) (((config) & ADC_CHANNEL_MASK) >> 5)
 #define ADC_GET_CHANNEL_BITS(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
@@ -19,7 +21,7 @@
                               gtk_label_set_label(args->label, FAULTY_READING_LABEL); \
                               isFaulty[args->channel] = TRUE;
 
-static void readChannel(const ReadChannelArgs* args) {
+static void readChannel(const SensorProps* args) {
     static gboolean isFaulty[3];
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | ADC_GET_CHANNEL_BITS(args->channel);
@@ -78,7 +80,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
     if (adc < 0)  g_error("Could not get adc handle %d", adc);
 
 
-    const ReadChannelArgs oilTempArgs = getOilTempArgs(pi, adc, oilTempLabel);
+    const SensorProps oilTempArgs = getOilTempArgs(pi, adc, oilTempLabel);
 
     g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
