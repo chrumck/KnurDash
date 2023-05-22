@@ -40,12 +40,26 @@ typedef struct _SensorWidgets {
     GtkLabel* labelMax;
 } SensorWidgets;
 
+enum SensorState {
+    AlertLow = -3,
+    WarningLow = -2,
+    NotifyLow = -1,
+    Normal = 0,
+    NotifyHigh = 1,
+    WarningHigh = 2,
+    AlertHigh = 3,
+};
+
 typedef struct _SensorData {
     int piHandle;
     int adcHandle;
 
-    gdouble lastReadings[4];
+    gint8 lastStates[4];
     gboolean isFaulty[4];
+
+    gdouble lastReadings[4];
+    gdouble minValues[4];
+    gdouble maxValues[4];
 
     SensorWidgets widgets[4];
 } SensorData;

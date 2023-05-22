@@ -95,6 +95,9 @@ static gpointer sensorWorkerLoop(gpointer data) {
         sensorData.widgets[i].frame = GTK_FRAME(gtk_builder_get_object(workerData->builder, sensor.frameId));
         sensorData.widgets[i].labelMin = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelMinId));
         sensorData.widgets[i].labelMax = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelMaxId));
+
+        sensorData.minValues[i] = G_MAXDOUBLE;
+        sensorData.maxValues[i] = G_MINDOUBLE;
     }
 
     g_message("Sensor worker starting");
