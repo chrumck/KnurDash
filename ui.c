@@ -65,10 +65,8 @@ static void shutDown(gpointer data)
 }
 
 static void buttonShutDown(GtkWidget* button, gpointer data) {
-
     gtk_widget_set_sensitive(button, FALSE);
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
-
     shutDown(data);
 }
 

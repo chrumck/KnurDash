@@ -101,6 +101,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->isShuttingDown == FALSE) {
         readChannel(&sensorData, 2);
+        readChannel(&sensorData, 3);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }
