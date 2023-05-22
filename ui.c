@@ -1,3 +1,6 @@
+#ifndef ui_c
+#define ui_c
+
 #include <gtk/gtk.h>
 #include<fcntl.h> 
 
@@ -53,6 +56,7 @@ static void shutDown(gpointer data)
         g_usleep(100000);
     }
 
+    while (gtk_events_pending()) gtk_main_iteration();
 #ifdef NDEBUG
     system("sudo shutdown now");
 #else
@@ -69,3 +73,16 @@ static void buttonShutDown(GtkWidget* button, gpointer data) {
 }
 
 static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
+
+GMutex guiLock;
+static gboolean setLabelText(gpointer data) {
+    SetLabelArgs* args = (SetLabelArgs*)data;
+
+    g_mutex_lock(&guiLock);
+    gtk_label_set_label(args->label, args->value);
+    g_mutex_unlock(&guiLock);
+
+    return FALSE;
+}
+
+#endif
