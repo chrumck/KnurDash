@@ -20,31 +20,38 @@
 #define getAdcChannelValue(config) (((config) & ADC_CHANNEL_MASK) >> 5)
 #define getAdcChannelBits(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
 
-#define resetLastReadings() for (int i = 0; i < getSize(sensors); i++)\
-                            {\
-                                sensorData.lastReadings[i] = G_MAXDOUBLE;\
-                            }\
+static void resetLastReadings(SensorData* sensorData) {
+    for (int i = 0; i < getSize(sensors); i++) {
+        sensorData->lastReadings[i] = G_MAXDOUBLE;
+    }
+};
 
-#define resetMinMax()   for (int i = 0; i < getSize(sensors); i++)\
-                        {\
-                            sensorData.minValues[i] = G_MAXDOUBLE;\
-                            sensorData.maxValues[i] = -G_MAXDOUBLE;\
-                        }\
 
-#define handleFault()   if (isFaulty == TRUE) return; \
-                        gpointer data = malloc(sizeof(SetLabelArgs));\
-                        SetLabelArgs* args = (SetLabelArgs*)data;\
-                        args->label = sensorData->widgets[channel].label;\
-                        sprintf(args->value, "%s", FAULTY_READING_LABEL);\
-                        g_idle_add(setLabelText, data); \
-                        sensorData->isFaulty[channel] = TRUE; \
+static void resetMinMax(SensorData* sensorData) {
+    for (int i = 0; i < getSize(sensors); i++)
+    {
+        sensorData->minValues[i] = G_MAXDOUBLE;
+        sensorData->maxValues[i] = -G_MAXDOUBLE;
+    }
+};
 
-#define setLabel(labelToSet)    gpointer data = malloc(sizeof(SetLabelArgs));\
-                                SetLabelArgs* args = (SetLabelArgs*)data;\
-                                args->label = labelToSet;\
-                                sprintf(args->value, sensor.format, reading);\
-                                g_idle_add(setLabelText, data);\
+static void handleFault(SensorData* sensorData, int channel) {
+    if (sensorData->isFaulty[channel] == TRUE) return;
+    gpointer data = malloc(sizeof(SetLabelArgs));
+    SetLabelArgs* args = (SetLabelArgs*)data;
+    args->label = sensorData->widgets[channel].label;
+    sprintf(args->value, "%s", FAULTY_READING_LABEL);
+    g_idle_add(setLabelText, data);
+    sensorData->isFaulty[channel] = TRUE;
+};
 
+static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
+    gpointer data = malloc(sizeof(SetLabelArgs));
+    SetLabelArgs* args = (SetLabelArgs*)data;
+    args->label = label;
+    sprintf(args->value, format, reading);
+    g_idle_add(setLabelText, data);
+}
 
 static void readChannel(SensorData* sensorData, int channel) {
     const Sensor sensor = sensors[channel];
@@ -53,7 +60,7 @@ static void readChannel(SensorData* sensorData, int channel) {
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensorData->piHandle, sensorData->adcHandle, newConfig);
     if (writeResult < 0) {
-        handleFault();
+        handleFault(sensorData, channel);
         g_warning("Could not write config to adc: %d", writeResult);
         return;
     }
@@ -63,14 +70,14 @@ static void readChannel(SensorData* sensorData, int channel) {
     guint8 buf[3];
     int readResult = i2c_read_device(sensorData->piHandle, sensorData->adcHandle, buf, 3);
     if (readResult != 3) {
-        handleFault();
+        handleFault(sensorData, channel);
         g_warning("Could not read adc bytes: %d", readResult);
         return;
     }
 
     int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
-        handleFault();
+        handleFault(sensorData, channel);
         g_warning("Channel received %d does not match required: %d", receivedChannel, channel);
         return;
     }
@@ -80,7 +87,7 @@ static void readChannel(SensorData* sensorData, int channel) {
 
     if ((isFaulty == FALSE && (sensorV < sensor.vMin || sensorV > sensor.vMax)) ||
         (isFaulty == TRUE && (sensorV < sensor.vMin + ADC_READING_DEADBAND || sensorV > sensor.vMax - ADC_READING_DEADBAND))) {
-        handleFault();
+        handleFault(sensorData, channel);
         g_warning("Raw value %d out of bounds: %d - %d", sensorV, sensor.vMin, sensor.vMax);
         return;
     }
@@ -91,17 +98,17 @@ static void readChannel(SensorData* sensorData, int channel) {
     if (isFaulty != FALSE || sensorData->lastReadings[channel] != reading)
     {
         sensorData->lastReadings[channel] = reading;
-        setLabel(sensorData->widgets[channel].label);
+        setLabel(sensorData->widgets[channel].label, sensor.format, reading);
     };
 
     if (sensorData->minValues[channel] > reading) {
         sensorData->minValues[channel] = reading;
-        setLabel(sensorData->widgets[channel].labelMin);
+        setLabel(sensorData->widgets[channel].labelMin, sensor.format, reading);
     }
 
     if (sensorData->maxValues[channel] < reading) {
         sensorData->maxValues[channel] = reading;
-        setLabel(sensorData->widgets[channel].labelMax);
+        setLabel(sensorData->widgets[channel].labelMax, sensor.format, reading);
     }
 }
 
@@ -115,8 +122,8 @@ static gpointer sensorWorkerLoop(gpointer data) {
     if (adc0Handle < 0)  g_error("Could not get adc0 handle %d", adc0Handle);
 
     SensorData sensorData = { .piHandle = piHandle, .adcHandle = adc0Handle };
-    resetLastReadings();
-    resetMinMax();
+    resetLastReadings(&sensorData);
+    resetMinMax(&sensorData);
 
     for (int i = 0; i < getSize(sensors); i++)
     {
@@ -131,7 +138,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->requestShutdown == FALSE) {
         if (workerData->requestMinMaxReset == TRUE) {
-            resetMinMax();
+            resetMinMax(&sensorData);
             workerData->requestMinMaxReset = FALSE;
         }
 
