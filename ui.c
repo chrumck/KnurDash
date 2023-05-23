@@ -86,6 +86,7 @@ static gboolean setLabelText(gpointer data) {
     gtk_label_set_label(args->label, args->value);
     g_mutex_unlock(&guiLock);
 
+    free(data);
     return FALSE;
 }
 

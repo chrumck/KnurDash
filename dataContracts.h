@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 
+#define FORMATTED_READING_LENGTH 10
 
 typedef struct _WorkerData {
     GtkBuilder* builder;
@@ -67,7 +68,7 @@ typedef struct _SensorData {
 
 typedef struct _SetLabelArgs {
     GtkLabel* label;
-    char* value;
+    char value[FORMATTED_READING_LENGTH];
 } SetLabelArgs;
 
 #endif

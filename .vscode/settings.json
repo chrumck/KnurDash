@@ -3,7 +3,8 @@
         "*.sql": "plsql",
         "*.cr6": "plaintext",
         "*.ui": "xml",
-        "*.h": "c"
+        "*.h": "c",
+        "type_traits": "c"
     },
     "cSpell.words": [
         "DEADBAND",
