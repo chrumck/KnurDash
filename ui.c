@@ -49,7 +49,7 @@ static void setBrightnessUp() { setBrightness(TRUE); }
 static void shutDown(gpointer data)
 {
     WorkerData* workerData = (WorkerData*)data;
-    workerData->isShuttingDown = TRUE;
+    workerData->requestShutdown = TRUE;
 
     while (workerData->isSensorWorkerRunning == TRUE) {
         while (gtk_events_pending()) gtk_main_iteration();

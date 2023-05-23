@@ -102,7 +102,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
     g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
-    while (workerData->isShuttingDown == FALSE) {
+    while (workerData->requestShutdown == FALSE) {
         readChannel(&sensorData, 2);
         readChannel(&sensorData, 3);
 

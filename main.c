@@ -11,23 +11,17 @@ int main(int argc, char* argv[])
 {
     gtk_init(&argc, &argv);
 
-
     static char exeFilePath[FILE_PATH_LENGTH];
     readlink("/proc/self/exe", exeFilePath, FILE_PATH_LENGTH);
-
-    g_message(exeFilePath);
 
     static char cssFilePath[FILE_PATH_LENGTH];
     sprintf(cssFilePath, "%s%s", exeFilePath, ".css");
 
     GError* error = NULL;
     GtkCssProvider* cssProvider = gtk_css_provider_new();
-    if (gtk_css_provider_load_from_path(cssProvider, cssFilePath, &error) == 0)
-    {
-        g_printerr("Error loading file: %s\n", error->message);
-        g_clear_error(&error);
-        return 1;
-    }
+    gtk_css_provider_load_from_path(cssProvider, cssFilePath, &error);
+
+    if (error != NULL) g_error("Error loading file: %s\n", error->message);
 
     GdkScreen* screen = gdk_screen_get_default();
     gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
@@ -36,18 +30,14 @@ int main(int argc, char* argv[])
     sprintf(uiFilePath, "%s%s", exeFilePath, ".ui");
 
     GtkBuilder* builder = gtk_builder_new();
-    if (gtk_builder_add_from_file(builder, uiFilePath, &error) == 0)
-    {
-        g_printerr("Error loading file: %s\n", error->message);
-        g_clear_error(&error);
-        return 1;
-    }
+    gtk_builder_add_from_file(builder, uiFilePath, &error;
+    if (error != NULL) g_error("Error loading file: %s\n", error->message);
 
     GObject* window = gtk_builder_get_object(builder, "window");
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    WorkerData workerData = { .builder = builder, .isShuttingDown = FALSE, .isSensorWorkerRunning = FALSE };
+    WorkerData workerData = { .builder = builder, .requestShutdown = FALSE, .isSensorWorkerRunning = FALSE };
     GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
 
     g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
