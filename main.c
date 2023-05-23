@@ -30,14 +30,14 @@ int main(int argc, char* argv[])
     sprintf(uiFilePath, "%s%s", exeFilePath, ".ui");
 
     GtkBuilder* builder = gtk_builder_new();
-    gtk_builder_add_from_file(builder, uiFilePath, &error;
+    gtk_builder_add_from_file(builder, uiFilePath, &error);
     if (error != NULL) g_error("Error loading file: %s\n", error->message);
 
     GObject* window = gtk_builder_get_object(builder, "window");
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    WorkerData workerData = { .builder = builder, .requestShutdown = FALSE, .isSensorWorkerRunning = FALSE };
+    WorkerData workerData = { .builder = builder };
     GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
 
     g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
