@@ -26,6 +26,7 @@ static gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
 static gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
     gdouble sensorR = sensorV * refR / (driveV - sensorV);
     gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
+    value = round(value * 100) / 100;
     return value < 0 ? 0 : value;
 }
 

@@ -9,6 +9,12 @@
 #define BRIGHTNESS_SYSTEM_PATH "/sys/class/backlight/10-0045/brightness"
 #define BRIGHTNESS_INCREMENT 32
 
+static void requestMinMaxReset(GtkWidget* button, gpointer data)
+{
+    WorkerData* workerData = (WorkerData*)data;
+    workerData->requestMinMaxReset = TRUE;
+}
+
 static void setBrightness(gboolean isUp)
 {
     const int fileDesc = open(BRIGHTNESS_SYSTEM_PATH, O_RDWR);

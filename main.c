@@ -37,12 +37,15 @@ int main(int argc, char* argv[])
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    WorkerData workerData = { .builder = builder };
+    WorkerData workerData = { .builder = builder, };
     GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
 
     g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
 
-    GObject* button = gtk_builder_get_object(builder, "brightnessDown");
+    GObject* button = gtk_builder_get_object(builder, "resetMinMax");
+    g_signal_connect(button, "clicked", G_CALLBACK(requestMinMaxReset), &workerData);
+
+    button = gtk_builder_get_object(builder, "brightnessDown");
     g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessDown), NULL);
 
     button = gtk_builder_get_object(builder, "brightnessUp");

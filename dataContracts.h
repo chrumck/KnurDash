@@ -7,6 +7,7 @@
 typedef struct _WorkerData {
     GtkBuilder* builder;
 
+    gboolean requestMinMaxReset;
     gboolean requestShutdown;
 
     gboolean isSensorWorkerRunning;

@@ -18,21 +18,34 @@
 #define ADC0_I2C_ADDRESS 0x6a
 #define ADC_DEFAULT_CONFIG 0x10
 #define ADC_CHANNEL_MASK 0x60
-#define ADC_GET_CHANNEL_VALUE(config) (((config) & ADC_CHANNEL_MASK) >> 5)
-#define ADC_GET_CHANNEL_BITS(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
+#define getAdcChannelValue(config) (((config) & ADC_CHANNEL_MASK) >> 5)
+#define getAdcChannelBits(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
 
-
-#define HANDLE_FAULT()  if (sensorData->isFaulty[channel] == TRUE) return; \
+#define handleFault()  if (isFaulty == TRUE) return; \
                         SetLabelArgs args = { .label = sensorData->widgets[channel].label, .value = FAULTY_READING_LABEL }; \
                         g_idle_add(setLabelText, &args); \
                         sensorData->isFaulty[channel] = TRUE; \
 
-static void readChannel(SensorData* sensorData, int channel) {
+#define resetLastReadings() for (int i = 0; i < getSize(sensors); i++)\
+                            {\
+                                sensorData.lastReadings[i] = G_MINDOUBLE;\
+                            }\
 
-    guint8 newConfig = ADC_DEFAULT_CONFIG | ADC_GET_CHANNEL_BITS(channel);
+#define resetMinMax()   for (int i = 0; i < getSize(sensors); i++)\
+                        {\
+                            sensorData.minValues[i] = G_MAXDOUBLE;\
+                            sensorData.maxValues[i] = G_MINDOUBLE;\
+                        }\
+
+
+static void readChannel(SensorData* sensorData, int channel) {
+    const Sensor sensor = sensors[channel];
+    gboolean isFaulty = sensorData->isFaulty[channel];
+
+    guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensorData->piHandle, sensorData->adcHandle, newConfig);
     if (writeResult < 0) {
-        HANDLE_FAULT();
+        handleFault();
         g_warning("Could not write config to adc: %d", writeResult);
         return;
     }
@@ -42,14 +55,14 @@ static void readChannel(SensorData* sensorData, int channel) {
     guint8 buf[3];
     int readResult = i2c_read_device(sensorData->piHandle, sensorData->adcHandle, buf, 3);
     if (readResult != 3) {
-        HANDLE_FAULT();
+        handleFault();
         g_warning("Could not read adc bytes: %d", readResult);
         return;
     }
 
-    int receivedChannel = ADC_GET_CHANNEL_VALUE(buf[2]);
+    int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
-        HANDLE_FAULT();
+        handleFault();
         g_warning("Channel received %d does not match required: %d", receivedChannel, channel);
         return;
     }
@@ -57,20 +70,19 @@ static void readChannel(SensorData* sensorData, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 sensorV = signExtend32(temp, 12);
 
-    const Sensor sensor = sensors[channel];
-    gboolean isFaulty = sensorData->isFaulty[channel];
-
     if ((isFaulty == FALSE && (sensorV < sensor.vMin || sensorV > sensor.vMax)) ||
         (isFaulty == TRUE && (sensorV < sensor.vMin + ADC_READING_DEADBAND || sensorV > sensor.vMax - ADC_READING_DEADBAND))) {
-        HANDLE_FAULT();
+        handleFault();
         g_warning("Raw value %d out of bounds: %d - %d", sensorV, sensor.vMin, sensor.vMax);
         return;
     }
 
     gdouble reading = sensor.convert(sensorV, DRIVE_V, sensor.refR);
 
-    sensorData->lastReadings[channel] = reading;
+    if (isFaulty == FALSE && sensorData->lastReadings[channel] == reading) return;
+
     sensorData->isFaulty[channel] = FALSE;
+    sensorData->lastReadings[channel] = reading;
 
     char formatted[FORMATTED_READING_LENGTH];
     sprintf(formatted, sensor.format, reading);
@@ -88,6 +100,9 @@ static gpointer sensorWorkerLoop(gpointer data) {
     if (adc0Handle < 0)  g_error("Could not get adc0 handle %d", adc0Handle);
 
     SensorData sensorData = { .piHandle = piHandle, .adcHandle = adc0Handle };
+    resetLastReadings();
+    resetMinMax();
+
     for (int i = 0; i < getSize(sensors); i++)
     {
         const Sensor sensor = sensors[i];
@@ -95,14 +110,16 @@ static gpointer sensorWorkerLoop(gpointer data) {
         sensorData.widgets[i].frame = GTK_FRAME(gtk_builder_get_object(workerData->builder, sensor.frameId));
         sensorData.widgets[i].labelMin = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelMinId));
         sensorData.widgets[i].labelMax = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelMaxId));
-
-        sensorData.minValues[i] = G_MAXDOUBLE;
-        sensorData.maxValues[i] = G_MINDOUBLE;
     }
 
     g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->requestShutdown == FALSE) {
+        if (workerData->requestMinMaxReset == TRUE) {
+            resetMinMax();
+            workerData->requestMinMaxReset = FALSE;
+        }
+
         readChannel(&sensorData, 2);
         readChannel(&sensorData, 3);
 
