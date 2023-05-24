@@ -12,6 +12,7 @@
 #define DRIVE_V 3350
 
 #define FAULTY_READING_LABEL "--"
+#define FAULTY_READING_VALUE (G_MAXDOUBLE - 10000)
 #define ADC_READING_DEADBAND 10
 
 #define ADC0_I2C_ADDRESS 0x6a
@@ -24,12 +25,14 @@
 #define handleFault()\
     if (wasFaulty == TRUE) return;\
     reading->isFaulty = TRUE;\
+    reading->value = FAULTY_READING_VALUE;\
     setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
     setFrame(widgets->frame, StateNormal);\
 
 //-------------------------------------------------------------------------------------------------------------
 
 static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
+    if (label == NULL) return;
     gpointer data = malloc(sizeof(SetLabelArgs));
     SetLabelArgs* args = (SetLabelArgs*)data;
     args->label = label;
@@ -38,6 +41,7 @@ static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
 }
 
 static void setFrame(GtkFrame* frame, const SensorState state) {
+    if (frame == NULL) return;
     gpointer data = malloc(sizeof(SetFrameClassArgs));
     SetFrameClassArgs* args = (SetFrameClassArgs*)data;
     args->frame = frame;
@@ -79,8 +83,8 @@ static void resetMinMaxLabels(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const SensorWidgets* widgets = &sensorData->widgets[i][j];
-            if (widgets->labelMin != NULL) setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
-            if (widgets->labelMax != NULL) setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
+            setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
+            setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
         }
     }
 };
