@@ -9,6 +9,8 @@
 #define BRIGHTNESS_SYSTEM_PATH "/sys/class/backlight/10-0045/brightness"
 #define BRIGHTNESS_INCREMENT 32
 
+GMutex guiLock;
+
 static void requestMinMaxReset(GtkWidget* button, gpointer data)
 {
     WorkerData* workerData = (WorkerData*)data;
@@ -70,15 +72,17 @@ static void shutDown(gpointer data)
 #endif
 }
 
+static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
+
 static void buttonShutDown(GtkWidget* button, gpointer data) {
+    g_mutex_lock(&guiLock);
     gtk_widget_set_sensitive(button, FALSE);
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
+    g_mutex_unlock(&guiLock);
+
     shutDown(data);
 }
 
-static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
-
-GMutex guiLock;
 static gboolean setLabelText(gpointer data) {
     SetLabelArgs* args = (SetLabelArgs*)data;
 
