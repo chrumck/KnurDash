@@ -3,6 +3,8 @@
 
 #include <gtk/gtk.h>
 
+#define ADC_COUNT 2
+#define ADC_CHANNEL_COUNT 4
 #define FORMATTED_READING_LENGTH 10
 
 typedef struct _WorkerData {
@@ -14,7 +16,7 @@ typedef struct _WorkerData {
     gboolean isSensorWorkerRunning;
 } WorkerData;
 
-typedef struct _SensorProps {
+typedef struct _Sensor {
     char* labelId;
     char* frameId;
     char* labelMinId;
@@ -36,13 +38,6 @@ typedef struct _SensorProps {
     gdouble precision;
 } Sensor;
 
-typedef struct _SensorWidgets {
-    GtkLabel* label;
-    GtkFrame* frame;
-    GtkLabel* labelMin;
-    GtkLabel* labelMax;
-} SensorWidgets;
-
 typedef enum _SensorState {
     StateAlertLow = -3,
     StateWarningLow = -2,
@@ -53,18 +48,28 @@ typedef enum _SensorState {
     StateAlertHigh = 3,
 } SensorState;
 
+typedef struct _SensorReading {
+    gdouble value;
+    gdouble min;
+    gdouble max;
+
+    SensorState state;
+    gboolean isFaulty;
+} SensorReading;
+
+typedef struct _SensorWidgets {
+    GtkLabel* label;
+    GtkFrame* frame;
+    GtkLabel* labelMin;
+    GtkLabel* labelMax;
+} SensorWidgets;
+
 typedef struct _SensorData {
     int piHandle;
-    int adcHandle;
+    int adcHandle[ADC_COUNT];
 
-    SensorState lastStates[4];
-    gboolean isFaulty[4];
-
-    gdouble lastReadings[4];
-    gdouble minValues[4];
-    gdouble maxValues[4];
-
-    SensorWidgets widgets[4];
+    SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
+    SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 } SensorData;
 
 typedef struct _SetLabelArgs {

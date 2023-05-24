@@ -1,9 +1,9 @@
 #include <gtk/gtk.h>
 
 /**
- * Return the size of passed value;
+ * Return the length of passed array;
 */
-#define getSize(value) (sizeof(value) / sizeof(value[0]))
+#define getLength(value) (sizeof(value) / sizeof(value[0]))
 
 /**
  * sign_extend32 - sign extend a 32-bit value using specified bit as sign-bit

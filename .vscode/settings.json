@@ -17,6 +17,7 @@
         "guint",
         "MAXDOUBLE",
         "MINDOUBLE",
+        "Piboto",
         "pigpio",
         "pigpiod",
         "printerr"
