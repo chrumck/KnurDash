@@ -52,7 +52,7 @@ static void setFrame(GtkFrame* frame, const SensorState state) {
 static void resetLastReadings(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            sensorData->readings[i][j].value = G_MAXDOUBLE;
+            sensorData->readings[i][j].value = FAULTY_READING_VALUE;
         }
     }
 };
