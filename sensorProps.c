@@ -18,15 +18,14 @@
 #define PRESS_C 0.0000364
 
 static gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
-    gdouble sensorR = sensorV * refR / (driveV - sensorV);
-    gdouble logSensorR = log(sensorR);
-    return round(TEMP_A + (TEMP_B * logSensorR) + (TEMP_C * pow(logSensorR, 3)));
+    const gdouble sensorR = sensorV * refR / (driveV - sensorV);
+    const gdouble logSensorR = log(sensorR);
+    return TEMP_A + (TEMP_B * logSensorR) + (TEMP_C * pow(logSensorR, 3));
 }
 
 static gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
-    gdouble sensorR = sensorV * refR / (driveV - sensorV);
-    gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
-    value = round(value * 100) / 100;
+    const gdouble sensorR = sensorV * refR / (driveV - sensorV);
+    const gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
     return value < 0 ? 0 : value;
 }
 
@@ -36,27 +35,27 @@ static const Sensor sensors[4] = {
         .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
         .alertLow = -25, .warningLow = -25, .notifyLow = -25,
         .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
-        .refR = 2012, .convert = convertTemp, .format = "%.0f" ,
+        .refR = 2012, .convert = convertTemp, .format = "%.0f" , .precision = 0.2,
     },
     {
         .labelId = "diffTemp", .frameId = "diffTempFrame", .labelMinId = "diffTempMin", .labelMaxId = "diffTempMax",
         .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
         .alertLow = -25, .warningLow = -25, .notifyLow = -25,
         .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
-        .refR = 2006, .convert = convertTemp, .format = "%.0f" ,
+        .refR = 2006, .convert = convertTemp, .format = "%.0f" , .precision = 0.2,
     },
     {
         .labelId = "oilTemp", .frameId = "oilTempFrame", .labelMinId = "oilTempMin", .labelMaxId = "oilTempMax",
         .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
         .alertLow = -25, .warningLow = -25, .notifyLow = 100,
         .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
-        .refR = 1992, .convert = convertTemp, .format = "%.0f" ,
+        .refR = 1992, .convert = convertTemp, .format = "%.0f" , .precision = 0.2,
     },
     {
         .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
         .vMin = PRESS_SENSOR_RAW_MIN, .vMax = PRESS_SENSOR_RAW_MAX,
         .alertLow = -25, .warningLow = -25, .notifyLow = 100,
         .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
-        .refR = 465, .convert = convertOilPress, .format = "%.1f" ,
+        .refR = 465, .convert = convertOilPress, .format = "%.1f" , .precision = 0.02,
     },
 };

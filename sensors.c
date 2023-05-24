@@ -21,9 +21,11 @@
 #define getAdcChannelBits(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
 
 #define handleFault()\
-    if (isFaulty == TRUE) return;\
+    if (wasFaulty == TRUE) return;\
     sensorData->isFaulty[channel] = TRUE;\
     setLabel(sensorData->widgets[channel].label, FAULTY_READING_LABEL, 0);\
+
+
 
 static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
     gpointer data = malloc(sizeof(SetLabelArgs));
@@ -40,16 +42,14 @@ static void resetLastReadings(SensorData* sensorData) {
 };
 
 static void resetMinMaxReadings(SensorData* sensorData) {
-    for (int i = 0; i < getSize(sensors); i++)
-    {
+    for (int i = 0; i < getSize(sensors); i++) {
         sensorData->minValues[i] = G_MAXDOUBLE;
         sensorData->maxValues[i] = -G_MAXDOUBLE;
     }
 };
 
 static void resetMinMaxLabels(SensorData* sensorData) {
-    for (int i = 0; i < getSize(sensors); i++)
-    {
+    for (int i = 0; i < getSize(sensors); i++) {
         if (sensorData->widgets[i].labelMin != 0) setLabel(sensorData->widgets[i].labelMin, FAULTY_READING_LABEL, 0);
         if (sensorData->widgets[i].labelMax != 0)setLabel(sensorData->widgets[i].labelMax, FAULTY_READING_LABEL, 0);
     }
@@ -57,7 +57,7 @@ static void resetMinMaxLabels(SensorData* sensorData) {
 
 static void readChannel(SensorData* sensorData, int channel) {
     const Sensor sensor = sensors[channel];
-    gboolean isFaulty = sensorData->isFaulty[channel];
+    gboolean wasFaulty = sensorData->isFaulty[channel];
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensorData->piHandle, sensorData->adcHandle, newConfig);
@@ -87,8 +87,8 @@ static void readChannel(SensorData* sensorData, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 sensorV = signExtend32(temp, 12);
 
-    if ((isFaulty == FALSE && (sensorV < sensor.vMin || sensorV > sensor.vMax)) ||
-        (isFaulty == TRUE && (sensorV < sensor.vMin + ADC_READING_DEADBAND || sensorV > sensor.vMax - ADC_READING_DEADBAND))) {
+    if ((wasFaulty == FALSE && (sensorV < sensor.vMin || sensorV > sensor.vMax)) ||
+        (wasFaulty == TRUE && (sensorV < sensor.vMin + ADC_READING_DEADBAND || sensorV > sensor.vMax - ADC_READING_DEADBAND))) {
         handleFault();
         g_warning("Raw value %d out of bounds: %d - %d", sensorV, sensor.vMin, sensor.vMax);
         return;
@@ -97,11 +97,14 @@ static void readChannel(SensorData* sensorData, int channel) {
     sensorData->isFaulty[channel] = FALSE;
     gdouble reading = sensor.convert(sensorV, DRIVE_V, sensor.refR);
 
-    if (isFaulty != FALSE || sensorData->lastReadings[channel] != reading)
-    {
-        sensorData->lastReadings[channel] = reading;
-        setLabel(sensorData->widgets[channel].label, sensor.format, reading);
-    };
+    if (wasFaulty == FALSE &&
+        reading < sensorData->lastReadings[channel] + sensor.precision &&
+        reading > sensorData->lastReadings[channel] - sensor.precision &&
+        reading >= sensorData->minValues[channel] - sensor.precision &&
+        reading <= sensorData->maxValues[channel] + sensor.precision) return;
+
+    sensorData->lastReadings[channel] = reading;
+    setLabel(sensorData->widgets[channel].label, sensor.format, reading);
 
     if (sensorData->minValues[channel] > reading) {
         sensorData->minValues[channel] = reading;
@@ -127,8 +130,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
     resetLastReadings(&sensorData);
     resetMinMaxReadings(&sensorData);
 
-    for (int i = 0; i < getSize(sensors); i++)
-    {
+    for (int i = 0; i < getSize(sensors); i++) {
         const Sensor sensor = sensors[i];
         sensorData.widgets[i].label = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelId));
         sensorData.widgets[i].frame = GTK_FRAME(gtk_builder_get_object(workerData->builder, sensor.frameId));

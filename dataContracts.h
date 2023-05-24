@@ -33,6 +33,7 @@ typedef struct _SensorProps {
     gint32 refR;
     gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
     char* format;
+    gdouble precision;
 } Sensor;
 
 typedef struct _SensorWidgets {
