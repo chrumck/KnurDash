@@ -10,5 +10,5 @@
  * @value: value to sign extend
  * @index: 0 based bit index (0<=index<32) to sign bit
  */
-#define signExtend32(value, index) (gint32)(value << (31 - index)) >> (31 - index)
+#define signExtend32(value, index) ((gint32)(value << (31 - index)) >> (31 - index))
 

@@ -24,8 +24,9 @@
     if (wasFaulty == TRUE) return;\
     sensorData->isFaulty[channel] = TRUE;\
     setLabel(sensorData->widgets[channel].label, FAULTY_READING_LABEL, 0);\
+    setFrame(sensorData->widgets[channel].frame, StateNormal);\
 
-
+//-------------------------------------------------------------------------------------------------------------
 
 static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
     gpointer data = malloc(sizeof(SetLabelArgs));
@@ -33,6 +34,14 @@ static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
     args->label = label;
     sprintf(args->value, format, reading);
     g_idle_add(setLabelText, data);
+}
+
+static void setFrame(GtkFrame* frame, const SensorState state) {
+    gpointer data = malloc(sizeof(SetFrameClassArgs));
+    SetFrameClassArgs* args = (SetFrameClassArgs*)data;
+    args->frame = frame;
+    args->state = state;
+    g_idle_add(setFrameClass, data);
 }
 
 static void resetLastReadings(SensorData* sensorData) {
@@ -55,8 +64,22 @@ static void resetMinMaxLabels(SensorData* sensorData) {
     }
 };
 
+static SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
+    if (reading < sensor->alertLow) return StateAlertLow;
+    if (reading < sensor->warningLow) return StateWarningLow;
+    if (reading < sensor->notifyLow) return StateNotifyLow;
+
+    if (reading > sensor->alertHigh) return StateAlertHigh;
+    if (reading > sensor->warningHigh) return StateWarningHigh;
+    if (reading > sensor->notifyHigh) return StateNotifyLow;
+
+    return StateNormal;
+}
+
+//-------------------------------------------------------------------------------------------------------------
+
 static void readChannel(SensorData* sensorData, int channel) {
-    const Sensor sensor = sensors[channel];
+    const Sensor* sensor = &sensors[channel];
     gboolean wasFaulty = sensorData->isFaulty[channel];
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
@@ -87,33 +110,39 @@ static void readChannel(SensorData* sensorData, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 sensorV = signExtend32(temp, 12);
 
-    if ((wasFaulty == FALSE && (sensorV < sensor.vMin || sensorV > sensor.vMax)) ||
-        (wasFaulty == TRUE && (sensorV < sensor.vMin + ADC_READING_DEADBAND || sensorV > sensor.vMax - ADC_READING_DEADBAND))) {
+    if ((wasFaulty == FALSE && (sensorV < sensor->vMin || sensorV > sensor->vMax)) ||
+        (wasFaulty == TRUE && (sensorV < sensor->vMin + ADC_READING_DEADBAND || sensorV > sensor->vMax - ADC_READING_DEADBAND))) {
         handleFault();
-        g_warning("Raw value %d out of bounds: %d - %d", sensorV, sensor.vMin, sensor.vMax);
+        g_warning("Raw value %d out of bounds: %d - %d", sensorV, sensor->vMin, sensor->vMax);
         return;
     }
 
     sensorData->isFaulty[channel] = FALSE;
-    gdouble reading = sensor.convert(sensorV, DRIVE_V, sensor.refR);
+    const gdouble reading = sensor->convert(sensorV, DRIVE_V, sensor->refR);
 
     if (wasFaulty == FALSE &&
-        reading < sensorData->lastReadings[channel] + sensor.precision &&
-        reading > sensorData->lastReadings[channel] - sensor.precision &&
-        reading >= sensorData->minValues[channel] - sensor.precision &&
-        reading <= sensorData->maxValues[channel] + sensor.precision) return;
+        reading < sensorData->lastReadings[channel] + sensor->precision &&
+        reading > sensorData->lastReadings[channel] - sensor->precision &&
+        reading >= sensorData->minValues[channel] - sensor->precision &&
+        reading <= sensorData->maxValues[channel] + sensor->precision) return;
 
     sensorData->lastReadings[channel] = reading;
-    setLabel(sensorData->widgets[channel].label, sensor.format, reading);
+    setLabel(sensorData->widgets[channel].label, sensor->format, reading);
 
     if (sensorData->minValues[channel] > reading) {
         sensorData->minValues[channel] = reading;
-        setLabel(sensorData->widgets[channel].labelMin, sensor.format, reading);
+        setLabel(sensorData->widgets[channel].labelMin, sensor->format, reading);
     }
 
     if (sensorData->maxValues[channel] < reading) {
         sensorData->maxValues[channel] = reading;
-        setLabel(sensorData->widgets[channel].labelMax, sensor.format, reading);
+        setLabel(sensorData->widgets[channel].labelMax, sensor->format, reading);
+    }
+
+    const SensorState state = getSensorState(sensor, reading);
+    if (wasFaulty == TRUE || state != sensorData->lastStates[channel]) {
+        sensorData->lastStates[channel] = state;
+        setFrame(sensorData->widgets[channel].frame, state);
     }
 }
 
@@ -131,11 +160,11 @@ static gpointer sensorWorkerLoop(gpointer data) {
     resetMinMaxReadings(&sensorData);
 
     for (int i = 0; i < getSize(sensors); i++) {
-        const Sensor sensor = sensors[i];
-        sensorData.widgets[i].label = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelId));
-        sensorData.widgets[i].frame = GTK_FRAME(gtk_builder_get_object(workerData->builder, sensor.frameId));
-        sensorData.widgets[i].labelMin = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelMinId));
-        sensorData.widgets[i].labelMax = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor.labelMaxId));
+        const Sensor* sensor = &sensors[i];
+        sensorData.widgets[i].label = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor->labelId));
+        sensorData.widgets[i].frame = GTK_FRAME(gtk_builder_get_object(workerData->builder, sensor->frameId));
+        sensorData.widgets[i].labelMin = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor->labelMinId));
+        sensorData.widgets[i].labelMax = GTK_LABEL(gtk_builder_get_object(workerData->builder, sensor->labelMaxId));
     }
 
     g_message("Sensor worker starting");

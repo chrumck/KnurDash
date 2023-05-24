@@ -43,21 +43,21 @@ typedef struct _SensorWidgets {
     GtkLabel* labelMax;
 } SensorWidgets;
 
-enum SensorState {
-    AlertLow = -3,
-    WarningLow = -2,
-    NotifyLow = -1,
-    Normal = 0,
-    NotifyHigh = 1,
-    WarningHigh = 2,
-    AlertHigh = 3,
-};
+typedef enum _SensorState {
+    StateAlertLow = -3,
+    StateWarningLow = -2,
+    StateNotifyLow = -1,
+    StateNormal = 0,
+    StateNotifyHigh = 1,
+    StateWarningHigh = 2,
+    StateAlertHigh = 3,
+} SensorState;
 
 typedef struct _SensorData {
     int piHandle;
     int adcHandle;
 
-    gint8 lastStates[4];
+    SensorState lastStates[4];
     gboolean isFaulty[4];
 
     gdouble lastReadings[4];
@@ -71,5 +71,10 @@ typedef struct _SetLabelArgs {
     GtkLabel* label;
     char value[FORMATTED_READING_LENGTH];
 } SetLabelArgs;
+
+typedef struct _SetFrameClassArgs {
+    GtkFrame* frame;
+    SensorState state;
+} SetFrameClassArgs;
 
 #endif

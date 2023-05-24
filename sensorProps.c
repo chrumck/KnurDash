@@ -54,8 +54,8 @@ static const Sensor sensors[4] = {
     {
         .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
         .vMin = PRESS_SENSOR_RAW_MIN, .vMax = PRESS_SENSOR_RAW_MAX,
-        .alertLow = -25, .warningLow = -25, .notifyLow = 100,
-        .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
+        .alertLow = 0.8, .warningLow = 1.3, .notifyLow = 1.3,
+        .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
         .refR = 465, .convert = convertOilPress, .format = "%.1f" , .precision = 0.02,
     },
 };

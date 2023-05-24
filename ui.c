@@ -9,6 +9,10 @@
 #define BRIGHTNESS_SYSTEM_PATH "/sys/class/backlight/10-0045/brightness"
 #define BRIGHTNESS_INCREMENT 32
 
+#define CSS_CLASS_NOTIFY "notify"
+#define CSS_CLASS_WARNING "warning"
+#define CSS_CLASS_ALERT "alert"
+
 GMutex guiLock;
 
 static void requestMinMaxReset(GtkWidget* button, gpointer data)
@@ -88,6 +92,26 @@ static gboolean setLabelText(gpointer data) {
 
     g_mutex_lock(&guiLock);
     gtk_label_set_label(args->label, args->value);
+    g_mutex_unlock(&guiLock);
+
+    free(data);
+    return FALSE;
+}
+
+static gboolean setFrameClass(gpointer data) {
+    SetFrameClassArgs* args = (SetFrameClassArgs*)data;
+
+    g_mutex_lock(&guiLock);
+    GtkStyleContext* context = gtk_widget_get_style_context(GTK_WIDGET(args->frame));
+
+    if (gtk_style_context_has_class(context, CSS_CLASS_NOTIFY)) gtk_style_context_remove_class(context, CSS_CLASS_NOTIFY);
+    if (gtk_style_context_has_class(context, CSS_CLASS_WARNING)) gtk_style_context_remove_class(context, CSS_CLASS_WARNING);
+    if (gtk_style_context_has_class(context, CSS_CLASS_ALERT)) gtk_style_context_remove_class(context, CSS_CLASS_ALERT);
+
+    if (args->state == StateNotifyLow || args->state == StateNotifyHigh) gtk_style_context_add_class(context, CSS_CLASS_NOTIFY);
+    if (args->state == StateWarningLow || args->state == StateWarningHigh) gtk_style_context_add_class(context, CSS_CLASS_WARNING);
+    if (args->state == StateAlertLow || args->state == StateAlertHigh) gtk_style_context_add_class(context, CSS_CLASS_ALERT);
+
     g_mutex_unlock(&guiLock);
 
     free(data);
