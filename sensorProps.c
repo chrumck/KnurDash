@@ -9,6 +9,9 @@
 #define PRESS_SENSOR_RAW_MIN 30
 #define PRESS_SENSOR_RAW_MAX 1000
 
+#define VDD_RAW_MIN 1550
+#define VDD_RAW_MAX 1750
+
 #define TEMP_A 276.4
 #define TEMP_B -39.75
 #define TEMP_C 0.09174
@@ -27,6 +30,10 @@ static gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
     const gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
     return value < 0 ? 0 : value;
+}
+
+static gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
+    return sensorV * 2;
 }
 
 static const Sensor sensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
@@ -64,6 +71,11 @@ static const Sensor sensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         {},
         {},
         {},
-        {},
+        {
+            .vMin = VDD_RAW_MIN, .vMax = VDD_RAW_MAX,
+            .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
+            .notifyHigh = VDD_RAW_MAX * 2, .warningHigh = VDD_RAW_MAX * 2, .alertHigh = VDD_RAW_MAX * 2,
+            .refR = 0, .convert = convertVdd, .format = "%.0f" , .precision = 2,
+        },
     }
 };

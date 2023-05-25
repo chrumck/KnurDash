@@ -9,7 +9,14 @@
 #define SENSOR_WORKER_LOOP_INTERVAL 100000
 #define ADC_SWITCH_CHANNEL_SLEEP 5000
 
-#define DRIVE_V 3350
+#define VDD_DEFAULT 3350
+#define VDD_ADC 1
+#define VDD_CHANNEL 3
+
+#define OIL_TEMP_ADC 0
+#define OIL_TEMP_CHANNEL 2
+#define OIL_PRESS_ADC 0
+#define OIL_PRESS_CHANNEL 3
 
 #define FAULTY_READING_LABEL "--"
 #define FAULTY_READING_VALUE (G_MAXDOUBLE - 10000)
@@ -49,15 +56,16 @@ static void setFrame(GtkFrame* frame, const SensorState state) {
     g_idle_add(setFrameClass, data);
 }
 
-static void resetLastReadings(SensorData* sensorData) {
+static void resetReadingsValues(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             sensorData->readings[i][j].value = FAULTY_READING_VALUE;
+            sensorData->readings[i][j].isFaulty = TRUE;
         }
     }
 };
 
-static void resetMinMaxReadings(SensorData* sensorData) {
+static void resetReadingsMinMax(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             sensorData->readings[i][j].min = G_MAXDOUBLE;
@@ -144,8 +152,11 @@ static void readChannel(SensorData* sensorData, int adc, int channel) {
         return;
     }
 
+    SensorReading* vddReading = &sensorData->readings[VDD_ADC][VDD_CHANNEL];
+    const gdouble vdd = vddReading->isFaulty == FALSE ? vddReading->value : VDD_DEFAULT;
+
+    const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
     reading->isFaulty = FALSE;
-    const gdouble value = sensor->convert(v, DRIVE_V, sensor->refR);
 
     if (wasFaulty == FALSE &&
         value < reading->value + sensor->precision &&
@@ -186,21 +197,23 @@ static gpointer sensorWorkerLoop(gpointer data) {
     if (adc1Handle < 0)  g_error("Could not get adc1 handle %d", adc1Handle);
 
     SensorData sensorData = { .piHandle = piHandle, .adcHandle = {adc0Handle, adc1Handle} };
-    resetLastReadings(&sensorData);
-    resetMinMaxReadings(&sensorData);
+    resetReadingsValues(&sensorData);
+    resetReadingsMinMax(&sensorData);
     setWidgets(workerData->builder, &sensorData);
 
     g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
     while (workerData->requestShutdown == FALSE) {
         if (workerData->requestMinMaxReset == TRUE) {
-            resetMinMaxReadings(&sensorData);
+            resetReadingsMinMax(&sensorData);
             resetMinMaxLabels(&sensorData);
             workerData->requestMinMaxReset = FALSE;
         }
 
-        readChannel(&sensorData, 0, 2);
-        readChannel(&sensorData, 0, 3);
+        readChannel(&sensorData, VDD_ADC, VDD_CHANNEL);
+
+        readChannel(&sensorData, OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
+        readChannel(&sensorData, OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }
