@@ -4,7 +4,7 @@
 #include "dataContracts.h"
 
 #define TEMP_SENSOR_RAW_MIN 30
-#define TEMP_SENSOR_RAW_MAX 1830
+#define TEMP_SENSOR_RAW_MAX 2030
 
 #define PRESS_SENSOR_RAW_MIN 30
 #define PRESS_SENSOR_RAW_MAX 1000
@@ -12,13 +12,13 @@
 #define VDD_RAW_MIN 1550
 #define VDD_RAW_MAX 1750
 
-#define TEMP_A 276.4
-#define TEMP_B -39.75
-#define TEMP_C 0.09174
+#define TEMP_A 276.3
+#define TEMP_B -39.95
+#define TEMP_C 0.09136
 
-#define PRESS_A -0.2980
-#define PRESS_B 0.02548
-#define PRESS_C 0.0000364
+#define PRESS_A -0.2967
+#define PRESS_B 0.02529
+#define PRESS_C 0.0000350
 
 static gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
