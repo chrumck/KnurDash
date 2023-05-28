@@ -8,6 +8,10 @@
 
 #define SENSOR_WORKER_LOOP_INTERVAL 100000
 #define ADC_SWITCH_CHANNEL_SLEEP 5000
+#define SHUTDOWN_DELAY 600
+#define SHUTDOWN_DELAY_ENGINE_STARTED 30
+
+#define IGN_GPIO_NO 22
 
 #define VDD_DEFAULT 3350
 #define VDD_ADC 1
@@ -196,6 +200,12 @@ static gpointer sensorWorkerLoop(gpointer data) {
     int adc1Handle = i2c_open(piHandle, 1, ADC1_I2C_ADDRESS, 0);
     if (adc1Handle < 0)  g_error("Could not get adc1 handle %d", adc1Handle);
 
+    int setIgnInputModeResult = set_mode(piHandle, IGN_GPIO_NO, PI_INPUT);
+    if (setIgnInputModeResult < 0) g_error("Could not set GPIO mode for ignition input %d", setIgnInputModeResult);
+
+    int setIgnInputPullDown = set_pull_up_down(piHandle, IGN_GPIO_NO, PI_PUD_DOWN);
+    if (setIgnInputPullDown < 0) g_error("Could not set GPIO pull down for ignition input %d", setIgnInputPullDown);
+
     SensorData sensorData = { .piHandle = piHandle, .adcHandle = {adc0Handle, adc1Handle} };
     resetReadingsValues(&sensorData);
     resetReadingsMinMax(&sensorData);
@@ -203,11 +213,31 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
     g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
+    guint shutDownCounter = 0;
+
     while (workerData->requestShutdown == FALSE) {
         if (workerData->requestMinMaxReset == TRUE) {
             resetReadingsMinMax(&sensorData);
             resetMinMaxLabels(&sensorData);
             workerData->requestMinMaxReset = FALSE;
+        }
+
+        gboolean ignOn = gpio_read(piHandle, IGN_GPIO_NO);
+        shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
+
+        if (workerData->wasEngineStarted == FALSE) {
+            SensorReading* pressureReading = &sensorData.readings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+            const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+
+            if (ignOn == TRUE &&
+                pressureReading->isFaulty == FALSE &&
+                pressureReading->value > pressureSensor->alertLow) workerData->wasEngineStarted = TRUE;
+        }
+
+        if ((workerData->wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
+            shutDownCounter > SHUTDOWN_DELAY) {
+            g_idle_add(shutDown, workerData);
+            break;
         }
 
         readChannel(&sensorData, VDD_ADC, VDD_CHANNEL);

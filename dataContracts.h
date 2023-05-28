@@ -13,6 +13,7 @@ typedef struct _WorkerData {
     gboolean requestMinMaxReset;
     gboolean requestShutdown;
 
+    gboolean wasEngineStarted;
     gboolean isSensorWorkerRunning;
 } WorkerData;
 

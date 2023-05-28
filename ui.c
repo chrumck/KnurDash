@@ -58,7 +58,7 @@ static void setBrightnessDown() { setBrightness(FALSE); }
 
 static void setBrightnessUp() { setBrightness(TRUE); }
 
-static void shutDown(gpointer data)
+static gboolean shutDown(gpointer data)
 {
     WorkerData* workerData = (WorkerData*)data;
     workerData->requestShutdown = TRUE;
@@ -69,11 +69,14 @@ static void shutDown(gpointer data)
     }
 
     while (gtk_events_pending()) gtk_main_iteration();
+
 #ifdef NDEBUG
     system("sudo shutdown now");
 #else
     gtk_main_quit();
 #endif
+
+    return FALSE;
 }
 
 static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
