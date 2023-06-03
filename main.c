@@ -56,5 +56,7 @@ int main(int argc, char* argv[])
 
     gtk_main();
 
+    g_thread_join(sensorsWorker);
+
     return 0;
 }
