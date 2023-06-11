@@ -7,7 +7,7 @@
 #define ADC_CHANNEL_COUNT 4
 #define FORMATTED_READING_LENGTH 10
 
-typedef struct _WorkerData {
+typedef struct {
     GtkBuilder* builder;
 
     gboolean requestMinMaxReset;
@@ -17,7 +17,7 @@ typedef struct _WorkerData {
     gboolean isSensorWorkerRunning;
 } WorkerData;
 
-typedef struct _Sensor {
+typedef struct {
     char* labelId;
     char* frameId;
     char* labelMinId;
@@ -39,7 +39,7 @@ typedef struct _Sensor {
     gdouble precision;
 } Sensor;
 
-typedef enum _SensorState {
+typedef enum {
     StateAlertLow = -3,
     StateWarningLow = -2,
     StateNotifyLow = -1,
@@ -49,7 +49,7 @@ typedef enum _SensorState {
     StateAlertHigh = 3,
 } SensorState;
 
-typedef struct _SensorReading {
+typedef struct {
     gdouble value;
     gdouble min;
     gdouble max;
@@ -58,14 +58,14 @@ typedef struct _SensorReading {
     gboolean isFaulty;
 } SensorReading;
 
-typedef struct _SensorWidgets {
+typedef struct {
     GtkLabel* label;
     GtkFrame* frame;
     GtkLabel* labelMin;
     GtkLabel* labelMax;
 } SensorWidgets;
 
-typedef struct _SensorData {
+typedef struct {
     int piHandle;
     int adcHandle[ADC_COUNT];
 
@@ -73,12 +73,12 @@ typedef struct _SensorData {
     SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 } SensorData;
 
-typedef struct _SetLabelArgs {
+typedef struct {
     GtkLabel* label;
     char value[FORMATTED_READING_LENGTH];
 } SetLabelArgs;
 
-typedef struct _SetFrameClassArgs {
+typedef struct {
     GtkFrame* frame;
     SensorState state;
 } SetFrameClassArgs;
