@@ -4,7 +4,8 @@
         "*.cr6": "plaintext",
         "*.ui": "xml",
         "*.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "limits": "c"
     },
     "cSpell.words": [
         "DEADBAND",
