@@ -70,10 +70,10 @@ static gboolean shutDown(gpointer data)
 
     while (gtk_events_pending()) gtk_main_iteration();
 
+    gtk_main_quit();
+
 #ifdef NDEBUG
     system("sudo shutdown now");
-#else
-    gtk_main_quit();
 #endif
 
     return FALSE;
