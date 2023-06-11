@@ -236,7 +236,7 @@ static gpointer sensorWorkerLoop(gpointer data) {
 
         if ((workerData->wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
-            g_idle_add(shutDown, workerData);
+            g_idle_add(systemShutdown, workerData);
             break;
         }
 

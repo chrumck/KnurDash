@@ -43,8 +43,8 @@ int main(int argc, char* argv[])
     WorkerData workerData = { .builder = builder, };
     GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
 
-    g_unix_signal_add(SIGINT, unixSignalShutdown, &workerData);
-    g_unix_signal_add(SIGTERM, unixSignalShutdown, &workerData);
+    g_unix_signal_add(SIGINT, appShutdown, &workerData);
+    g_unix_signal_add(SIGTERM, appShutdown, &workerData);
 
     g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
 

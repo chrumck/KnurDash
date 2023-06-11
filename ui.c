@@ -83,7 +83,9 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
     return FALSE;
 }
 
-static gboolean unixSignalShutdown(gpointer data) { return shutDown(data, FALSE); }
+static gboolean appShutdown(gpointer data) { return shutDown(data, FALSE); }
+
+static gboolean systemShutdown(gpointer data) { return shutDown(data, TRUE); }
 
 static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data, TRUE); }
 
