@@ -1,6 +1,8 @@
 #define G_LOG_USE_STRUCTURED
 
 #include <gtk/gtk.h>
+#include <signal.h>
+#include <glib-unix.h>
 
 #include "dataContracts.h"
 #include "ui.c"
@@ -40,6 +42,9 @@ int main(int argc, char* argv[])
 
     WorkerData workerData = { .builder = builder, };
     GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
+
+    g_unix_signal_add(SIGINT, unixSignalShutdown, &workerData);
+    g_unix_signal_add(SIGTERM, unixSignalShutdown, &workerData);
 
     g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
 

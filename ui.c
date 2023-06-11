@@ -58,7 +58,7 @@ static void setBrightnessDown() { setBrightness(FALSE); }
 
 static void setBrightnessUp() { setBrightness(TRUE); }
 
-static gboolean shutDown(gpointer data)
+static gboolean shutDown(gpointer data, gboolean systemShutdown)
 {
     WorkerData* workerData = (WorkerData*)data;
     workerData->requestShutdown = TRUE;
@@ -72,14 +72,20 @@ static gboolean shutDown(gpointer data)
 
     gtk_main_quit();
 
+    if (!systemShutdown) return FALSE;
+
+    g_message("Shutting down system...");
+
 #ifdef NDEBUG
-    system("sudo shutdown now");
+    if (systemShutdown) system("sudo shutdown now");
 #endif
 
     return FALSE;
 }
 
-static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data); }
+static gboolean unixSignalShutdown(gpointer data) { return shutDown(data, FALSE); }
+
+static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data, TRUE); }
 
 static void buttonShutDown(GtkWidget* button, gpointer data) {
     g_mutex_lock(&guiLock);
@@ -87,7 +93,7 @@ static void buttonShutDown(GtkWidget* button, gpointer data) {
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
     g_mutex_unlock(&guiLock);
 
-    shutDown(data);
+    shutDown(data, TRUE);
 }
 
 static gboolean setLabelText(gpointer data) {
