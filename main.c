@@ -1,4 +1,5 @@
 #define G_LOG_USE_STRUCTURED
+
 #include <gtk/gtk.h>
 
 #include "dataContracts.h"
