@@ -1,0 +1,14 @@
+[Unit]
+Description=KnurDashMain
+
+[Service]
+Type=simple
+User=chrum
+Group=chrum
+Restart=always
+ExecStartPre=/usr/bin/sleep 5
+ExecStart=/usr/bin/startx /home/chrum/KnurDash/build/KnurDash
+ExecStop=/usr/bin/killall -w -e KnurDash
+
+[Install]
+WantedBy=multi-user.target
