@@ -6,12 +6,30 @@
 			[
 				{
 					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.18"
 					},
 					"projectIndex" : 0,
 					"source" : ".",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "bluez_inc/binc",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "bluez_inc/binc",
 					"targetIndexes" : 
 					[
 						0
@@ -24,21 +42,30 @@
 				{
 					"directoryIndexes" : 
 					[
-						0
+						0,
+						1
 					],
 					"name" : "KnurDash",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
 			"targets" : 
 			[
 				{
+					"directoryIndex" : 1,
+					"id" : "Binc::@4346a1f282a097fd22ee",
+					"jsonFile" : "target-Binc-Release-257f534595255b5d4396.json",
+					"name" : "Binc",
+					"projectIndex" : 0
+				},
+				{
 					"directoryIndex" : 0,
 					"id" : "KnurDash::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-KnurDash-Release-477a0ce648ffeb924899.json",
+					"jsonFile" : "target-KnurDash-Release-f57345e23edd72241f7b.json",
 					"name" : "KnurDash",
 					"projectIndex" : 0
 				}

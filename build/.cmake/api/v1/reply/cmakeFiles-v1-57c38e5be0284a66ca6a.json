@@ -161,6 +161,9 @@
 		},
 		{
 			"path" : "KnurDash.css"
+		},
+		{
+			"path" : "bluez_inc/binc/CMakeLists.txt"
 		}
 	],
 	"kind" : "cmakeFiles",
