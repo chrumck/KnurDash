@@ -6,7 +6,7 @@
 
 #include "dataContracts.h"
 #include "ui.c"
-#include "sensors.c"
+#include "sensorWorker.c"
 
 #define FILE_PATH_LENGTH (PATH_MAX + 1)
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     gtk_window_fullscreen(GTK_WINDOW(window));
 
     WorkerData workerData = { .builder = builder, };
-    GThread* sensorsWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
+    GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
 
     g_unix_signal_add(SIGINT, appShutdown, &workerData);
     g_unix_signal_add(SIGTERM, appShutdown, &workerData);
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 
     gtk_main();
 
-    g_thread_join(sensorsWorker);
+    g_thread_join(sensorWorker);
 
     return 0;
 }
