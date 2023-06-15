@@ -7,6 +7,7 @@
 #include "dataContracts.h"
 #include "ui.c"
 #include "sensorWorker.c"
+#include "bluetoothWorker.c"
 
 #define FILE_PATH_LENGTH (PATH_MAX + 1)
 

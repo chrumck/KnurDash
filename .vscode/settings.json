@@ -8,6 +8,8 @@
         "limits": "c"
     },
     "cSpell.words": [
+        "Binc",
+        "BLUEZ",
         "DEADBAND",
         "fullscreen",
         "gboolean",
@@ -21,7 +23,6 @@
         "Piboto",
         "pigpio",
         "pigpiod",
-        "printerr",
-        "Binc"
+        "printerr"
     ],
 }
