@@ -42,7 +42,9 @@ int main(int argc, char* argv[])
     gtk_window_fullscreen(GTK_WINDOW(window));
 
     WorkerData workerData = { .builder = builder, };
+
     GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
+    GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, &workerData);
 
     g_unix_signal_add(SIGINT, appShutdown, &workerData);
     g_unix_signal_add(SIGTERM, appShutdown, &workerData);
@@ -64,6 +66,7 @@ int main(int argc, char* argv[])
     gtk_main();
 
     g_thread_join(sensorWorker);
+    g_thread_join(bluetoothWorker);
 
     return 0;
 }
