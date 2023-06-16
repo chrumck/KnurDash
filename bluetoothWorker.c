@@ -19,11 +19,15 @@ Adapter* default_adapter = NULL;
 Advertisement* advertisement = NULL;
 Application* app = NULL;
 
-void on_powered_state_changed(Adapter* adapter, gboolean state) {
+void onPoweredStateChanged(Adapter* adapter, gboolean state) {
     g_message("powered '%s' (%s)", state ? "on" : "off", binc_adapter_get_path(adapter));
+    if (state == TRUE) return;
+
+    g_message("powering adapter up...");
+    binc_adapter_power_on(default_adapter);
 }
 
-void on_central_state_changed(Adapter* adapter, Device* device) {
+void onCentralStateChanged(Adapter* adapter, Device* device) {
     g_message("remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
     ConnectionState state = binc_device_get_connection_state(device);
     if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, advertisement);
@@ -97,12 +101,12 @@ int bluetoothWorkerLoop(void) {
         g_message("using default_adapter '%s'", binc_adapter_get_path(default_adapter));
 
         // Make sure the adapter is on
-        binc_adapter_set_powered_state_cb(default_adapter, &on_powered_state_changed);
+        binc_adapter_set_powered_state_cb(default_adapter, &onPoweredStateChanged);
         if (!binc_adapter_get_powered_state(default_adapter)) binc_adapter_power_on(default_adapter);
 
 
         // Setup remote central connection state btShutDown
-        binc_adapter_set_remote_central_cb(default_adapter, &on_central_state_changed);
+        binc_adapter_set_remote_central_cb(default_adapter, &onCentralStateChanged);
 
         // Setup advertisement
         GPtrArray* adv_service_uuids = g_ptr_array_new();
