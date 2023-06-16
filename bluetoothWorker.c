@@ -10,9 +10,9 @@
 #include "utility.h"
 #include "parser.h"
 
-#define HTS_SERVICE_UUID "00001809-0000-1000-8000-00805f9b34fb"
-#define TEMPERATURE_CHAR_UUID "00002a1c-0000-1000-8000-00805f9b34fb"
-#define CUD_CHAR "00002901-0000-1000-8000-00805f9b34fb"
+#define SERVICE_UUID "00001FF8-0000-1000-8000-00805F9B34FB" 
+#define CHAR_UUID_MAIN "00000001-0000-1000-8000-00805F9B34FB"
+#define CHAR_UUID_FILTER "00000002-0000-1000-8000-00805F9B34FB"
 
 GMainLoop* loop = NULL;
 Adapter* default_adapter = NULL;
@@ -36,7 +36,7 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
 
 const char* on_local_char_read(const Application* application, const char* address, const char* service_uuid,
     const char* char_uuid) {
-    if (g_str_equal(service_uuid, HTS_SERVICE_UUID) && g_str_equal(char_uuid, TEMPERATURE_CHAR_UUID)) {
+    if (g_str_equal(service_uuid, SERVICE_UUID) && g_str_equal(char_uuid, CHAR_UUID_MAIN)) {
         const guint8 bytes[] = { 0x06, 0x6f, 0x01, 0x00, 0xff, 0xe6, 0x07, 0x03, 0x03, 0x10, 0x04, 0x00, 0x01 };
         GByteArray* byteArray = g_byte_array_sized_new(sizeof(bytes));
         g_byte_array_append(byteArray, bytes, sizeof(bytes));
@@ -53,7 +53,7 @@ const char* on_local_char_write(const Application* application, const char* addr
 
 void on_local_char_start_notify(const Application* application, const char* service_uuid, const char* char_uuid) {
     g_message("on start notify");
-    if (g_str_equal(service_uuid, HTS_SERVICE_UUID) && g_str_equal(char_uuid, TEMPERATURE_CHAR_UUID)) {
+    if (g_str_equal(service_uuid, SERVICE_UUID) && g_str_equal(char_uuid, CHAR_UUID_MAIN)) {
         const guint8 bytes[] = { 0x06, 0x6A, 0x01, 0x00, 0xff, 0xe6, 0x07, 0x03, 0x03, 0x10, 0x04, 0x00, 0x01 };
         GByteArray* byteArray = g_byte_array_sized_new(sizeof(bytes));
         g_byte_array_append(byteArray, bytes, sizeof(bytes));
@@ -110,7 +110,7 @@ int bluetoothWorkerLoop(void) {
 
         // Setup advertisement
         GPtrArray* adv_service_uuids = g_ptr_array_new();
-        g_ptr_array_add(adv_service_uuids, HTS_SERVICE_UUID);
+        g_ptr_array_add(adv_service_uuids, SERVICE_UUID);
 
         advertisement = binc_advertisement_create();
         binc_advertisement_set_local_name(advertisement, "BINC");
@@ -120,25 +120,13 @@ int bluetoothWorkerLoop(void) {
 
         // Start application
         app = binc_create_application(default_adapter);
-        binc_application_add_service(app, HTS_SERVICE_UUID);
+        binc_application_add_service(app, SERVICE_UUID);
 
         binc_application_add_characteristic(
             app,
-            HTS_SERVICE_UUID,
-            TEMPERATURE_CHAR_UUID,
+            SERVICE_UUID,
+            CHAR_UUID_MAIN,
             GATT_CHR_PROP_READ | GATT_CHR_PROP_INDICATE | GATT_CHR_PROP_WRITE);
-
-        binc_application_add_descriptor(
-            app,
-            HTS_SERVICE_UUID,
-            TEMPERATURE_CHAR_UUID,
-            CUD_CHAR,
-            GATT_CHR_PROP_READ | GATT_CHR_PROP_WRITE);
-
-        const guint8 cud[] = "hello there";
-        GByteArray* cudArray = g_byte_array_sized_new(sizeof(cud));
-        g_byte_array_append(cudArray, cud, sizeof(cud));
-        binc_application_set_desc_value(app, HTS_SERVICE_UUID, TEMPERATURE_CHAR_UUID, CUD_CHAR, cudArray);
 
         binc_application_set_char_read_cb(app, &on_local_char_read);
         binc_application_set_char_write_cb(app, &on_local_char_write);
