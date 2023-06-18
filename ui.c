@@ -72,12 +72,14 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
 
     gtk_main_quit();
 
-    if (!systemShutdown) return FALSE;
-
     g_message("KnurDash app shutting down");
 
+
 #ifdef NDEBUG
-    if (systemShutdown) system("sudo shutdown now");
+    if (systemShutdown) {
+        g_message("System shutting down...");
+        system("sudo shutdown now");
+    }
 #endif
 
     return FALSE;

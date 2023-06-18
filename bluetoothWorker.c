@@ -13,6 +13,7 @@
 
 #include "dataContracts.h"
 
+#define SERVICE_BT_NAME "KnurDash BLE" 
 #define SERVICE_UUID "00001ff8-0000-1000-8000-00805f9b34fb" 
 #define CHAR_UUID_MAIN "00000001-0000-1000-8000-00805f9b34fb"
 #define CHAR_UUID_FILTER "00000002-0000-1000-8000-00805f9b34fb"
@@ -57,8 +58,8 @@ static gboolean stopBtWorker(gpointer data) {
 
     if (workerData->requestShutdown == FALSE) return G_SOURCE_CONTINUE;
 
-    // GMainContext* context = g_main_loop_get_context(workerData->bluetoothData.mainLoop);
-    // while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
+    GMainContext* context = g_main_loop_get_context(workerData->bluetoothData.mainLoop);
+    while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
     Adapter* adapter = workerData->bluetoothData.adapter;
 
@@ -120,7 +121,7 @@ static gpointer bluetoothWorkerLoop(gpointer data) {
 
     knurDashAdv = binc_advertisement_create();
 
-    binc_advertisement_set_local_name(knurDashAdv, "BINC");
+    binc_advertisement_set_local_name(knurDashAdv, SERVICE_BT_NAME);
     binc_advertisement_set_services(knurDashAdv, advServiceUuids);
     g_ptr_array_free(advServiceUuids, TRUE);
     binc_adapter_start_advertising(adapter, knurDashAdv);
