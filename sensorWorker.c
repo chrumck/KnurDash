@@ -237,11 +237,13 @@ gpointer sensorWorkerLoop(gpointer data) {
                 pressureReading->value > pressureSensor->alertLow) workerData->wasEngineStarted = TRUE;
         }
 
+#ifdef NDEBUG
         if ((workerData->wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
             g_idle_add(systemShutdown, workerData);
             break;
         }
+#endif
 
         readChannel(sensorData, VDD_ADC, VDD_CHANNEL);
 
