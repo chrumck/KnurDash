@@ -193,12 +193,15 @@ gpointer sensorWorkerLoop(gpointer data) {
 
     int piHandle = pigpio_start(NULL, NULL);
     if (piHandle < 0)  g_error("Could not connect to pigpiod: %d", piHandle);
+    workerData->sensorData.piHandle = piHandle;
 
     int adc0Handle = i2c_open(piHandle, 1, ADC0_I2C_ADDRESS, 0);
     if (adc0Handle < 0)  g_error("Could not get adc0 handle %d", adc0Handle);
+    workerData->sensorData.adcHandle[0] = adc0Handle;
 
     int adc1Handle = i2c_open(piHandle, 1, ADC1_I2C_ADDRESS, 0);
     if (adc1Handle < 0)  g_error("Could not get adc1 handle %d", adc1Handle);
+    workerData->sensorData.adcHandle[1] = adc1Handle;
 
     int setIgnInputModeResult = set_mode(piHandle, IGN_GPIO_NO, PI_INPUT);
     if (setIgnInputModeResult < 0) g_error("Could not set GPIO mode for ignition input %d", setIgnInputModeResult);
@@ -206,10 +209,10 @@ gpointer sensorWorkerLoop(gpointer data) {
     int setIgnInputPullDown = set_pull_up_down(piHandle, IGN_GPIO_NO, PI_PUD_DOWN);
     if (setIgnInputPullDown < 0) g_error("Could not set GPIO pull down for ignition input %d", setIgnInputPullDown);
 
-    SensorData sensorData = { .piHandle = piHandle, .adcHandle = {adc0Handle, adc1Handle} };
-    resetReadingsValues(&sensorData);
-    resetReadingsMinMax(&sensorData);
-    setWidgets(workerData->builder, &sensorData);
+    SensorData* sensorData = &workerData->sensorData;
+    resetReadingsValues(sensorData);
+    resetReadingsMinMax(sensorData);
+    setWidgets(workerData->builder, sensorData);
 
     g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
@@ -217,8 +220,8 @@ gpointer sensorWorkerLoop(gpointer data) {
 
     while (workerData->requestShutdown == FALSE) {
         if (workerData->requestMinMaxReset == TRUE) {
-            resetReadingsMinMax(&sensorData);
-            resetMinMaxLabels(&sensorData);
+            resetReadingsMinMax(sensorData);
+            resetMinMaxLabels(sensorData);
             workerData->requestMinMaxReset = FALSE;
         }
 
@@ -226,7 +229,7 @@ gpointer sensorWorkerLoop(gpointer data) {
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
 
         if (workerData->wasEngineStarted == FALSE) {
-            SensorReading* pressureReading = &sensorData.readings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+            SensorReading* pressureReading = &(sensorData->readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
             const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
             if (ignOn == TRUE &&
@@ -240,10 +243,10 @@ gpointer sensorWorkerLoop(gpointer data) {
             break;
         }
 
-        readChannel(&sensorData, VDD_ADC, VDD_CHANNEL);
+        readChannel(sensorData, VDD_ADC, VDD_CHANNEL);
 
-        readChannel(&sensorData, OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
-        readChannel(&sensorData, OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+        readChannel(sensorData, OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
+        readChannel(sensorData, OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }

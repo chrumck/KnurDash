@@ -63,7 +63,7 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
     WorkerData* workerData = (WorkerData*)data;
     workerData->requestShutdown = TRUE;
 
-    while (workerData->isSensorWorkerRunning == TRUE) {
+    while (workerData->isSensorWorkerRunning == TRUE || workerData->isBluetoothWorkerRunning == TRUE) {
         while (gtk_events_pending()) gtk_main_iteration();
         g_usleep(100000);
     }
@@ -74,7 +74,7 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
 
     if (!systemShutdown) return FALSE;
 
-    g_message("Shutting down system...");
+    g_message("KnurDash app shutting down");
 
 #ifdef NDEBUG
     if (systemShutdown) system("sudo shutdown now");

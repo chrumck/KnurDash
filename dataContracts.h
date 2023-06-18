@@ -3,19 +3,12 @@
 
 #include <gtk/gtk.h>
 
+#include "adapter.h"
+#include "application.h"
+
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
 #define FORMATTED_READING_LENGTH 10
-
-typedef struct {
-    GtkBuilder* builder;
-
-    gboolean requestMinMaxReset;
-    gboolean requestShutdown;
-
-    gboolean wasEngineStarted;
-    gboolean isSensorWorkerRunning;
-} WorkerData;
 
 typedef struct {
     char* labelId;
@@ -72,6 +65,29 @@ typedef struct {
     SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
     SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 } SensorData;
+
+typedef struct {
+    GMainLoop* mainLoop;
+
+    GDBusConnection* connection;
+    Adapter* adapter;
+    Application* application;
+} BluetoothData;
+
+typedef struct {
+    GtkBuilder* builder;
+
+    gboolean requestMinMaxReset;
+    gboolean requestShutdown;
+
+    gboolean wasEngineStarted;
+
+    SensorData sensorData;
+    gboolean isSensorWorkerRunning;
+
+    BluetoothData bluetoothData;
+    gboolean isBluetoothWorkerRunning;
+} WorkerData;
 
 typedef struct {
     GtkLabel* label;
