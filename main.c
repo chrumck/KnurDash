@@ -15,10 +15,10 @@ int main(int argc, char* argv[])
 {
     gtk_init(&argc, &argv);
 
-    static char exeFilePath[FILE_PATH_LENGTH];
+    char exeFilePath[FILE_PATH_LENGTH];
     readlink("/proc/self/exe", exeFilePath, FILE_PATH_LENGTH);
 
-    static char cssFilePath[FILE_PATH_LENGTH];
+    char cssFilePath[FILE_PATH_LENGTH];
     sprintf(cssFilePath, "%s%s", exeFilePath, ".css");
 
     GError* error = NULL;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     GdkScreen* screen = gdk_screen_get_default();
     gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
-    static char uiFilePath[FILE_PATH_LENGTH];
+    char uiFilePath[FILE_PATH_LENGTH];
     sprintf(uiFilePath, "%s%s", exeFilePath, ".ui");
 
     GtkBuilder* builder = gtk_builder_new();

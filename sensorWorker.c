@@ -42,7 +42,7 @@
 
 //-------------------------------------------------------------------------------------------------------------
 
-static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
+void setLabel(GtkLabel* label, const char* format, gdouble reading) {
     if (label == NULL) return;
     gpointer data = malloc(sizeof(SetLabelArgs));
     SetLabelArgs* args = (SetLabelArgs*)data;
@@ -51,7 +51,7 @@ static void setLabel(GtkLabel* label, const char* format, gdouble reading) {
     g_idle_add(setLabelText, data);
 }
 
-static void setFrame(GtkFrame* frame, const SensorState state) {
+void setFrame(GtkFrame* frame, const SensorState state) {
     if (frame == NULL) return;
     gpointer data = malloc(sizeof(SetFrameClassArgs));
     SetFrameClassArgs* args = (SetFrameClassArgs*)data;
@@ -60,7 +60,7 @@ static void setFrame(GtkFrame* frame, const SensorState state) {
     g_idle_add(setFrameClass, data);
 }
 
-static void resetReadingsValues(SensorData* sensorData) {
+void resetReadingsValues(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             sensorData->readings[i][j].value = FAULTY_READING_VALUE;
@@ -69,7 +69,7 @@ static void resetReadingsValues(SensorData* sensorData) {
     }
 };
 
-static void resetReadingsMinMax(SensorData* sensorData) {
+void resetReadingsMinMax(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             sensorData->readings[i][j].min = G_MAXDOUBLE;
@@ -78,7 +78,7 @@ static void resetReadingsMinMax(SensorData* sensorData) {
     }
 };
 
-static void setWidgets(GtkBuilder* builder, SensorData* sensorData) {
+void setWidgets(GtkBuilder* builder, SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const Sensor* sensor = &sensors[i][j];
@@ -91,7 +91,7 @@ static void setWidgets(GtkBuilder* builder, SensorData* sensorData) {
     }
 };
 
-static void resetMinMaxLabels(SensorData* sensorData) {
+void resetMinMaxLabels(SensorData* sensorData) {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const SensorWidgets* widgets = &sensorData->widgets[i][j];
@@ -101,7 +101,7 @@ static void resetMinMaxLabels(SensorData* sensorData) {
     }
 };
 
-static SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
+SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
     if (reading < sensor->alertLow) return StateAlertLow;
     if (reading < sensor->warningLow) return StateWarningLow;
     if (reading < sensor->notifyLow) return StateNotifyLow;
@@ -115,7 +115,7 @@ static SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
 
 //-------------------------------------------------------------------------------------------------------------
 
-static void readChannel(SensorData* sensorData, int adc, int channel) {
+void readChannel(SensorData* sensorData, int adc, int channel) {
     const Sensor* sensor = &sensors[adc][channel];
     const SensorWidgets* widgets = &sensorData->widgets[adc][channel];
     SensorReading* reading = &sensorData->readings[adc][channel];
@@ -188,8 +188,8 @@ static void readChannel(SensorData* sensorData, int adc, int channel) {
     }
 }
 
-static gpointer sensorWorkerLoop(gpointer data) {
-    WorkerData* workerData = (WorkerData*)data;
+gpointer sensorWorkerLoop(gpointer data) {
+    WorkerData* workerData = data;
 
     int piHandle = pigpio_start(NULL, NULL);
     if (piHandle < 0)  g_error("Could not connect to pigpiod: %d", piHandle);
