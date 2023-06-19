@@ -36,7 +36,7 @@
 					]
 				}
 			],
-			"name" : "Release",
+			"name" : "Debug",
 			"projects" : 
 			[
 				{
@@ -58,14 +58,14 @@
 				{
 					"directoryIndex" : 1,
 					"id" : "Binc::@4346a1f282a097fd22ee",
-					"jsonFile" : "target-Binc-Release-257f534595255b5d4396.json",
+					"jsonFile" : "target-Binc-Debug-c5a440ece30d2818e28b.json",
 					"name" : "Binc",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "KnurDash::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-KnurDash-Release-f57345e23edd72241f7b.json",
+					"jsonFile" : "target-KnurDash-Debug-031877d6689095397ad1.json",
 					"name" : "KnurDash",
 					"projectIndex" : 0
 				}

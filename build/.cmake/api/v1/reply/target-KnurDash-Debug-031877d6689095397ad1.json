@@ -56,7 +56,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -rdynamic -O3 -DNDEBUG"
+					"fragment" : " -rdynamic -g"
 				},
 				{
 					"backtrace" : 3,
@@ -173,7 +173,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-rdynamic -O3 -DNDEBUG",
+				"fragment" : "-rdynamic -g",
 				"role" : "flags"
 			},
 			{
