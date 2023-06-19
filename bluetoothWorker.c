@@ -23,15 +23,15 @@
 Advertisement* knurDashAdv;
 
 void onPoweredStateChanged(Adapter* adapter, gboolean state) {
-    g_message("powered '%s' (%s)", state ? "on" : "off", binc_adapter_get_path(adapter));
+    g_message("BT adapter powered '%s' (%s)", state ? "on" : "off", binc_adapter_get_path(adapter));
     if (state == TRUE) return;
 
-    g_message("powering adapter up...");
+    g_message("Powering up BT adapter (%s)", binc_adapter_get_path(adapter));
     binc_adapter_power_on(adapter);
 }
 
 void onCentralStateChanged(Adapter* adapter, Device* device) {
-    g_message("remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
+    g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
 
     ConnectionState state = binc_device_get_connection_state(device);
     if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, knurDashAdv);
@@ -50,7 +50,7 @@ const char* onCharRead(const Application* application, const char* address, cons
 }
 
 const char* onCharWrite(const Application* application, const char* address, const char* service_uuid, const char* char_uuid, GByteArray* byteArray) {
-    return NULL;
+    g_message("Write received on: %s, length:%d, values:%x,%x,%x  ", char_uuid, byteArray->len, byteArray->data[0], byteArray->data[1], byteArray->data[2]);
 }
 
 static gboolean stopBtWorker(gpointer data) {
@@ -95,7 +95,7 @@ static gpointer bluetoothWorkerLoop(gpointer data) {
     WorkerData* workerData = data;
 
 #ifdef NDEBUG
-    log_enabled(FALSE);
+    log_set_level(LOG_WARN);
 #endif
 
     GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
@@ -109,7 +109,7 @@ static gpointer bluetoothWorkerLoop(gpointer data) {
         return NULL;
     }
 
-    g_message("Starting Bluetooth with adapter '%s'", binc_adapter_get_path(adapter));
+    g_message("Bluetooth worker starting, adapter '%s'", binc_adapter_get_path(adapter));
 
     binc_adapter_set_powered_state_cb(adapter, &onPoweredStateChanged);
     if (!binc_adapter_get_powered_state(adapter)) binc_adapter_power_on(adapter);
