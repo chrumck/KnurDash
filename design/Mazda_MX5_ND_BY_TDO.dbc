@@ -57,10 +57,10 @@ BO_ 357 Gear: 8 XXX
    SG_ Gear : 55|8@0+ (1,0) [0|1] "" XXX
 
 BO_ 514 ThrottleRPM: 8 XXX
-   SG_ 2_VehicleSpeed : 23|16@0+ (1,0) [0|1] "" XXX
-   SG_ 4_Throttle : 39|16@0+ (1,0) [0|1] "" XXX
+   SG_ 2_VehicleSpeed : 23|16@0+ (1,0) [0|255] "" XXX
+   SG_ 4_Throttle : 39|8@0+ (0.4,0) [0|1] "" XXX
    SG_ 6_NI : 55|16@0+ (1,0) [0|1] "" XXX
-   SG_ 0_RPM : 7|16@0+ (0.25,0) [0|1e+06] "" XXX
+   SG_ 0_RPM : 7|16@0+ (0.25,0) [0|10000] "" XXX
 
 BO_ 134 NI3: 8 XXX
    SG_ NI3Counter : 23|16@0+ (1,0) [0|1] "" XXX
