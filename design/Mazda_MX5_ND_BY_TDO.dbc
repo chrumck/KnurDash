@@ -44,7 +44,7 @@ BO_ 533 WheelSpeed: 8 XXX
    SG_ Wheel1 : 7|16@0+ (1,-10000) [0|1] "" XXX
 
 BO_ 357 Clutch_Gear: 8 XXX
-   SG_ Clutch_Neutral : 23|8@0+ (1,0) [0|255] "" XXX
+   SG_ 2_Clutch_Neutral : 23|8@0+ (1,0) [0|0] "" XXX
    SG_ 6_CurrentGear : 55|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 514 ThrottleRPM: 8 XXX
@@ -54,7 +54,7 @@ BO_ 514 ThrottleRPM: 8 XXX
    SG_ 0_RPM : 7|16@0+ (0.25,0) [0|10000] "" XXX
 
 BO_ 120 Brake: 8 XXX
-   SG_ BrakePressure : 39|16@0+ (0.00152588,-40) [2|100000] "" XXX
+   SG_ BrakePressure : 39|16@0- (0.00152588,-40) [0|100] "%" Vector__XXX
 
 BO_ 535 NEW_MSG_2: 8 XXX
    SG_ NEW_SIGNAL_1 : 39|1@0+ (1,0) [0|1] "" XXX
@@ -70,10 +70,11 @@ BO_ 2147484704 Temps: 8 XXX
    SG_ 0_CoolantTempC : 7|8@0+ (1,30) [0|1] "" Vector__XXX
    SG_ 7_AirTemp : 63|8@0+ (1,-30) [0|1] "" Vector__XXX
 
-CM_ SG_ 120 BrakePressure "(100/65536)+40_ABS:_negative_values";
+CM_ SG_ 120 BrakePressure "100/65536+40 ABS:negative_values";
 BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
 BA_DEF_DEF_ "GenMsgBackgroundColor" "#ffffff";
 BA_DEF_DEF_ "GenMsgForegroundColor" "#000000";
 BA_ "GenMsgForegroundColor" BO_ 357 "#000000";
 BA_ "GenMsgForegroundColor" BO_ 2147484704 "#000000";
+VAL_ 357 2_Clutch_Neutral 22 "Neutral" 25 "Clutch-In" 23 "Clutch-Out";
