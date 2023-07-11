@@ -125,7 +125,7 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
     int writeResult = i2c_write_byte(sensorData->piHandle, sensorData->adcHandle[adc], newConfig);
     if (writeResult < 0) {
         handleFault();
-        g_warning("Could not write config to adc: %d", writeResult);
+        g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
         return;
     }
 
@@ -135,14 +135,14 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
     int readResult = i2c_read_device(sensorData->piHandle, sensorData->adcHandle[adc], buf, 3);
     if (readResult != 3) {
         handleFault();
-        g_warning("Could not read adc bytes: %d", readResult);
+        g_warning("Could not read adc bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
         return;
     }
 
     int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
         handleFault();
-        g_warning("Channel received %d does not match required: %d", receivedChannel, channel);
+        g_warning("Channel received %d does not match required - adc:%d, channel:%d", receivedChannel, adc, channel);
         return;
     }
 
@@ -152,7 +152,7 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
     if ((wasFaulty == FALSE && (v < sensor->vMin || v > sensor->vMax)) ||
         (wasFaulty == TRUE && (v < sensor->vMin + ADC_READING_DEADBAND || v > sensor->vMax - ADC_READING_DEADBAND))) {
         handleFault();
-        g_warning("Raw value %d out of bounds: %d - %d", v, sensor->vMin, sensor->vMax);
+        g_warning("Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ", v, sensor->vMin, sensor->vMax, adc, channel);
         return;
     }
 
