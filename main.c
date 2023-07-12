@@ -68,5 +68,7 @@ int main(int argc, char* argv[])
     g_thread_join(sensorWorker);
     g_thread_join(bluetoothWorker);
 
+    g_message("KnurDash app terminated");
+
     return 0;
 }

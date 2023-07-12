@@ -88,6 +88,8 @@ static gboolean stopBtWorker(gpointer data) {
 
     g_main_loop_quit(workerData->bluetoothData.mainLoop);
 
+    g_message("Bluetooth Worker stopBtWorker done");
+
     return G_SOURCE_REMOVE;
 }
 
