@@ -9,6 +9,7 @@ Restart=always
 ExecStartPre=/usr/bin/sleep 5
 ExecStart=/usr/bin/startx /home/chrum/KnurDash/build/KnurDash
 ExecStop=/usr/bin/killall -w -e KnurDash
+TimeoutStopSec=5
 
 [Install]
 WantedBy=multi-user.target
