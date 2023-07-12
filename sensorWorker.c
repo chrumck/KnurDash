@@ -190,10 +190,7 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
 
 gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = data;
-
-    int i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
-    workerData->sensorData.i2cPiHandle = i2cPiHandle;
+    int i2cPiHandle = workerData->sensorData.i2cPiHandle;
 
     int adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
     if (adc0Handle < 0)  g_error("Could not get adc0 handle %d", adc0Handle);
@@ -255,7 +252,7 @@ gpointer sensorWorkerLoop(gpointer data) {
 
     i2c_close(i2cPiHandle, adc0Handle);
     i2c_close(i2cPiHandle, adc1Handle);
-    pigpio_stop(i2cPiHandle);
+
 
     workerData->isSensorWorkerRunning = FALSE;
     g_message("Sensor worker shutting down");

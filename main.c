@@ -3,6 +3,7 @@
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <glib-unix.h>
+#include <pigpiod_if2.h>
 
 #include "dataContracts.h"
 #include "ui.c"
@@ -43,6 +44,10 @@ int main(int argc, char* argv[])
 
     WorkerData workerData = { .builder = builder, };
 
+    int i2cPiHandle = pigpio_start(NULL, NULL);
+    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
+    workerData.sensorData.i2cPiHandle = i2cPiHandle;
+
     GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
     GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, &workerData);
 
@@ -67,6 +72,8 @@ int main(int argc, char* argv[])
 
     g_thread_join(sensorWorker);
     g_thread_join(bluetoothWorker);
+
+    pigpio_stop(i2cPiHandle);
 
     g_message("KnurDash app terminated");
 
