@@ -59,8 +59,8 @@ typedef struct {
 } SensorWidgets;
 
 typedef struct {
-    int piHandle;
-    int adcHandle[ADC_COUNT];
+    int i2cPiHandle;
+    int i2cAdcHandles[ADC_COUNT];
 
     SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
     SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
