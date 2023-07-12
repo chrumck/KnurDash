@@ -67,6 +67,10 @@ typedef struct {
 } SensorData;
 
 typedef struct {
+    int i2cPiHandle;
+} CanBusData;
+
+typedef struct {
     GMainLoop* mainLoop;
 
     GDBusConnection* connection;
@@ -84,6 +88,9 @@ typedef struct {
 
     SensorData sensorData;
     gboolean isSensorWorkerRunning;
+
+    CanBusData canBusData;
+    gboolean isCanBusWorkerRunning;
 
     BluetoothData bluetoothData;
     gboolean isBluetoothWorkerRunning;

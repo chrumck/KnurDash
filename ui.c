@@ -65,7 +65,9 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
     WorkerData* workerData = (WorkerData*)data;
     workerData->requestShutdown = TRUE;
 
-    while (workerData->isSensorWorkerRunning == TRUE || workerData->isBluetoothWorkerRunning == TRUE) {
+    while (workerData->isSensorWorkerRunning == TRUE ||
+        workerData->isCanBusWorkerRunning == TRUE ||
+        workerData->isBluetoothWorkerRunning == TRUE) {
         while (gtk_events_pending()) gtk_main_iteration();
         g_usleep(100000);
     }

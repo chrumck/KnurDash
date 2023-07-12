@@ -42,11 +42,14 @@ int main(int argc, char* argv[])
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    WorkerData workerData = { .builder = builder, };
-
     int i2cPiHandle = pigpio_start(NULL, NULL);
     if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
-    workerData.sensorData.i2cPiHandle = i2cPiHandle;
+
+    WorkerData workerData = {
+        .builder = builder,
+        .sensorData = {.i2cPiHandle = i2cPiHandle},
+        .canBusData = {.i2cPiHandle = i2cPiHandle}
+    };
 
     GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
     GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, &workerData);
