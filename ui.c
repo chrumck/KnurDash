@@ -60,6 +60,8 @@ static void setBrightnessUp() { setBrightness(TRUE); }
 
 static gboolean shutDown(gpointer data, gboolean systemShutdown)
 {
+    g_message("KnurDash shutdown request received");
+
     WorkerData* workerData = (WorkerData*)data;
     workerData->requestShutdown = TRUE;
 
@@ -71,9 +73,6 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
     while (gtk_events_pending()) gtk_main_iteration();
 
     gtk_main_quit();
-
-    g_message("KnurDash app shutting down");
-
 
 #ifdef NDEBUG
     if (systemShutdown) {

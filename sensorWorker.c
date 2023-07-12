@@ -253,12 +253,12 @@ gpointer sensorWorkerLoop(gpointer data) {
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }
 
-    g_message("Sensor worker shutting down");
-
     i2c_close(piHandle, adc0Handle);
+    i2c_close(piHandle, adc1Handle);
     pigpio_stop(piHandle);
 
     workerData->isSensorWorkerRunning = FALSE;
+    g_message("Sensor worker shutting down");
 
     return NULL;
 }
