@@ -8,6 +8,7 @@
 #include "dataContracts.h"
 #include "ui.c"
 #include "sensorWorker.c"
+#include "canBusWorker.c"
 #include "bluetoothWorker.c"
 
 #define FILE_PATH_LENGTH (PATH_MAX + 1)
@@ -42,16 +43,11 @@ int main(int argc, char* argv[])
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    int i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
 
-    WorkerData workerData = {
-        .builder = builder,
-        .sensorData = {.i2cPiHandle = i2cPiHandle},
-        .canBusData = {.i2cPiHandle = i2cPiHandle}
-    };
+    WorkerData workerData = { .builder = builder, };
 
     GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
+    GThread* canBusWorker = g_thread_new("canBusWorker", canBusWorkerLoop, &workerData);
     GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, &workerData);
 
     g_unix_signal_add(SIGINT, appShutdown, &workerData);
@@ -74,9 +70,8 @@ int main(int argc, char* argv[])
     gtk_main();
 
     g_thread_join(sensorWorker);
+    g_thread_join(canBusWorker);
     g_thread_join(bluetoothWorker);
-
-    pigpio_stop(i2cPiHandle);
 
     g_message("KnurDash app terminated");
 

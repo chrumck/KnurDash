@@ -190,21 +190,24 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
 
 gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = data;
-    int i2cPiHandle = workerData->sensorData.i2cPiHandle;
+
+    int i2cPiHandle = pigpio_start(NULL, NULL);
+    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
+    workerData->sensorData.i2cPiHandle = i2cPiHandle;
 
     int adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
-    if (adc0Handle < 0)  g_error("Could not get adc0 handle %d", adc0Handle);
+    if (adc0Handle < 0)  g_error("Could not get adc0 handle: %d", adc0Handle);
     workerData->sensorData.i2cAdcHandles[0] = adc0Handle;
 
     int adc1Handle = i2c_open(i2cPiHandle, 1, ADC1_I2C_ADDRESS, 0);
-    if (adc1Handle < 0)  g_error("Could not get adc1 handle %d", adc1Handle);
+    if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
     workerData->sensorData.i2cAdcHandles[1] = adc1Handle;
 
     int setIgnInputModeResult = set_mode(i2cPiHandle, IGN_GPIO_NO, PI_INPUT);
-    if (setIgnInputModeResult < 0) g_error("Could not set GPIO mode for ignition input %d", setIgnInputModeResult);
+    if (setIgnInputModeResult < 0) g_error("Could not set GPIO mode for ignition input: %d", setIgnInputModeResult);
 
     int setIgnInputPullDown = set_pull_up_down(i2cPiHandle, IGN_GPIO_NO, PI_PUD_DOWN);
-    if (setIgnInputPullDown < 0) g_error("Could not set GPIO pull down for ignition input %d", setIgnInputPullDown);
+    if (setIgnInputPullDown < 0) g_error("Could not set GPIO pull down for ignition input: %d", setIgnInputPullDown);
 
     SensorData* sensorData = &workerData->sensorData;
     resetReadingsValues(sensorData);
@@ -252,7 +255,7 @@ gpointer sensorWorkerLoop(gpointer data) {
 
     i2c_close(i2cPiHandle, adc0Handle);
     i2c_close(i2cPiHandle, adc1Handle);
-
+    pigpio_stop(i2cPiHandle);
 
     workerData->isSensorWorkerRunning = FALSE;
     g_message("Sensor worker shutting down");
