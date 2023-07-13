@@ -68,6 +68,7 @@ typedef struct {
 
 typedef struct {
     int i2cPiHandle;
+    int i2cCanHandle;
 } CanBusData;
 
 typedef struct {
