@@ -53,7 +53,7 @@ const char* onCharWrite(const Application* application, const char* address, con
     g_message("Write received on: %s, length:%d, values:%x,%x,%x  ", char_uuid, byteArray->len, byteArray->data[0], byteArray->data[1], byteArray->data[2]);
 }
 
-static gboolean stopBtWorker(gpointer data) {
+gboolean stopBtWorker(gpointer data) {
     WorkerData* workerData = data;
 
     if (workerData->requestShutdown == FALSE) return G_SOURCE_CONTINUE;
@@ -93,7 +93,7 @@ static gboolean stopBtWorker(gpointer data) {
     return G_SOURCE_REMOVE;
 }
 
-static gpointer bluetoothWorkerLoop(gpointer data) {
+gpointer bluetoothWorkerLoop(gpointer data) {
     WorkerData* workerData = data;
 
 #ifdef NDEBUG

@@ -1,5 +1,5 @@
-#ifndef dataContracts_h
-#define dataContracts_h
+#ifndef __dataContracts_h
+#define __dataContracts_h
 
 #include <gtk/gtk.h>
 
