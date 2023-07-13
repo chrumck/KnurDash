@@ -28,21 +28,30 @@ guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 guint8 filter5Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 
 
-void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* expectedValue) {
+void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
     guint8 maskOrFilterBuffer[MASK_FILTER_LENGTH];
     int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, maskOrFilterBuffer, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
-        g_error("Could not get CAN mask or filter, register:%x, error:%d", i2cRegister, readResult);
+        g_error("Could not get CAN mask/filter, register:%x, error:%d", i2cRegister, readResult);
     }
 
-    if (!isArrayEqual(expectedValue, maskOrFilterBuffer, MASK_FILTER_LENGTH)) {
-        int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, expectedValue, MASK_FILTER_LENGTH);
-        if (writeResult != 0) g_error("Could not set CAN mask or filter, register:%x, error:%d", i2cRegister, writeResult);
+    if (!isArrayEqual(value, maskOrFilterBuffer, MASK_FILTER_LENGTH)) {
+        g_message(
+            "Setting CAN filter/mask, register:0x%x, values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
+            i2cRegister, value[0], value[1], value[2], value[3], value[4]
+        );
+
+        int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
+        if (writeResult != 0) g_error("Could not set CAN mask/filter, register:%x, error:%d", i2cRegister, writeResult);
+
+        g_usleep(100000);
     }
 }
 
 gpointer canBusWorkerLoop(gpointer data) {
     WorkerData* workerData = data;
+
+    g_message("CANBUS worker starting");
 
     int i2cPiHandle = pigpio_start(NULL, NULL);
     if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
@@ -60,7 +69,7 @@ gpointer canBusWorkerLoop(gpointer data) {
     }
 
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK0_REGISTER, maskValue);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK1_REGISTER, maskValue);  
+    setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK1_REGISTER, maskValue);
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER0_REGISTER, filter0Value);
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER1_REGISTER, filter1Value);
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER2_REGISTER, filter2Value);

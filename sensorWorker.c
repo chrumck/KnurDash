@@ -191,6 +191,8 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
 gpointer sensorWorkerLoop(gpointer data) {
     WorkerData* workerData = data;
 
+    g_message("Sensor worker starting");
+
     int i2cPiHandle = pigpio_start(NULL, NULL);
     if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
     workerData->sensorData.i2cPiHandle = i2cPiHandle;
@@ -214,7 +216,6 @@ gpointer sensorWorkerLoop(gpointer data) {
     resetReadingsMinMax(sensorData);
     setWidgets(workerData->builder, sensorData);
 
-    g_message("Sensor worker starting");
     workerData->isSensorWorkerRunning = TRUE;
     guint shutDownCounter = 0;
 
@@ -242,7 +243,7 @@ gpointer sensorWorkerLoop(gpointer data) {
             shutDownCounter > SHUTDOWN_DELAY) {
             g_idle_add(systemShutdown, workerData);
             break;
-        }
+    }
 #endif
 
         readChannel(sensorData, VDD_ADC, VDD_CHANNEL);
@@ -251,7 +252,7 @@ gpointer sensorWorkerLoop(gpointer data) {
         readChannel(sensorData, OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
-    }
+}
 
     i2c_close(i2cPiHandle, adc0Handle);
     i2c_close(i2cPiHandle, adc1Handle);
