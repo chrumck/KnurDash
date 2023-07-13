@@ -123,7 +123,7 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], newConfig);
-    if (writeResult < 0) {
+    if (writeResult != 0) {
         handleFault();
         g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
         return;
@@ -204,10 +204,10 @@ gpointer sensorWorkerLoop(gpointer data) {
     workerData->sensorData.i2cAdcHandles[1] = adc1Handle;
 
     int setIgnInputModeResult = set_mode(i2cPiHandle, IGN_GPIO_NO, PI_INPUT);
-    if (setIgnInputModeResult < 0) g_error("Could not set GPIO mode for ignition input: %d", setIgnInputModeResult);
+    if (setIgnInputModeResult != 0) g_error("Could not set GPIO mode for ignition input: %d", setIgnInputModeResult);
 
     int setIgnInputPullDown = set_pull_up_down(i2cPiHandle, IGN_GPIO_NO, PI_PUD_DOWN);
-    if (setIgnInputPullDown < 0) g_error("Could not set GPIO pull down for ignition input: %d", setIgnInputPullDown);
+    if (setIgnInputPullDown != 0) g_error("Could not set GPIO pull down for ignition input: %d", setIgnInputPullDown);
 
     SensorData* sensorData = &workerData->sensorData;
     resetReadingsValues(sensorData);
