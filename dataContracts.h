@@ -81,7 +81,7 @@ typedef struct {
     guint8 dataLength;
     guint8 data[CAN_DATA_SIZE];
     gint64 timestamp;
-    gboolean isSent;
+    gboolean isReady;
 } CanFrameState;
 
 typedef struct {
