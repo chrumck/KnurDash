@@ -163,6 +163,7 @@ gpointer bluetoothWorkerLoop() {
     g_main_loop_unref(mainLoop);
 
     g_message("Bluetooth worker shutting down");
+    workerData.isBluetoothWorkerRunning = FALSE;
 
     return NULL;
 }
