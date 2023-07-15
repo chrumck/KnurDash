@@ -6,8 +6,8 @@
 #include "sensorProps.c"
 #include "ui.c"
 
-#define SENSOR_WORKER_LOOP_INTERVAL 100000
-#define ADC_SWITCH_CHANNEL_SLEEP 5000
+#define SENSOR_WORKER_LOOP_INTERVAL 100e3
+#define ADC_SWITCH_CHANNEL_SLEEP 5e3
 #define SHUTDOWN_DELAY 600
 #define SHUTDOWN_DELAY_ENGINE_STARTED 30
 
@@ -23,7 +23,7 @@
 #define OIL_PRESS_CHANNEL 3
 
 #define FAULTY_READING_LABEL "--"
-#define FAULTY_READING_VALUE (G_MAXDOUBLE - 10000)
+#define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
 
 #define ADC0_I2C_ADDRESS 0x6a
@@ -243,7 +243,7 @@ gpointer sensorWorkerLoop(gpointer data) {
             shutDownCounter > SHUTDOWN_DELAY) {
             g_idle_add(systemShutdown, workerData);
             break;
-    }
+        }
 #endif
 
         readChannel(sensorData, VDD_ADC, VDD_CHANNEL);
@@ -252,7 +252,7 @@ gpointer sensorWorkerLoop(gpointer data) {
         readChannel(sensorData, OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
-}
+    }
 
     i2c_close(i2cPiHandle, adc0Handle);
     i2c_close(i2cPiHandle, adc1Handle);

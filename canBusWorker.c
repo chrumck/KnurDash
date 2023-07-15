@@ -5,7 +5,7 @@
 #include "helpers.c"
 
 #define I2C_ADDRESS 0x25
-#define I2C_DELAY_AFTER_WRITE 2000
+#define I2C_DELAY_AFTER_WRITE 2e3
 
 #define BAUD_REGISTER 0x03
 #define BAUD_VALUE 16
