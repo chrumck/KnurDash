@@ -5,6 +5,8 @@
 #include "helpers.c"
 #include "canBusProps.c"
 
+#define CANBUS_WORKER_SHUTDOWN_LOOP_INTERVAL 500
+
 #define I2C_ADDRESS 0x25
 #define I2C_DELAY_AFTER_WRITE 2e3
 
@@ -35,8 +37,22 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 }
 
-gpointer canBusWorkerLoop(gpointer data) {
-    WorkerData* workerData = data;
+gboolean stopCanBusWorker() {
+    if (workerData.requestShutdown == FALSE) return G_SOURCE_CONTINUE;
+
+    GMainContext* context = g_main_loop_get_context(workerData.canBusData.mainLoop);
+    while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
+
+    g_main_loop_quit(workerData.canBusData.mainLoop);
+
+    return G_SOURCE_REMOVE;
+}
+
+gboolean refreshFrame(guint frameIndex) {
+
+
+    return G_SOURCE_CONTINUE;
+}
 
 gpointer canBusWorkerLoop() {
     g_message("CANBUS worker starting");
@@ -66,10 +82,27 @@ gpointer canBusWorkerLoop() {
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
 
-    // loop goes here
+    GMainContext* workerContext = g_main_context_new();
+    g_main_context_push_thread_default(workerContext);
+    GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
+    workerData.canBusData.mainLoop = mainLoop;
+
+    GSource* stopCanBusWorkerSource = g_timeout_source_new(CANBUS_WORKER_SHUTDOWN_LOOP_INTERVAL);
+    g_source_set_callback(stopCanBusWorkerSource, stopCanBusWorker, NULL, NULL);
+    g_source_attach(stopCanBusWorkerSource, workerContext);
+    g_source_unref(stopCanBusWorkerSource);
+
+    workerData.isCanBusWorkerRunning = TRUE;
+
+    g_main_loop_run(mainLoop);
+
+    g_main_loop_unref(mainLoop);
 
     i2c_close(i2cPiHandle, i2cCanHandle);
     pigpio_stop(i2cPiHandle);
+
+    workerData.isCanBusWorkerRunning = FALSE;
+    g_message("CANBUS worker shutting down");
 
     return NULL;
 }

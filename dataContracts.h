@@ -11,6 +11,7 @@
 #define FORMATTED_READING_LENGTH 10
 
 #define CAN_DATA_SIZE 8
+#define CAN_FRAMES_COUNT 4
 
 typedef struct {
     char* labelId;
@@ -70,7 +71,7 @@ typedef struct {
 
 typedef struct {
     guint32 canId;
-    guint32 refreshIntervalUs;
+    guint32 refreshIntervalMillis;
 } CanFrame;
 
 typedef struct {
@@ -81,11 +82,15 @@ typedef struct {
     guint8 data[CAN_DATA_SIZE];
     gint64 timestamp;
     gboolean isSent;
-} CanFrameData;
+} CanFrameState;
 
 typedef struct {
     int i2cPiHandle;
     int i2cCanHandle;
+
+    GMainLoop* mainLoop;
+
+    CanFrameState frames[CAN_FRAMES_COUNT];
 } CanBusData;
 
 typedef struct {

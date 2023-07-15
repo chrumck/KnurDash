@@ -22,9 +22,9 @@ guint8 filter3Value[] = { 0x0, 0x0, 0x0, 0x0, 0x78 };
 guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 guint8 filter5Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 
-static const CanFrame canFrames[] = {
-    {.canId = 0x78, .refreshIntervalUs = 33e3},
-    {.canId = 0x86, .refreshIntervalUs = 33e3},
-    {.canId = 0x202, .refreshIntervalUs = 33e3},
-    {.canId = 0x420, .refreshIntervalUs = 500e3},
+static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
+    {.canId = 0x78, .refreshIntervalMillis = 33},
+    {.canId = 0x86, .refreshIntervalMillis = 33},
+    {.canId = 0x202, .refreshIntervalMillis = 33},
+    {.canId = 0x420, .refreshIntervalMillis = 500},
 };
