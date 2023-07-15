@@ -58,14 +58,14 @@ gpointer canBusWorkerLoop(gpointer data) {
     workerData->canBusData.i2cPiHandle = i2cPiHandle;
 
     int i2cCanHandle = i2c_open(i2cPiHandle, 1, I2C_ADDRESS, 0);
-    if (i2cCanHandle < 0)  g_error("Could not get CAN adapter handle %d", i2cCanHandle);
+    if (i2cCanHandle < 0)  g_error("Could not get CAN handle %d", i2cCanHandle);
     workerData->canBusData.i2cCanHandle = i2cCanHandle;
 
     int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
-    if (baudValue < 0)  g_warning("Could not get can adapter baud value: %d", baudValue);
+    if (baudValue < 0)  g_warning("Could not get CAN baud value: %d", baudValue);
     if (baudValue != BAUD_VALUE) {
         int writeResult = i2c_write_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER, BAUD_VALUE);
-        if (writeResult < 0) g_warning("Could not set can adapter baud value: %d", writeResult);
+        if (writeResult < 0) g_warning("Could not set CAN baud value: %d", writeResult);
         g_usleep(I2C_DELAY_AFTER_WRITE);
     }
 
