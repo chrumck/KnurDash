@@ -6,8 +6,8 @@
 #include "sensorProps.c"
 #include "ui.c"
 
-#define SENSOR_WORKER_LOOP_INTERVAL 100000
-#define ADC_SWITCH_CHANNEL_SLEEP 5000
+#define SENSOR_WORKER_LOOP_INTERVAL 100e3
+#define ADC_SWITCH_CHANNEL_SLEEP 5e3
 #define SHUTDOWN_DELAY 600
 #define SHUTDOWN_DELAY_ENGINE_STARTED 30
 
@@ -23,7 +23,7 @@
 #define OIL_PRESS_CHANNEL 3
 
 #define FAULTY_READING_LABEL "--"
-#define FAULTY_READING_VALUE (G_MAXDOUBLE - 10000)
+#define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
 
 #define ADC0_I2C_ADDRESS 0x6a
@@ -60,29 +60,31 @@ void setFrame(GtkFrame* frame, const SensorState state) {
     g_idle_add(setFrameClass, data);
 }
 
-void resetReadingsValues(SensorData* sensorData) {
+void resetReadingsValues() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            sensorData->readings[i][j].value = FAULTY_READING_VALUE;
-            sensorData->readings[i][j].isFaulty = TRUE;
+            workerData.sensorData.readings[i][j].value = FAULTY_READING_VALUE;
+            workerData.sensorData.readings[i][j].isFaulty = TRUE;
         }
     }
 };
 
-void resetReadingsMinMax(SensorData* sensorData) {
+void resetReadingsMinMax() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            sensorData->readings[i][j].min = G_MAXDOUBLE;
-            sensorData->readings[i][j].max = -G_MAXDOUBLE;
+            workerData.sensorData.readings[i][j].min = G_MAXDOUBLE;
+            workerData.sensorData.readings[i][j].max = -G_MAXDOUBLE;
         }
     }
 };
 
-void setWidgets(GtkBuilder* builder, SensorData* sensorData) {
+void setWidgets() {
+    GtkBuilder* builder = workerData.builder;
+
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const Sensor* sensor = &sensors[i][j];
-            SensorWidgets* widgets = &sensorData->widgets[i][j];
+            SensorWidgets* widgets = &workerData.sensorData.widgets[i][j];
             if (sensor->labelId != NULL) widgets->label = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelId));
             if (sensor->frameId != NULL) widgets->frame = GTK_FRAME(gtk_builder_get_object(builder, sensor->frameId));
             if (sensor->labelMinId != NULL) widgets->labelMin = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelMinId));
@@ -91,10 +93,10 @@ void setWidgets(GtkBuilder* builder, SensorData* sensorData) {
     }
 };
 
-void resetMinMaxLabels(SensorData* sensorData) {
+void resetMinMaxLabels() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            const SensorWidgets* widgets = &sensorData->widgets[i][j];
+            const SensorWidgets* widgets = &workerData.sensorData.widgets[i][j];
             setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
             setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
         }
@@ -115,15 +117,16 @@ SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
 
 //-------------------------------------------------------------------------------------------------------------
 
-void readChannel(SensorData* sensorData, int adc, int channel) {
+void readChannel(int adc, int channel) {
     const Sensor* sensor = &sensors[adc][channel];
+    SensorData* sensorData = &workerData.sensorData;
     const SensorWidgets* widgets = &sensorData->widgets[adc][channel];
     SensorReading* reading = &sensorData->readings[adc][channel];
     gboolean wasFaulty = reading->isFaulty;
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
-    int writeResult = i2c_write_byte(sensorData->piHandle, sensorData->adcHandle[adc], newConfig);
-    if (writeResult < 0) {
+    int writeResult = i2c_write_byte(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], newConfig);
+    if (writeResult != 0) {
         handleFault();
         g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
         return;
@@ -132,7 +135,7 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
     g_usleep(ADC_SWITCH_CHANNEL_SLEEP);
 
     guint8 buf[3];
-    int readResult = i2c_read_device(sensorData->piHandle, sensorData->adcHandle[adc], buf, 3);
+    int readResult = i2c_read_device(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], buf, 3);
     if (readResult != 3) {
         handleFault();
         g_warning("Could not read adc bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
@@ -188,76 +191,74 @@ void readChannel(SensorData* sensorData, int adc, int channel) {
     }
 }
 
-gpointer sensorWorkerLoop(gpointer data) {
-    WorkerData* workerData = data;
-
-    int piHandle = pigpio_start(NULL, NULL);
-    if (piHandle < 0)  g_error("Could not connect to pigpiod: %d", piHandle);
-    workerData->sensorData.piHandle = piHandle;
-
-    int adc0Handle = i2c_open(piHandle, 1, ADC0_I2C_ADDRESS, 0);
-    if (adc0Handle < 0)  g_error("Could not get adc0 handle %d", adc0Handle);
-    workerData->sensorData.adcHandle[0] = adc0Handle;
-
-    int adc1Handle = i2c_open(piHandle, 1, ADC1_I2C_ADDRESS, 0);
-    if (adc1Handle < 0)  g_error("Could not get adc1 handle %d", adc1Handle);
-    workerData->sensorData.adcHandle[1] = adc1Handle;
-
-    int setIgnInputModeResult = set_mode(piHandle, IGN_GPIO_NO, PI_INPUT);
-    if (setIgnInputModeResult < 0) g_error("Could not set GPIO mode for ignition input %d", setIgnInputModeResult);
-
-    int setIgnInputPullDown = set_pull_up_down(piHandle, IGN_GPIO_NO, PI_PUD_DOWN);
-    if (setIgnInputPullDown < 0) g_error("Could not set GPIO pull down for ignition input %d", setIgnInputPullDown);
-
-    SensorData* sensorData = &workerData->sensorData;
-    resetReadingsValues(sensorData);
-    resetReadingsMinMax(sensorData);
-    setWidgets(workerData->builder, sensorData);
-
+gpointer sensorWorkerLoop() {
     g_message("Sensor worker starting");
-    workerData->isSensorWorkerRunning = TRUE;
+
+    int i2cPiHandle = pigpio_start(NULL, NULL);
+    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
+    workerData.sensorData.i2cPiHandle = i2cPiHandle;
+
+    int adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
+    if (adc0Handle < 0)  g_error("Could not get adc0 handle: %d", adc0Handle);
+    workerData.sensorData.i2cAdcHandles[0] = adc0Handle;
+
+    int adc1Handle = i2c_open(i2cPiHandle, 1, ADC1_I2C_ADDRESS, 0);
+    if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
+    workerData.sensorData.i2cAdcHandles[1] = adc1Handle;
+
+    int setIgnInputModeResult = set_mode(i2cPiHandle, IGN_GPIO_NO, PI_INPUT);
+    if (setIgnInputModeResult != 0) g_error("Could not set GPIO mode for ignition input: %d", setIgnInputModeResult);
+
+    int setIgnInputPullDown = set_pull_up_down(i2cPiHandle, IGN_GPIO_NO, PI_PUD_DOWN);
+    if (setIgnInputPullDown != 0) g_error("Could not set GPIO pull down for ignition input: %d", setIgnInputPullDown);
+
+    resetReadingsValues();
+    resetReadingsMinMax();
+    setWidgets();
+
+    workerData.isSensorWorkerRunning = TRUE;
     guint shutDownCounter = 0;
 
-    while (workerData->requestShutdown == FALSE) {
-        if (workerData->requestMinMaxReset == TRUE) {
-            resetReadingsMinMax(sensorData);
-            resetMinMaxLabels(sensorData);
-            workerData->requestMinMaxReset = FALSE;
+    while (workerData.requestShutdown == FALSE) {
+        if (workerData.requestMinMaxReset == TRUE) {
+            resetReadingsMinMax();
+            resetMinMaxLabels();
+            workerData.requestMinMaxReset = FALSE;
         }
 
-        gboolean ignOn = gpio_read(piHandle, IGN_GPIO_NO);
+        gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_NO);
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
 
-        if (workerData->wasEngineStarted == FALSE) {
-            SensorReading* pressureReading = &(sensorData->readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        if (workerData.wasEngineStarted == FALSE) {
+            SensorReading* pressureReading = &(workerData.sensorData.readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
             const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
             if (ignOn == TRUE &&
                 pressureReading->isFaulty == FALSE &&
-                pressureReading->value > pressureSensor->alertLow) workerData->wasEngineStarted = TRUE;
+                pressureReading->value > pressureSensor->alertLow) workerData.wasEngineStarted = TRUE;
         }
 
 #ifdef NDEBUG
-        if ((workerData->wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
+        if ((workerData.wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
-            g_idle_add(systemShutdown, workerData);
+            g_idle_add(shutDown, TRUE);
             break;
         }
 #endif
 
-        readChannel(sensorData, VDD_ADC, VDD_CHANNEL);
+        readChannel(VDD_ADC, VDD_CHANNEL);
 
-        readChannel(sensorData, OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
-        readChannel(sensorData, OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+        readChannel(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
+        readChannel(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }
 
-    i2c_close(piHandle, adc0Handle);
-    i2c_close(piHandle, adc1Handle);
-    pigpio_stop(piHandle);
+    i2c_close(i2cPiHandle, adc0Handle);
+    i2c_close(i2cPiHandle, adc1Handle);
+    pigpio_stop(i2cPiHandle);
 
-    workerData->isSensorWorkerRunning = FALSE;
+    workerData.isSensorWorkerRunning = FALSE;
     g_message("Sensor worker shutting down");
 
     return NULL;

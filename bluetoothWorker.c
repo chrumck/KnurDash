@@ -12,6 +12,7 @@
 #include "logger.h"
 
 #include "dataContracts.h"
+#include "workerData.c"
 
 #define SERVICE_BT_NAME "KnurDash BLE" 
 #define SERVICE_UUID "00001ff8-0000-1000-8000-00805f9b34fb" 
@@ -53,20 +54,19 @@ const char* onCharWrite(const Application* application, const char* address, con
     g_message("Write received on: %s, length:%d, values:%x,%x,%x  ", char_uuid, byteArray->len, byteArray->data[0], byteArray->data[1], byteArray->data[2]);
 }
 
-static gboolean stopBtWorker(gpointer data) {
-    WorkerData* workerData = data;
+gboolean stopBtWorker() {
 
-    if (workerData->requestShutdown == FALSE) return G_SOURCE_CONTINUE;
+    if (workerData.requestShutdown == FALSE) return G_SOURCE_CONTINUE;
 
-    GMainContext* context = g_main_loop_get_context(workerData->bluetoothData.mainLoop);
+    GMainContext* context = g_main_loop_get_context(workerData.bluetoothData.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
-    Adapter* adapter = workerData->bluetoothData.adapter;
+    Adapter* adapter = workerData.bluetoothData.adapter;
 
-    if (workerData->bluetoothData.application != NULL) {
-        binc_adapter_unregister_application(adapter, workerData->bluetoothData.application);
-        binc_application_free(workerData->bluetoothData.application);
-        workerData->bluetoothData.application = NULL;
+    if (workerData.bluetoothData.application != NULL) {
+        binc_adapter_unregister_application(adapter, workerData.bluetoothData.application);
+        binc_application_free(workerData.bluetoothData.application);
+        workerData.bluetoothData.application = NULL;
     }
 
     if (knurDashAdv != NULL) {
@@ -76,35 +76,31 @@ static gboolean stopBtWorker(gpointer data) {
 
     if (adapter != NULL) {
         binc_adapter_free(adapter);
-        workerData->bluetoothData.adapter = NULL;
+        workerData.bluetoothData.adapter = NULL;
     }
 
-    if (workerData->bluetoothData.connection != NULL) {
-        g_dbus_connection_close_sync(workerData->bluetoothData.connection, NULL, NULL);
-        g_object_unref(workerData->bluetoothData.connection);
+    if (workerData.bluetoothData.connection != NULL) {
+        g_dbus_connection_close_sync(workerData.bluetoothData.connection, NULL, NULL);
+        g_object_unref(workerData.bluetoothData.connection);
     }
 
-    workerData->isBluetoothWorkerRunning = FALSE;
-
-    g_main_loop_quit(workerData->bluetoothData.mainLoop);
+    g_main_loop_quit(workerData.bluetoothData.mainLoop);
 
     g_message("Bluetooth Worker stopBtWorker done");
 
     return G_SOURCE_REMOVE;
 }
 
-static gpointer bluetoothWorkerLoop(gpointer data) {
-    WorkerData* workerData = data;
-
+gpointer bluetoothWorkerLoop() {
 #ifdef NDEBUG
     log_set_level(LOG_WARN);
 #endif
 
     GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
-    workerData->bluetoothData.connection = connection;
+    workerData.bluetoothData.connection = connection;
 
     Adapter* adapter = binc_adapter_get_default(connection);
-    workerData->bluetoothData.adapter = adapter;
+    workerData.bluetoothData.adapter = adapter;
 
     if (adapter == NULL) {
         g_error("No adapter found");
@@ -129,7 +125,7 @@ static gpointer bluetoothWorkerLoop(gpointer data) {
     binc_adapter_start_advertising(adapter, knurDashAdv);
 
     Application* application = binc_create_application(adapter);
-    workerData->bluetoothData.application = application;
+    workerData.bluetoothData.application = application;
 
     binc_application_add_service(application, SERVICE_UUID);
 
@@ -153,20 +149,21 @@ static gpointer bluetoothWorkerLoop(gpointer data) {
     GMainContext* workerContext = g_main_context_new();
     g_main_context_push_thread_default(workerContext);
     GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
-    workerData->bluetoothData.mainLoop = mainLoop;
+    workerData.bluetoothData.mainLoop = mainLoop;
 
     GSource* stopBtWorkerSource = g_timeout_source_new(BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL);
-    g_source_set_callback(stopBtWorkerSource, stopBtWorker, workerData, NULL);
+    g_source_set_callback(stopBtWorkerSource, stopBtWorker, NULL, NULL);
     g_source_attach(stopBtWorkerSource, workerContext);
     g_source_unref(stopBtWorkerSource);
 
-    workerData->isBluetoothWorkerRunning = TRUE;
+    workerData.isBluetoothWorkerRunning = TRUE;
 
     g_main_loop_run(mainLoop);
 
     g_main_loop_unref(mainLoop);
 
     g_message("Bluetooth worker shutting down");
+    workerData.isBluetoothWorkerRunning = FALSE;
 
     return NULL;
 }

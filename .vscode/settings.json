@@ -10,9 +10,11 @@
     "cSpell.words": [
         "Binc",
         "BLUEZ",
+        "CANBUS",
         "DEADBAND",
         "fullscreen",
         "gboolean",
+        "gconstpointer",
         "gdouble",
         "gint",
         "gpio",

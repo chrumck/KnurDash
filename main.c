@@ -3,10 +3,13 @@
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <glib-unix.h>
+#include <pigpiod_if2.h>
 
 #include "dataContracts.h"
+#include "workerData.c"
 #include "ui.c"
 #include "sensorWorker.c"
+#include "canBusWorker.c"
 #include "bluetoothWorker.c"
 
 #define FILE_PATH_LENGTH (PATH_MAX + 1)
@@ -41,18 +44,19 @@ int main(int argc, char* argv[])
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    WorkerData workerData = { .builder = builder, };
+    workerData.builder = builder;
 
-    GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, &workerData);
-    GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, &workerData);
+    GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, NULL);
+    GThread* canBusWorker = g_thread_new("canBusWorker", canBusWorkerLoop, NULL);
+    GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, NULL);
 
-    g_unix_signal_add(SIGINT, appShutdown, &workerData);
-    g_unix_signal_add(SIGTERM, appShutdown, &workerData);
+    g_unix_signal_add(SIGINT, windowShutDown, NULL);
+    g_unix_signal_add(SIGTERM, windowShutDown, NULL);
 
-    g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), &workerData);
+    g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), NULL);
 
     GObject* button = gtk_builder_get_object(builder, "resetMinMax");
-    g_signal_connect(button, "clicked", G_CALLBACK(requestMinMaxReset), &workerData);
+    g_signal_connect(button, "clicked", G_CALLBACK(requestMinMaxReset), NULL);
 
     button = gtk_builder_get_object(builder, "brightnessDown");
     g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessDown), NULL);
@@ -61,11 +65,12 @@ int main(int argc, char* argv[])
     g_signal_connect(button, "clicked", G_CALLBACK(setBrightnessUp), NULL);
 
     button = gtk_builder_get_object(builder, "turnOff");
-    g_signal_connect(button, "clicked", G_CALLBACK(buttonShutDown), &workerData);
+    g_signal_connect(button, "clicked", G_CALLBACK(buttonShutDown), NULL);
 
     gtk_main();
 
     g_thread_join(sensorWorker);
+    g_thread_join(canBusWorker);
     g_thread_join(bluetoothWorker);
 
     g_message("KnurDash app terminated");

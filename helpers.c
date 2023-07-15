@@ -1,3 +1,6 @@
+#ifndef __helpers_c
+#define __helpers_c
+
 #include <gtk/gtk.h>
 
 /**
@@ -12,3 +15,13 @@
  */
 #define signExtend32(value, index) ((gint32)(value << (31 - index)) >> (31 - index))
 
+ /**
+  * Compares values of two byte arrays.
+ */
+gboolean isArrayEqual(const guint8* a, const guint8* b, guint size) {
+    for (int i = 0; i < size; i++) if (a[i] != b[i]) return FALSE;
+
+    return TRUE;
+}
+
+#endif

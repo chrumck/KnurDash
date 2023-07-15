@@ -1,5 +1,5 @@
-#ifndef dataContracts_h
-#define dataContracts_h
+#ifndef __dataContracts_h
+#define __dataContracts_h
 
 #include <gtk/gtk.h>
 
@@ -9,6 +9,9 @@
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
 #define FORMATTED_READING_LENGTH 10
+
+#define CAN_DATA_SIZE 8
+#define CAN_FRAMES_COUNT 4
 
 typedef struct {
     char* labelId;
@@ -59,12 +62,36 @@ typedef struct {
 } SensorWidgets;
 
 typedef struct {
-    int piHandle;
-    int adcHandle[ADC_COUNT];
+    int i2cPiHandle;
+    int i2cAdcHandles[ADC_COUNT];
 
     SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
     SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 } SensorData;
+
+typedef struct {
+    guint32 canId;
+    guint32 refreshIntervalMillis;
+} CanFrame;
+
+typedef struct {
+    guint32 canId;
+    gboolean isExtended;
+    gboolean isRemoteRequest;
+    guint8 dataLength;
+    guint8 data[CAN_DATA_SIZE];
+    gint64 timestamp;
+    gboolean isSent;
+} CanFrameState;
+
+typedef struct {
+    int i2cPiHandle;
+    int i2cCanHandle;
+
+    GMainLoop* mainLoop;
+
+    CanFrameState frames[CAN_FRAMES_COUNT];
+} CanBusData;
 
 typedef struct {
     GMainLoop* mainLoop;
@@ -84,6 +111,9 @@ typedef struct {
 
     SensorData sensorData;
     gboolean isSensorWorkerRunning;
+
+    CanBusData canBusData;
+    gboolean isCanBusWorkerRunning;
 
     BluetoothData bluetoothData;
     gboolean isBluetoothWorkerRunning;
