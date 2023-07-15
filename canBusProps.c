@@ -2,6 +2,8 @@
 
 #include "dataContracts.h"
 
+#define SENSORS_FRAME_IO 0x7F0
+
 #define BAUD_REGISTER 0x03
 #define BAUD_VALUE 16
 
