@@ -3,31 +3,16 @@
 
 #include "dataContracts.h"
 #include "helpers.c"
+#include "canBusProps.c"
 
 #define I2C_ADDRESS 0x25
 #define I2C_DELAY_AFTER_WRITE 2e3
 
-#define BAUD_REGISTER 0x03
-#define BAUD_VALUE 16
-
 #define MASK_FILTER_LENGTH  5
-#define MASK0_REGISTER   0x60
-#define MASK1_REGISTER   0x65
-#define FILTER0_REGISTER 0x70
-#define FILTER1_REGISTER 0x80
-#define FILTER2_REGISTER 0x90
-#define FILTER3_REGISTER 0xa0
-#define FILTER4_REGISTER 0xb0
-#define FILTER5_REGISTER 0xc0
 
-guint8 maskValue[] = { 0x0, 0x0, 0x0, 0x07, 0xFF };
-guint8 filter0Value[] = { 0x0, 0x0, 0x0, 0x02, 0x02 };
-guint8 filter1Value[] = { 0x0, 0x0, 0x0, 0x0, 0x86 };
-guint8 filter2Value[] = { 0x0, 0x0, 0x0, 0x04, 0x20 };
-guint8 filter3Value[] = { 0x0, 0x0, 0x0, 0x0, 0x78 };
-guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
-guint8 filter5Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
+guint hashCanFrame(gconstpointer value) {
 
+}
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
     guint8 maskOrFilterBuffer[MASK_FILTER_LENGTH];

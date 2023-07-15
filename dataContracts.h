@@ -10,6 +10,8 @@
 #define ADC_CHANNEL_COUNT 4
 #define FORMATTED_READING_LENGTH 10
 
+#define CAN_DATA_SIZE 8
+
 typedef struct {
     char* labelId;
     char* frameId;
@@ -65,6 +67,21 @@ typedef struct {
     SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
     SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 } SensorData;
+
+typedef struct {
+    guint32 canId;
+    guint32 refreshIntervalUs;
+} CanFrame;
+
+typedef struct {
+    guint32 canId;
+    gboolean isExtended;
+    gboolean isRemoteRequest;
+    guint8 dataLength;
+    guint8 data[CAN_DATA_SIZE];
+    gint64 timestamp;
+    gboolean isSent;
+} CanFrameData;
 
 typedef struct {
     int i2cPiHandle;

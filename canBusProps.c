@@ -1,0 +1,30 @@
+#include <gtk/gtk.h>
+
+#include "dataContracts.h"
+
+#define BAUD_REGISTER 0x03
+#define BAUD_VALUE 16
+
+#define MASK0_REGISTER   0x60
+#define MASK1_REGISTER   0x65
+#define FILTER0_REGISTER 0x70
+#define FILTER1_REGISTER 0x80
+#define FILTER2_REGISTER 0x90
+#define FILTER3_REGISTER 0xa0
+#define FILTER4_REGISTER 0xb0
+#define FILTER5_REGISTER 0xc0
+
+guint8 maskValue[] = { 0x0, 0x0, 0x0, 0x07, 0xFF };
+guint8 filter0Value[] = { 0x0, 0x0, 0x0, 0x02, 0x02 };
+guint8 filter1Value[] = { 0x0, 0x0, 0x0, 0x0, 0x86 };
+guint8 filter2Value[] = { 0x0, 0x0, 0x0, 0x04, 0x20 };
+guint8 filter3Value[] = { 0x0, 0x0, 0x0, 0x0, 0x78 };
+guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
+guint8 filter5Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
+
+static const CanFrame canFrames[] = {
+    {.canId = 0x78, .refreshIntervalUs = 33e3},
+    {.canId = 0x86, .refreshIntervalUs = 33e3},
+    {.canId = 0x202, .refreshIntervalUs = 33e3},
+    {.canId = 0x420, .refreshIntervalUs = 500e3},
+};
