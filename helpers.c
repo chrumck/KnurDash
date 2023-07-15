@@ -1,7 +1,7 @@
-#include <gtk/gtk.h>
-
 #ifndef __helpers_c
 #define __helpers_c
+
+#include <gtk/gtk.h>
 
 /**
  * Return the length of passed array;

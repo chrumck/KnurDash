@@ -5,6 +5,7 @@
 #include<fcntl.h> 
 
 #include "dataContracts.h"
+#include "workerData.c"
 
 #define BRIGHTNESS_SYSTEM_PATH "/sys/class/backlight/10-0045/brightness"
 #define BRIGHTNESS_INCREMENT 32
@@ -15,13 +16,12 @@
 
 GMutex guiLock;
 
-static void requestMinMaxReset(GtkWidget* button, gpointer data)
+void requestMinMaxReset()
 {
-    WorkerData* workerData = (WorkerData*)data;
-    workerData->requestMinMaxReset = TRUE;
+    workerData.requestMinMaxReset = TRUE;
 }
 
-static void setBrightness(gboolean isUp)
+void setBrightness(gboolean isUp)
 {
     const int fileDesc = open(BRIGHTNESS_SYSTEM_PATH, O_RDWR);
     if (fileDesc < 0)
@@ -54,20 +54,19 @@ static void setBrightness(gboolean isUp)
     close(fileDesc);
 }
 
-static void setBrightnessDown() { setBrightness(FALSE); }
+void setBrightnessDown() { setBrightness(FALSE); }
 
-static void setBrightnessUp() { setBrightness(TRUE); }
+void setBrightnessUp() { setBrightness(TRUE); }
 
-static gboolean shutDown(gpointer data, gboolean systemShutdown)
+gboolean shutDown(gboolean systemShutdown)
 {
     g_message("KnurDash shutdown request received");
 
-    WorkerData* workerData = (WorkerData*)data;
-    workerData->requestShutdown = TRUE;
+    workerData.requestShutdown = TRUE;
 
-    while (workerData->isSensorWorkerRunning == TRUE ||
-        workerData->isCanBusWorkerRunning == TRUE ||
-        workerData->isBluetoothWorkerRunning == TRUE) {
+    while (workerData.isSensorWorkerRunning == TRUE ||
+        workerData.isCanBusWorkerRunning == TRUE ||
+        workerData.isBluetoothWorkerRunning == TRUE) {
         while (gtk_events_pending()) gtk_main_iteration();
         g_usleep(100000);
     }
@@ -86,23 +85,19 @@ static gboolean shutDown(gpointer data, gboolean systemShutdown)
     return FALSE;
 }
 
-static gboolean appShutdown(gpointer data) { return shutDown(data, FALSE); }
+gboolean windowShutDown() { return shutDown(FALSE); }
 
-static gboolean systemShutdown(gpointer data) { return shutDown(data, TRUE); }
-
-static void windowShutDown(GtkWidget* window, gpointer data) { shutDown(data, TRUE); }
-
-static void buttonShutDown(GtkWidget* button, gpointer data) {
+void buttonShutDown(GtkWidget* button) {
     g_mutex_lock(&guiLock);
     gtk_widget_set_sensitive(button, FALSE);
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
     g_mutex_unlock(&guiLock);
 
-    shutDown(data, TRUE);
+    shutDown(TRUE);
 }
 
-static gboolean setLabelText(gpointer data) {
-    SetLabelArgs* args = (SetLabelArgs*)data;
+gboolean setLabelText(gpointer data) {
+    SetLabelArgs* args = data;
 
     g_mutex_lock(&guiLock);
     gtk_label_set_label(args->label, args->value);
@@ -112,7 +107,7 @@ static gboolean setLabelText(gpointer data) {
     return FALSE;
 }
 
-static gboolean setFrameClass(gpointer data) {
+gboolean setFrameClass(gpointer data) {
     SetFrameClassArgs* args = (SetFrameClassArgs*)data;
 
     g_mutex_lock(&guiLock);
