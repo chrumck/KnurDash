@@ -36,6 +36,8 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         g_warning("Could not get CAN mask/filter, register:%x, error:%d", i2cRegister, readResult);
     }
 
+    return;
+
     if (!isArrayEqual(value, maskOrFilterBuffer, MASK_FILTER_LENGTH)) {
         g_message(
             "Setting CAN filter/mask, register:0x%x, values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
