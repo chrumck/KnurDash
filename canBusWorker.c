@@ -5,6 +5,7 @@
 #include "helpers.c"
 
 #define I2C_ADDRESS 0x25
+#define I2C_DELAY_AFTER_WRITE 2000
 
 #define BAUD_REGISTER 0x03
 #define BAUD_VALUE 16
@@ -32,7 +33,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     guint8 maskOrFilterBuffer[MASK_FILTER_LENGTH];
     int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, maskOrFilterBuffer, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
-        g_error("Could not get CAN mask/filter, register:%x, error:%d", i2cRegister, readResult);
+        g_warning("Could not get CAN mask/filter, register:%x, error:%d", i2cRegister, readResult);
     }
 
     if (!isArrayEqual(value, maskOrFilterBuffer, MASK_FILTER_LENGTH)) {
@@ -42,9 +43,8 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         );
 
         int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
-        if (writeResult != 0) g_error("Could not set CAN mask/filter, register:%x, error:%d", i2cRegister, writeResult);
-
-        g_usleep(100000);
+        if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:%x, error:%d", i2cRegister, writeResult);
+        g_usleep(I2C_DELAY_AFTER_WRITE);
     }
 }
 
@@ -62,10 +62,11 @@ gpointer canBusWorkerLoop(gpointer data) {
     workerData->canBusData.i2cCanHandle = i2cCanHandle;
 
     int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
-    if (baudValue < 0)  g_error("Could not get can adapter baud value: %d", baudValue);
+    if (baudValue < 0)  g_warning("Could not get can adapter baud value: %d", baudValue);
     if (baudValue != BAUD_VALUE) {
         int writeResult = i2c_write_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER, BAUD_VALUE);
-        if (writeResult < 0) g_error("Could not set can adapter baud value: %d", writeResult);
+        if (writeResult < 0) g_warning("Could not set can adapter baud value: %d", writeResult);
+        g_usleep(I2C_DELAY_AFTER_WRITE);
     }
 
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK0_REGISTER, maskValue);
