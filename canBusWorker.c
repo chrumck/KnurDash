@@ -2,6 +2,7 @@
 #include <pigpiod_if2.h>
 
 #include "dataContracts.h"
+#include "workerData.c"
 #include "helpers.c"
 #include "canBusProps.c"
 
