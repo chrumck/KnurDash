@@ -2,16 +2,20 @@
 #include <pigpiod_if2.h>
 
 #include "dataContracts.h"
+#include "workerData.c"
 #include "helpers.c"
 #include "sensorProps.c"
+#include "canBusProps.c"
 #include "ui.c"
 
 #define SENSOR_WORKER_LOOP_INTERVAL 100e3
 #define ADC_SWITCH_CHANNEL_SLEEP 5e3
 #define SHUTDOWN_DELAY 600
 #define SHUTDOWN_DELAY_ENGINE_STARTED 30
+#define OIL_PRESSURE_ALERT_MIN_RPM 1000
 
-#define IGN_GPIO_NO 22
+#define IGN_GPIO_PIN 22
+#define BUZZER_GPIO_PIN 27
 
 #define VDD_DEFAULT 3350
 #define VDD_ADC 1
@@ -206,11 +210,17 @@ gpointer sensorWorkerLoop() {
     if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
     workerData.sensorData.i2cAdcHandles[1] = adc1Handle;
 
-    int setIgnInputModeResult = set_mode(i2cPiHandle, IGN_GPIO_NO, PI_INPUT);
-    if (setIgnInputModeResult != 0) g_error("Could not set GPIO mode for ignition input: %d", setIgnInputModeResult);
+    int setIgnPinMode = set_mode(i2cPiHandle, IGN_GPIO_PIN, PI_INPUT);
+    if (setIgnPinMode != 0) g_error("Could not set GPIO pin mode for IGN_IN: %d", setIgnPinMode);
 
-    int setIgnInputPullDown = set_pull_up_down(i2cPiHandle, IGN_GPIO_NO, PI_PUD_DOWN);
-    if (setIgnInputPullDown != 0) g_error("Could not set GPIO pull down for ignition input: %d", setIgnInputPullDown);
+    int setIgnPinPullDown = set_pull_up_down(i2cPiHandle, IGN_GPIO_PIN, PI_PUD_DOWN);
+    if (setIgnPinPullDown != 0) g_error("Could not set GPIO pin pulldown for IGN_IN: %d", setIgnPinPullDown);
+
+    int setBuzzerPinMode = set_mode(i2cPiHandle, BUZZER_GPIO_PIN, PI_OUTPUT);
+    if (setBuzzerPinMode != 0) g_error("Could not set GPIO pin mode for BUZZER: %d", setBuzzerPinMode);
+
+    int setBuzzerPinPullDown = set_pull_up_down(i2cPiHandle, BUZZER_GPIO_PIN, PI_PUD_OFF);
+    if (setBuzzerPinPullDown != 0) g_error("Could not set GPIO pin pulldown for BUZZER: %d", setBuzzerPinPullDown);
 
     resetReadingsValues();
     resetReadingsMinMax();
@@ -226,16 +236,29 @@ gpointer sensorWorkerLoop() {
             workerData.requestMinMaxReset = FALSE;
         }
 
-        gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_NO);
+        gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
 
-        if (workerData.wasEngineStarted == FALSE) {
-            SensorReading* pressureReading = &(workerData.sensorData.readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
-            const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        SensorReading* pressureReading = &(workerData.sensorData.readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
-            if (ignOn == TRUE &&
-                pressureReading->isFaulty == FALSE &&
-                pressureReading->value > pressureSensor->alertLow) workerData.wasEngineStarted = TRUE;
+        if (workerData.wasEngineStarted == FALSE &&
+            ignOn == TRUE &&
+            pressureReading->isFaulty == FALSE &&
+            pressureReading->value > pressureSensor->alertLow) {
+            workerData.wasEngineStarted = TRUE;
+        }
+
+        gint32 engineRpm = getEngineRpm();
+        gboolean buzzerOn = gpio_read(i2cPiHandle, BUZZER_GPIO_PIN) == TRUE;
+
+        if (engineRpm < OIL_PRESSURE_ALERT_MIN_RPM && buzzerOn) gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
+
+        if (pressureReading->isFaulty == FALSE &&
+            pressureReading->value < pressureSensor->alertLow &&
+            engineRpm > OIL_PRESSURE_ALERT_MIN_RPM &&
+            !buzzerOn) {
+            gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, TRUE);
         }
 
 #ifdef NDEBUG
@@ -254,6 +277,7 @@ gpointer sensorWorkerLoop() {
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }
 
+    gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
     i2c_close(i2cPiHandle, adc0Handle);
     i2c_close(i2cPiHandle, adc1Handle);
     pigpio_stop(i2cPiHandle);

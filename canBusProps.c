@@ -39,7 +39,7 @@ static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
 
 #define RPM_SIGNAL_FRAME_INDEX 2
 
-gint32 getRpm() {
+gint32 getEngineRpm() {
     const CanFrame* frame = &canFrames[RPM_SIGNAL_FRAME_INDEX];
     CanFrameState* frameState = &workerData.canBusData.frames[RPM_SIGNAL_FRAME_INDEX];
 
