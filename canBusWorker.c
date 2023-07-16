@@ -9,7 +9,7 @@
 #define CANBUS_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
 #define I2C_ADDRESS 0x25
-#define I2C_DELAY_AFTER_WRITE 2e3
+#define I2C_REQUEST_DELAY 2e3
 
 #define MASK_FILTER_LENGTH  5
 #define FRAME_ID_LENGTH  4
@@ -36,7 +36,8 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
 
         int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
         if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:%x, error:%d", i2cRegister, writeResult);
-        g_usleep(I2C_DELAY_AFTER_WRITE);
+
+        g_usleep(I2C_REQUEST_DELAY);
     }
 }
 
@@ -82,16 +83,10 @@ gboolean getFrameFromCAN(gpointer data) {
 
     if (requestResult != 0) handleGetFrameError("Failed request for CAN frame id:%x, error:%d", frame->canId, requestResult);
 
-
-    g_usleep(I2C_DELAY_AFTER_WRITE);
+    g_usleep(I2C_REQUEST_DELAY);
 
     guint8 frameData[15] = { 0 };
-    int readResult = i2c_read_i2c_block_data(
-        canBusData->i2cPiHandle,
-        canBusData->i2cCanHandle,
-        GET_FRAME_REGISTER,
-        frameData,
-        FRAME_LENGTH);
+    int readResult = i2c_read_device(canBusData->i2cPiHandle, canBusData->i2cCanHandle, frameData, FRAME_LENGTH);
 
     if (readResult != FRAME_LENGTH) handleGetFrameError("Failed receive for CAN frame id:%x, error:%d", frame->canId, requestResult);
 
@@ -100,15 +95,15 @@ gboolean getFrameFromCAN(gpointer data) {
     if (receivedFrameId == NO_FRAMES_AVAILABLE_RESPONSE) return G_SOURCE_CONTINUE;
 
     if (receivedFrameId == RECEIVE_REJECTED_RESPONSE || receivedFrameId == RESPONSE_NOT_READY_RESPONSE) {
-        handleGetFrameError("Got error frame id for CAN frame id:%x, error:%d", frame->canId, receivedFrameId);
+        handleGetFrameError("Got error frame id for CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId);
     }
 
     if (frameData[6] < 0 || frameData[6] > CAN_DATA_SIZE) {
-        handleGetFrameError("Invalid data length for CAN frame id:%x, length:%d", frame->canId, frameData[6]);
+        handleGetFrameError("Invalid data length for CAN frame id:0x%x, length:%d", frame->canId, frameData[6]);
     }
 
     if (receivedFrameId != frame->canId) {
-        handleGetFrameError("Invalid received id CAN frame id:%x, received:%d", frame->canId, receivedFrameId);
+        handleGetFrameError("Invalid received id CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId);
     }
 
     g_mutex_lock(&frameState->lock);
@@ -142,7 +137,7 @@ gpointer canBusWorkerLoop() {
     if (baudValue != BAUD_VALUE) {
         int writeResult = i2c_write_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER, BAUD_VALUE);
         if (writeResult < 0) g_warning("Could not set CAN baud value: %d", writeResult);
-        g_usleep(I2C_DELAY_AFTER_WRITE);
+        g_usleep(I2C_REQUEST_DELAY);
     }
 
     setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK0_REGISTER, maskValue);
