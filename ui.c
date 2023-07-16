@@ -85,6 +85,7 @@ gboolean shutDown(gboolean systemShutdown)
     return FALSE;
 }
 
+gboolean systemShutDown() { return shutDown(TRUE); }
 gboolean windowShutDown() { return shutDown(FALSE); }
 
 void buttonShutDown(GtkWidget* button) {

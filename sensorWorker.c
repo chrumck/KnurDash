@@ -237,7 +237,6 @@ gpointer sensorWorkerLoop() {
         }
 
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
-        shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
 
         SensorReading* pressureReading = &(workerData.sensorData.readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
         const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
@@ -261,10 +260,12 @@ gpointer sensorWorkerLoop() {
             gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, TRUE);
         }
 
+        shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
+
 #ifdef NDEBUG
         if ((workerData.wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
-            g_idle_add(shutDown, TRUE);
+            g_idle_add(systemShutDown, NULL);
             break;
         }
 #endif
