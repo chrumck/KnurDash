@@ -80,8 +80,9 @@ typedef struct {
     gboolean isRemoteRequest;
     guint8 dataLength;
     guint8 data[CAN_DATA_SIZE];
-    gint64 timestamp;
     gboolean isReady;
+    gboolean receiveFailed;
+    GMutex lock;
 } CanFrameState;
 
 typedef struct {

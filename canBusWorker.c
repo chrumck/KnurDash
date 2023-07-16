@@ -12,10 +12,12 @@
 #define I2C_DELAY_AFTER_WRITE 2e3
 
 #define MASK_FILTER_LENGTH  5
+#define FRAME_ID_LENGTH  4
+#define FRAME_LENGTH  15
 
-guint hashCanFrame(gconstpointer value) {
-
-}
+#define NO_FRAMES_AVAILABLE_RESPONSE 0x00000000
+#define RECEIVE_REJECTED_RESPONSE 0x00000001
+#define RESPONSE_NOT_READY_RESPONSE 0x00000002
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
     guint8 maskOrFilterBuffer[MASK_FILTER_LENGTH];
@@ -49,9 +51,78 @@ gboolean stopCanBusWorker() {
     return G_SOURCE_REMOVE;
 }
 
-gboolean refreshFrame(guint frameIndex) {
+#define getFrameIdArray(_frameId)\
+    guint8 frameIdArray[FRAME_ID_LENGTH];\
+    frameIdArray[0] = (_frameId >> 24) & 0xFF;\
+    frameIdArray[1] = (_frameId >> 16) & 0xFF;\
+    frameIdArray[2] = (_frameId >> 8) & 0xFF;\
+    frameIdArray[3] = _frameId & 0xFF;\
+
+#define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2) {\
+    if (!frameState->receiveFailed) g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2);\
+    frameState->receiveFailed = TRUE;\
+    return G_SOURCE_CONTINUE;\
+}\
+
+gboolean getFrameFromCAN(gpointer data) {
+    guint8* frameIndex = data;
+
+    const CanFrame* frame = &canFrames[*frameIndex];
+    CanBusData* canBusData = &workerData.canBusData;
+    CanFrameState* frameState = &canBusData->frames[*frameIndex];
+
+    getFrameIdArray(frame->canId);
+    int requestResult = i2c_write_i2c_block_data(
+        canBusData->i2cPiHandle,
+        canBusData->i2cCanHandle,
+        GET_FRAME_REGISTER,
+        frameIdArray,
+        FRAME_ID_LENGTH);
 
 
+    if (requestResult != 0) handleGetFrameError("Failed request for CAN frame id:%x, error:%d", frame->canId, requestResult);
+
+
+    g_usleep(I2C_DELAY_AFTER_WRITE);
+
+    guint8 frameData[15] = { 0 };
+    int readResult = i2c_read_i2c_block_data(
+        canBusData->i2cPiHandle,
+        canBusData->i2cCanHandle,
+        GET_FRAME_REGISTER,
+        frameData,
+        FRAME_LENGTH);
+
+    if (readResult != FRAME_LENGTH) handleGetFrameError("Failed receive for CAN frame id:%x, error:%d", frame->canId, requestResult);
+
+    guint32 receivedFrameId = frameData[0] << 24 | frameData[1] << 16 | frameData[2] << 8 | frameData[3];
+
+    if (receivedFrameId == NO_FRAMES_AVAILABLE_RESPONSE) return G_SOURCE_CONTINUE;
+
+    if (receivedFrameId == RECEIVE_REJECTED_RESPONSE || receivedFrameId == RESPONSE_NOT_READY_RESPONSE) {
+        handleGetFrameError("Got error frame id for CAN frame id:%x, error:%d", frame->canId, receivedFrameId);
+    }
+
+    if (frameData[6] < 0 || frameData[6] > CAN_DATA_SIZE) {
+        handleGetFrameError("Invalid data length for CAN frame id:%x, length:%d", frame->canId, frameData[6]);
+    }
+
+    if (receivedFrameId != frame->canId) {
+        handleGetFrameError("Invalid received id CAN frame id:%x, received:%d", frame->canId, receivedFrameId);
+    }
+
+    g_mutex_lock(&frameState->lock);
+
+    frameState->canId = receivedFrameId;
+    frameState->isExtended = frameData[4];
+    frameState->isRemoteRequest = frameData[5];
+    frameState->dataLength = frameData[6];
+    memset(frameState->data, 0, CAN_DATA_SIZE);
+    memcpy(frameState->data, frameData + 7, frameData[6]);
+    frameState->isReady = TRUE;
+    frameState->receiveFailed = FALSE;
+
+    g_mutex_unlock(&frameState->lock);
     return G_SOURCE_CONTINUE;
 }
 
@@ -92,6 +163,14 @@ gpointer canBusWorkerLoop() {
     g_source_set_callback(stopCanBusWorkerSource, stopCanBusWorker, NULL, NULL);
     g_source_attach(stopCanBusWorkerSource, workerContext);
     g_source_unref(stopCanBusWorkerSource);
+
+    for (guint8 i = 0; i < CAN_FRAMES_COUNT; i++)
+    {
+        GSource* frameRefreshSource = g_timeout_source_new(canFrames[i].refreshIntervalMillis);
+        g_source_set_callback(frameRefreshSource, getFrameFromCAN, &i, NULL);
+        g_source_attach(frameRefreshSource, workerContext);
+        g_source_unref(frameRefreshSource);
+    }
 
     workerData.isCanBusWorkerRunning = TRUE;
 
