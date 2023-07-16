@@ -65,11 +65,11 @@ gboolean stopCanBusWorker() {
 }\
 
 gboolean getFrameFromCAN(gpointer data) {
-    guint8* frameIndex = data;
+    int frameIndex = GPOINTER_TO_INT(data);
 
-    const CanFrame* frame = &canFrames[*frameIndex];
+    const CanFrame* frame = &canFrames[frameIndex];
     CanBusData* canBusData = &workerData.canBusData;
-    CanFrameState* frameState = &canBusData->frames[*frameIndex];
+    CanFrameState* frameState = &canBusData->frames[frameIndex];
 
     getFrameIdArray(frame->canId);
     int requestResult = i2c_write_i2c_block_data(
@@ -164,10 +164,10 @@ gpointer canBusWorkerLoop() {
     g_source_attach(stopCanBusWorkerSource, workerContext);
     g_source_unref(stopCanBusWorkerSource);
 
-    for (guint8 i = 0; i < CAN_FRAMES_COUNT; i++)
+    for (int i = 0; i < CAN_FRAMES_COUNT; i++)
     {
         GSource* frameRefreshSource = g_timeout_source_new(canFrames[i].refreshIntervalMillis);
-        g_source_set_callback(frameRefreshSource, getFrameFromCAN, &i, NULL);
+        g_source_set_callback(frameRefreshSource, getFrameFromCAN, GINT_TO_POINTER(i), NULL);
         g_source_attach(frameRefreshSource, workerContext);
         g_source_unref(frameRefreshSource);
     }
