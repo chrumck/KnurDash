@@ -114,8 +114,8 @@ gboolean getFrameFromCAN(gpointer data) {
     frameState->dataLength = frameData[6];
     memset(frameState->data, 0, CAN_DATA_SIZE);
     memcpy(frameState->data, frameData + 7, frameData[6]);
-    frameState->isReady = TRUE;
     frameState->receiveFailed = FALSE;
+    frameState->timestamp = g_get_monotonic_time();
 
     g_mutex_unlock(&frameState->lock);
     return G_SOURCE_CONTINUE;

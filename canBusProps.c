@@ -1,6 +1,10 @@
+#ifndef __canBusProps_c
+#define __canBusProps_c
+
 #include <gtk/gtk.h>
 
 #include "dataContracts.h"
+#include "workerData.c"
 
 #define KNURDASH_FRAME_ID 0x7F0
 
@@ -32,3 +36,17 @@ static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
     {.canId = 0x202, .refreshIntervalMillis = 33},
     {.canId = 0x420, .refreshIntervalMillis = 500},
 };
+
+#define RPM_SIGNAL_FRAME_INDEX 2
+
+gint32 getRpm() {
+    const CanFrame* frame = &canFrames[RPM_SIGNAL_FRAME_INDEX];
+    CanFrameState* frameState = &workerData.canBusData.frames[RPM_SIGNAL_FRAME_INDEX];
+
+    gint64 currentTimestamp = g_get_monotonic_time();
+    if (frameState->timestamp + (3 * frame->refreshIntervalMillis * 1000) < currentTimestamp) return -1;
+
+    return (frameState->data[0] << 8 | frameState->data[1]) / 4;
+}
+
+#endif
