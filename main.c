@@ -3,7 +3,6 @@
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <glib-unix.h>
-#include <pigpiod_if2.h>
 
 #include "dataContracts.h"
 #include "workerData.c"
