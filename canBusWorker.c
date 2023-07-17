@@ -62,7 +62,7 @@ gboolean stopCanBusWorker() {
 #define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2) {\
     errorCount++;\
     if (!frameState->receiveFailed)  g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2);\
-    if (!frameState->receiveFailed)  g_warning("CAN errors:%d, error rate:%.4f", errorCount, (float)errorCount / requestCount);\
+    if (errorCount % 20 == 0)  g_warning("CAN requests:%d, errors:%d, rate:%.4f", requestCount, errorCount, (float)errorCount / requestCount);\
     frameState->receiveFailed = TRUE;\
     return G_SOURCE_CONTINUE;\
 }\
