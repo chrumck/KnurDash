@@ -253,6 +253,7 @@ gpointer sensorWorkerLoop() {
 
         if (engineRpm < OIL_PRESSURE_ALERT_MIN_RPM && buzzerOn) gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
 
+#ifndef IS_DEBUG
         if (pressureReading->isFaulty == FALSE &&
             pressureReading->value < pressureSensor->alertLow &&
             engineRpm > OIL_PRESSURE_ALERT_MIN_RPM &&
@@ -261,8 +262,6 @@ gpointer sensorWorkerLoop() {
         }
 
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
-
-#ifdef NDEBUG
         if ((workerData.wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
             g_idle_add(systemShutDown, NULL);

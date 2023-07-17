@@ -92,7 +92,7 @@ gboolean stopBtWorker() {
 }
 
 gpointer bluetoothWorkerLoop() {
-#ifdef NDEBUG
+#ifndef IS_DEBUG
     log_set_level(LOG_WARN);
 #endif
 

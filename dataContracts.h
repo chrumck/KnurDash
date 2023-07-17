@@ -1,6 +1,8 @@
 #ifndef __dataContracts_h
 #define __dataContracts_h
 
+#define IS_DEBUG
+
 #include <gtk/gtk.h>
 
 #include "adapter.h"
@@ -82,7 +84,7 @@ typedef struct {
     guint8 data[CAN_DATA_SIZE];
     gboolean receiveFailed;
     gint64 timestamp;
-    
+
     GMutex lock;
 
     gboolean btWasSent;

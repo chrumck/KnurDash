@@ -75,9 +75,9 @@ gboolean shutDown(gboolean systemShutdown)
 
     gtk_main_quit();
 
-#ifdef NDEBUG
+#ifndef IS_DEBUG
     if (systemShutdown) {
-        g_message("System shutting down...");
+        g_message("Shutting down the system");
         system("sudo shutdown now");
     }
 #endif
