@@ -94,6 +94,9 @@ typedef struct {
     int i2cPiHandle;
     int i2cCanHandle;
 
+    guint32 requestCount;
+    guint32 errorCount;
+
     GMainLoop* mainLoop;
 
     CanFrameState frames[CAN_FRAMES_COUNT];

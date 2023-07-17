@@ -58,9 +58,8 @@ gboolean stopCanBusWorker() {
     frameIdArray[3] = _frameId & 0xFF;\
 
 #define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2) {\
-    errorCount++;\
+    workerData.canBusData.errorCount++;\
     if (!frameState->receiveFailed)  g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2);\
-    if (errorCount % 20 == 0)  g_warning("CAN requests:%d, errors:%d, rate:%.4f", requestCount, errorCount, (float)errorCount / requestCount);\
     frameState->receiveFailed = TRUE;\
     return G_SOURCE_CONTINUE;\
 }\
@@ -77,9 +76,7 @@ guint8 getChecksum(guint8* data, int length)
 gboolean getFrameFromCAN(gpointer data) {
     int frameIndex = GPOINTER_TO_INT(data);
 
-    static guint32 requestCount = 0;
-    static guint32 errorCount = 0;
-    requestCount++;
+    workerData.canBusData.requestCount++;
 
     const CanFrame* frame = &canFrames[frameIndex];
     CanBusData* canBusData = &workerData.canBusData;
@@ -194,8 +191,15 @@ gpointer canBusWorkerLoop() {
     i2c_close(i2cPiHandle, i2cCanHandle);
     pigpio_stop(i2cPiHandle);
 
-    workerData.isCanBusWorkerRunning = FALSE;
+
+    g_message(
+        "CAN requests:%d, errors:%d, rate:%.4f",
+        workerData.canBusData.requestCount,
+        workerData.canBusData.errorCount,
+        (float)workerData.canBusData.errorCount / workerData.canBusData.requestCount);
+
     g_message("CANBUS worker shutting down");
+    workerData.isCanBusWorkerRunning = FALSE;
 
     return NULL;
 }
