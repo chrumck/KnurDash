@@ -15,10 +15,12 @@ window {
 }
 
 .mainGauge {
-    font-size: 65px;
+    margin: -10px;
+    font-size: 78px;
 }
 
 .subGauge {
+    margin: -2px;
     font-size: 35px;
 }
 
