@@ -16,6 +16,7 @@
         "gboolean",
         "gconstpointer",
         "gdouble",
+        "gfloat",
         "gint",
         "gpio",
         "gpointer",
