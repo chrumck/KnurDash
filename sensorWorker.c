@@ -264,7 +264,8 @@ gpointer sensorWorkerLoop() {
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
         if ((workerData.wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
-            g_idle_add(systemShutDown, NULL);
+            g_message("Ignition off, requesting system shutdown");
+            g_idle_add(shutDown, GINT_TO_POINTER(SystemShutdown));
             break;
         }
 #endif
@@ -282,8 +283,8 @@ gpointer sensorWorkerLoop() {
     i2c_close(i2cPiHandle, adc1Handle);
     pigpio_stop(i2cPiHandle);
 
-    workerData.isSensorWorkerRunning = FALSE;
     g_message("Sensor worker shutting down");
+    workerData.isSensorWorkerRunning = FALSE;
 
     return NULL;
 }

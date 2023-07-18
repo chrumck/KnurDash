@@ -15,6 +15,12 @@
 #define CAN_DATA_SIZE 8
 #define CAN_FRAMES_COUNT 4
 
+typedef enum {
+    AppShutdown = 0,
+    SystemShutdown = 1,
+    SystemReboot = 2,
+} ShutDownType;
+
 typedef struct {
     char* labelId;
     char* frameId;
