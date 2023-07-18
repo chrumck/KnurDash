@@ -23,7 +23,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     guint8 maskOrFilterBuffer[MASK_FILTER_LENGTH];
     int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, maskOrFilterBuffer, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
-        g_warning("Could not get CAN mask/filter, register:%x, error:%d", i2cRegister, readResult);
+        g_warning("Could not get CAN mask/filter, register:0x%x, error:%d", i2cRegister, readResult);
     }
 
     if (!isArrayEqual(value, maskOrFilterBuffer, MASK_FILTER_LENGTH)) {
@@ -33,7 +33,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         );
 
         int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
-        if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:%x, error:%d", i2cRegister, writeResult);
+        if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
 
         g_usleep(I2C_REQUEST_DELAY);
     }
@@ -91,14 +91,14 @@ gboolean getFrameFromCAN(gpointer data) {
         FRAME_ID_LENGTH);
 
 
-    if (requestResult != 0) handleGetFrameError("Failed request for CAN frame id:%x, error:%d", frame->canId, requestResult);
+    if (requestResult != 0) handleGetFrameError("Failed request for CAN frame id:0x%x, error:%d", frame->canId, requestResult);
 
     g_usleep(I2C_REQUEST_DELAY);
 
     guint8 frameData[FRAME_LENGTH] = { 0 };
     int readResult = i2c_read_device(canBusData->i2cPiHandle, canBusData->i2cCanHandle, frameData, FRAME_LENGTH);
 
-    if (readResult != FRAME_LENGTH) handleGetFrameError("Failed receive for CAN frame id:%x, error:%d", frame->canId, requestResult);
+    if (readResult != FRAME_LENGTH) handleGetFrameError("Failed receive for CAN frame id:0x%x, error:%d", frame->canId, requestResult);
 
     guint32 receivedFrameId = frameData[0] << 24 | frameData[1] << 16 | frameData[2] << 8 | frameData[3];
 
