@@ -1,5 +1,5 @@
-#ifndef ui_c
-#define ui_c
+#ifndef __ui_c
+#define __ui_c
 
 #include <gtk/gtk.h>
 #include<fcntl.h> 
