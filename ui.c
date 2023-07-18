@@ -86,7 +86,7 @@ gboolean shutDown(gboolean systemShutdown)
 }
 
 gboolean systemShutDown() { return shutDown(TRUE); }
-gboolean windowShutDown() { return shutDown(FALSE); }
+gboolean appShutDown() { return shutDown(FALSE); }
 
 void buttonShutDown(GtkWidget* button) {
     g_mutex_lock(&guiLock);

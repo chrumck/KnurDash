@@ -49,10 +49,10 @@ int main(int argc, char* argv[])
     GThread* canBusWorker = g_thread_new("canBusWorker", canBusWorkerLoop, NULL);
     GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, NULL);
 
-    g_unix_signal_add(SIGINT, windowShutDown, NULL);
-    g_unix_signal_add(SIGTERM, windowShutDown, NULL);
+    g_unix_signal_add(SIGINT, appShutDown, NULL);
+    g_unix_signal_add(SIGTERM, appShutDown, NULL);
 
-    g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), NULL);
+    g_signal_connect(window, "destroy", G_CALLBACK(appShutDown), NULL);
 
     GObject* button = gtk_builder_get_object(builder, "resetMinMax");
     g_signal_connect(button, "clicked", G_CALLBACK(requestMinMaxReset), NULL);
