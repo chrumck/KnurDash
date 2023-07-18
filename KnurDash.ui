@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <object id="window" class="GtkWindow">
+  <!-- interface-css-provider-path KnurDashUi.css -->
+  <object class="GtkWindow" id="window">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="border-width">6</property>
@@ -10,254 +12,330 @@
     <property name="default-height">480</property>
     <property name="hide-titlebar-when-maximized">True</property>
     <property name="decorated">False</property>
-
     <child>
-      <object class="GtkGrid">
+      <!-- n-columns=3 n-rows=1 -->
+      <object class="GtkGrid" id="windowGrid">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="row-homogeneous">True</property>
         <property name="column-homogeneous">True</property>
-
         <child>
-          <object class="GtkFrame" id="oilTempFrame">
+          <!-- n-columns=2 n-rows=3 -->
+          <object class="GtkGrid" id="gauges">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="label-xalign">0</property>
-            <property name="shadow-type">none</property>
+            <property name="row-homogeneous">True</property>
+            <property name="column-homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="oilTemp">
+              <object class="GtkFrame" id="oilTempFrame">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label" translatable="yes">--</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="oilTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="oilTempMin">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="oilTempMax">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Oil Temp (°C)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
                 <style>
-                  <class name="mainGauge"/>
+                  <class name="gaugeFrame"/>
                 </style>
               </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">0</property>
+              </packing>
             </child>
-            <child type="label">
-              <object class="GtkLabel">
+            <child>
+              <object class="GtkFrame" id="oilPressFrame">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="xpad">5</property>
-                <property name="label" translatable="yes">Oil Temp (°C)</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="oilPress">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="oilPressMin">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="oilPressMax">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Oil Pressure (bar)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
                 <style>
-                  <class name="gaugeFrameLabel"/>
+                  <class name="gaugeFrame"/>
                 </style>
               </object>
+              <packing>
+                <property name="left-attach">1</property>
+                <property name="top-attach">0</property>
+              </packing>
             </child>
-            <style>
-              <class name="gaugeFrame"/>
-            </style>
+            <child>
+              <object class="GtkBox" id="gaugesBlank1">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFrame" id="coolantTempFrame">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="coolantTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="coolantTempMin">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="coolantTempMax">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Coolant Temp (°C)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
+              </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
           </object>
           <packing>
             <property name="left-attach">0</property>
             <property name="top-attach">0</property>
+            <property name="width">2</property>
           </packing>
         </child>
-
         <child>
-          <object class="GtkFrame" id="oilTempMinMaxFrame">
+          <object class="GtkBox" id="buttons">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="label-xalign">0</property>
-            <property name="shadow-type">none</property>
-            <child>
-              <object class="GtkBox">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="homogeneous">True</property>
-                <child>
-                  <object class="GtkLabel" id="oilTempMin">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">--</property>
-                    <style>
-                      <class name="subGauge"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="oilTempMax">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">--</property>
-                    <style>
-                      <class name="subGauge"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-            </child>
-            <child type="label">
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="xpad">5</property>
-                <property name="label" translatable="yes">Oil Temp   Min  /  Max</property>
-                <style>
-                  <class name="gaugeFrameLabel"/>
-                </style>
-              </object>
-            </child>
-            <style>
-              <class name="gaugeFrame"/>
-            </style>
-          </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">1</property>
-          </packing>
-        </child>
-
-        <child>
-          <object class="GtkFrame" id="oilPressFrame">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="label-xalign">0</property>
-            <property name="shadow-type">none</property>
-            <child>
-              <object class="GtkLabel" id="oilPress">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="label" translatable="yes">--</property>
-                <style>
-                  <class name="mainGauge"/>
-                </style>
-              </object>
-            </child>
-            <child type="label">
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="xpad">5</property>
-                <property name="label" translatable="yes">Oil Pressure (bar)</property>
-                <style>
-                  <class name="gaugeFrameLabel"/>
-                </style>
-              </object>
-            </child>
-            <style>
-              <class name="gaugeFrame"/>
-            </style>
-          </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">0</property>
-          </packing>
-        </child>
-
-        <child>
-          <object class="GtkFrame" id="oilPressMinMaxFrame">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="label-xalign">0</property>
-            <property name="shadow-type">none</property>
-            <child>
-              <object class="GtkBox">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="homogeneous">True</property>
-                <child>
-                  <object class="GtkLabel" id="oilPressMin">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">--</property>
-                    <style>
-                      <class name="subGauge"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="oilPressMax">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">--</property>
-                    <style>
-                      <class name="subGauge"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-            </child>
-            <child type="label">
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="xpad">5</property>
-                <property name="label" translatable="yes">Oil Press   Min  /  Max</property>
-                <style>
-                  <class name="gaugeFrameLabel"/>
-                </style>
-              </object>
-            </child>
-            <style>
-              <class name="gaugeFrame"/>
-            </style>
-          </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">1</property>
-          </packing>
-        </child>
-
-        <child>
-          <object class="GtkButton" id="resetMinMax">
-            <property name="label" translatable="yes">Reset Min / Max</property>
-            <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="focus-on-click">True</property>
-            <property name="receives-default">True</property>
-            <property name="relief">none</property>
-          </object>
-          <packing>
-            <property name="left-attach">2</property>
-            <property name="top-attach">0</property>
-          </packing>
-        </child>
-
-        <child>
-          <object class="GtkBox">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
+            <property name="orientation">vertical</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkButton" id="brightnessDown">
-                <!-- <property name="label" translatable="yes">Brightness
-Down</property> -->
+              <object class="GtkButton" id="resetMinMax">
+                <property name="label" translatable="yes">Reset Min / Max</property>
                 <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="focus-on-click">False</property>
-                <property name="receives-default">False</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
                 <property name="relief">none</property>
-                <property name="always-show-image">True</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="justify">center</property>
-                    <property name="label">Brightness
-Down</property>
-                    <property name="visible">1</property>
-                  </object>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -266,19 +344,56 @@ Down</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="brightnessUp">
+              <object class="GtkBox" id="brightness">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="focus-on-click">False</property>
-                <property name="receives-default">False</property>
-                <property name="relief">none</property>
+                <property name="homogeneous">True</property>
                 <child>
-                  <object class="GtkLabel">
-                    <property name="justify">center</property>
-                    <property name="label">Brightness
-Up</property>
-                    <property name="visible">1</property>
+                  <object class="GtkButton" id="brightnessDown">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="focus-on-click">False</property>
+                    <property name="receives-default">False</property>
+                    <property name="relief">none</property>
+                    <property name="always-show-image">True</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label">Brightness
+Down</property>
+                        <property name="justify">center</property>
+                      </object>
+                    </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="brightnessUp">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="focus-on-click">False</property>
+                    <property name="receives-default">False</property>
+                    <property name="relief">none</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label">Brightness
+Up</property>
+                        <property name="justify">center</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
               </object>
               <packing>
@@ -287,37 +402,43 @@ Up</property>
                 <property name="position">1</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkBox" id="buttonsBlank1">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="homogeneous">True</property>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="turnOff">
+                <property name="label" translatable="yes">Turn Off</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="focus-on-click">False</property>
+                <property name="receives-default">False</property>
+                <property name="relief">none</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="left-attach">2</property>
-            <property name="top-attach">1</property>
-          </packing>
-        </child>
-
-        <child>
-          <object class="GtkBox">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="orientation">vertical</property>
-          </object>
-          <packing>
-            <property name="left-attach">2</property>
-            <property name="top-attach">2</property>
-          </packing>
-        </child>
-
-        <child>
-          <object class="GtkButton" id="turnOff">
-            <property name="label" translatable="yes">Turn Off</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="focus-on-click">False</property>
-            <property name="receives-default">False</property>
-            <property name="relief">none</property>
-          </object>
-          <packing>
-            <property name="left-attach">2</property>
-            <property name="top-attach">3</property>
+            <property name="top-attach">0</property>
           </packing>
         </child>
       </object>
