@@ -20,13 +20,13 @@
 #define RESPONSE_NOT_READY_RESPONSE 0x00000002
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
-    guint8 maskOrFilterBuffer[MASK_FILTER_LENGTH];
-    int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, maskOrFilterBuffer, MASK_FILTER_LENGTH);
+    guint8 readBuf[MASK_FILTER_LENGTH];
+    int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, readBuf, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
         g_warning("Could not get CAN mask/filter, register:0x%x, error:%d", i2cRegister, readResult);
     }
 
-    if (!isArrayEqual(value, maskOrFilterBuffer, MASK_FILTER_LENGTH)) {
+    if (!isArrayEqual(value, readBuf, MASK_FILTER_LENGTH)) {
         g_message(
             "Setting CAN filter/mask, register:0x%x, values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
             i2cRegister, value[0], value[1], value[2], value[3], value[4]
