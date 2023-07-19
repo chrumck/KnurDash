@@ -5,6 +5,7 @@
 #include "workerData.c"
 #include "helpers.c"
 #include "canBusProps.c"
+#include "ui.c"
 
 #define CANBUS_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
@@ -26,17 +27,28 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         g_warning("Could not get CAN mask/filter, register:0x%x, error:%d", i2cRegister, readResult);
     }
 
-    if (!isArrayEqual(value, readBuf, MASK_FILTER_LENGTH)) {
-        g_message(
-            "Setting CAN filter/mask, register:0x%x, values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
-            i2cRegister, value[0], value[1], value[2], value[3], value[4]
-        );
+    guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
+    if (response == RECEIVE_REJECTED_RESPONSE) {
+        g_warning(
+            "Request rejected when getting CAN mask/filter, shutting down app, register:0x%x, response:%d",
+            i2cRegister, response);
 
-        int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
-        if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
-
-        g_usleep(I2C_REQUEST_DELAY);
+        g_idle_add(shutDown, GINT_TO_POINTER(AppShutdown));
+        return;
     }
+
+    if (isArrayEqual(value, readBuf, MASK_FILTER_LENGTH)) return;
+
+    g_message(
+        "Setting CAN filter/mask, register:0x%x, values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
+        i2cRegister, value[0], value[1], value[2], value[3], value[4]
+    );
+
+    int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
+    if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
+
+    g_usleep(I2C_REQUEST_DELAY);
+
 }
 
 gboolean stopCanBusWorker() {
