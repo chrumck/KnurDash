@@ -67,8 +67,8 @@ void setFrame(GtkFrame* frame, const SensorState state) {
 void resetReadingsValues() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            workerData.sensorData.readings[i][j].value = FAULTY_READING_VALUE;
-            workerData.sensorData.readings[i][j].isFaulty = TRUE;
+            workerData.sensorData.adcReadings[i][j].value = FAULTY_READING_VALUE;
+            workerData.sensorData.adcReadings[i][j].isFaulty = TRUE;
         }
     }
 };
@@ -76,8 +76,8 @@ void resetReadingsValues() {
 void resetReadingsMinMax() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            workerData.sensorData.readings[i][j].min = G_MAXDOUBLE;
-            workerData.sensorData.readings[i][j].max = -G_MAXDOUBLE;
+            workerData.sensorData.adcReadings[i][j].min = G_MAXDOUBLE;
+            workerData.sensorData.adcReadings[i][j].max = -G_MAXDOUBLE;
         }
     }
 };
@@ -87,12 +87,12 @@ void setWidgets() {
 
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            const Sensor* sensor = &sensors[i][j];
-            SensorWidgets* widgets = &workerData.sensorData.widgets[i][j];
-            if (sensor->labelId != NULL) widgets->label = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelId));
-            if (sensor->frameId != NULL) widgets->frame = GTK_FRAME(gtk_builder_get_object(builder, sensor->frameId));
-            if (sensor->labelMinId != NULL) widgets->labelMin = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelMinId));
-            if (sensor->labelMaxId != NULL) widgets->labelMax = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelMaxId));
+            const AdcSensor* sensor = &adcSensors[i][j];
+            SensorWidgets* widgets = &workerData.sensorData.adcWidgets[i][j];
+            if (sensor->base.labelId != NULL) widgets->label = GTK_LABEL(gtk_builder_get_object(builder, sensor->base.labelId));
+            if (sensor->base.frameId != NULL) widgets->frame = GTK_FRAME(gtk_builder_get_object(builder, sensor->base.frameId));
+            if (sensor->base.labelMinId != NULL) widgets->labelMin = GTK_LABEL(gtk_builder_get_object(builder, sensor->base.labelMinId));
+            if (sensor->base.labelMaxId != NULL) widgets->labelMax = GTK_LABEL(gtk_builder_get_object(builder, sensor->base.labelMaxId));
         }
     }
 };
@@ -100,14 +100,14 @@ void setWidgets() {
 void resetMinMaxLabels() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            const SensorWidgets* widgets = &workerData.sensorData.widgets[i][j];
+            const SensorWidgets* widgets = &workerData.sensorData.adcWidgets[i][j];
             setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
             setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
         }
     }
 };
 
-SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
+SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
     if (reading < sensor->alertLow) return StateAlertLow;
     if (reading < sensor->warningLow) return StateWarningLow;
     if (reading < sensor->notifyLow) return StateNotifyLow;
@@ -121,11 +121,11 @@ SensorState getSensorState(const Sensor* sensor, const gdouble reading) {
 
 //-------------------------------------------------------------------------------------------------------------
 
-void readChannel(int adc, int channel) {
-    const Sensor* sensor = &sensors[adc][channel];
+void readAdcChannel(int adc, int channel) {
+    const AdcSensor* sensor = &adcSensors[adc][channel];
     SensorData* sensorData = &workerData.sensorData;
-    const SensorWidgets* widgets = &sensorData->widgets[adc][channel];
-    SensorReading* reading = &sensorData->readings[adc][channel];
+    const SensorWidgets* widgets = &sensorData->adcWidgets[adc][channel];
+    SensorReading* reading = &sensorData->adcReadings[adc][channel];
     gboolean wasFaulty = reading->isFaulty;
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
@@ -156,39 +156,39 @@ void readChannel(int adc, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 v = signExtend32(temp, 12);
 
-    if ((wasFaulty == FALSE && (v < sensor->vMin || v > sensor->vMax)) ||
-        (wasFaulty == TRUE && (v < sensor->vMin + ADC_READING_DEADBAND || v > sensor->vMax - ADC_READING_DEADBAND))) {
+    if ((wasFaulty == FALSE && (v < sensor->base.rawMin || v > sensor->base.rawMax)) ||
+        (wasFaulty == TRUE && (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND))) {
         handleFault();
-        g_warning("Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ", v, sensor->vMin, sensor->vMax, adc, channel);
+        g_warning("Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ", v, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
         return;
     }
 
-    SensorReading* vddReading = &sensorData->readings[VDD_ADC][VDD_CHANNEL];
+    SensorReading* vddReading = &sensorData->adcReadings[VDD_ADC][VDD_CHANNEL];
     const gdouble vdd = vddReading->isFaulty == FALSE ? vddReading->value : VDD_DEFAULT;
 
     const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
     reading->isFaulty = FALSE;
 
     if (wasFaulty == FALSE &&
-        value < reading->value + sensor->precision &&
-        value > reading->value - sensor->precision &&
-        value >= reading->min - sensor->precision &&
-        value <= reading->max + sensor->precision) return;
+        value < reading->value + sensor->base.precision &&
+        value > reading->value - sensor->base.precision &&
+        value >= reading->min - sensor->base.precision &&
+        value <= reading->max + sensor->base.precision) return;
 
     reading->value = value;
-    setLabel(widgets->label, sensor->format, value);
+    setLabel(widgets->label, sensor->base.format, value);
 
     if (reading->min > value) {
         reading->min = value;
-        setLabel(widgets->labelMin, sensor->format, value);
+        setLabel(widgets->labelMin, sensor->base.format, value);
     }
 
     if (reading->max < value) {
         reading->max = value;
-        setLabel(widgets->labelMax, sensor->format, value);
+        setLabel(widgets->labelMax, sensor->base.format, value);
     }
 
-    const SensorState state = getSensorState(sensor, value);
+    const SensorState state = getSensorState(&sensor->base, value);
     if (wasFaulty == TRUE || state != reading->state) {
         reading->state = state;
         setFrame(widgets->frame, state);
@@ -238,13 +238,13 @@ gpointer sensorWorkerLoop() {
 
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
 
-        SensorReading* pressureReading = &(workerData.sensorData.readings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
-        const Sensor* pressureSensor = &sensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        SensorReading* pressureReading = &(workerData.sensorData.adcReadings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
         if (workerData.wasEngineStarted == FALSE &&
             ignOn == TRUE &&
             pressureReading->isFaulty == FALSE &&
-            pressureReading->value > pressureSensor->alertLow) {
+            pressureReading->value > pressureSensor->base.alertLow) {
             workerData.wasEngineStarted = TRUE;
         }
 
@@ -254,7 +254,7 @@ gpointer sensorWorkerLoop() {
         if (engineRpm < OIL_PRESSURE_ALERT_MIN_RPM && buzzerOn) gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
 
         if (pressureReading->isFaulty == FALSE &&
-            pressureReading->value < pressureSensor->alertLow &&
+            pressureReading->value < pressureSensor->base.alertLow &&
             engineRpm > OIL_PRESSURE_ALERT_MIN_RPM &&
             !buzzerOn) {
             gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, TRUE);
@@ -270,10 +270,10 @@ gpointer sensorWorkerLoop() {
         }
 #endif
 
-        readChannel(VDD_ADC, VDD_CHANNEL);
+        readAdcChannel(VDD_ADC, VDD_CHANNEL);
 
-        readChannel(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
-        readChannel(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+        readAdcChannel(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
+        readAdcChannel(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }

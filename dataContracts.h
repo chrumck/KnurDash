@@ -27,9 +27,6 @@ typedef struct {
     char* labelMinId;
     char* labelMaxId;
 
-    gint32 vMin;
-    gint32 vMax;
-
     gdouble alertLow;
     gdouble warningLow;
     gdouble notifyLow;
@@ -37,11 +34,19 @@ typedef struct {
     gdouble warningHigh;
     gdouble alertHigh;
 
-    gint32 refR;
-    gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
+    gint32 rawMin;
+    gint32 rawMax;
+
     char* format;
     gdouble precision;
-} Sensor;
+} SensorBase;
+
+typedef struct {
+    SensorBase base;
+
+    gint32 refR;
+    gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
+} AdcSensor;
 
 typedef enum {
     StateAlertLow = -3,
@@ -73,8 +78,8 @@ typedef struct {
     int i2cPiHandle;
     int i2cAdcHandles[ADC_COUNT];
 
-    SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
-    SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
+    SensorReading adcReadings[ADC_COUNT][ADC_CHANNEL_COUNT];
+    SensorWidgets adcWidgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 } SensorData;
 
 typedef struct {

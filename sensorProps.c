@@ -36,35 +36,47 @@ static gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
     return sensorV * 2;
 }
 
-static const Sensor sensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
+static const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
     {
         {
-            .labelId = "transTemp", .frameId = "transTempFrame", .labelMinId = "transTempMin", .labelMaxId = "transTempMax",
-            .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
-            .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-            .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
-            .refR = 2012, .convert = convertTemp, .format = "%.0f" , .precision = 0.3,
+            .base = {
+                .labelId = "transTemp", .frameId = "transTempFrame", .labelMinId = "transTempMin", .labelMaxId = "transTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = -25,
+                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.3,
+            },
+             .refR = 2012, .convert = convertTemp,
         },
         {
-            .labelId = "diffTemp", .frameId = "diffTempFrame", .labelMinId = "diffTempMin", .labelMaxId = "diffTempMax",
-            .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
-            .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-            .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
-            .refR = 2006, .convert = convertTemp, .format = "%.0f" , .precision = 0.3,
+            .base = {
+                .labelId = "diffTemp", .frameId = "diffTempFrame", .labelMinId = "diffTempMin", .labelMaxId = "diffTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = -25,
+                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.3,
+            },
+            .refR = 2006, .convert = convertTemp,
         },
         {
-            .labelId = "oilTemp", .frameId = "oilTempFrame", .labelMinId = "oilTempMin", .labelMaxId = "oilTempMax",
-            .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
-            .alertLow = -25, .warningLow = -25, .notifyLow = 80,
-            .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
-            .refR = 1992, .convert = convertTemp, .format = "%.0f" , .precision = 0.3,
+            .base = {
+                .labelId = "oilTemp", .frameId = "oilTempFrame", .labelMinId = "oilTempMin", .labelMaxId = "oilTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = 80,
+                .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.3,
+            },
+            .refR = 1992, .convert = convertTemp,
         },
         {
-            .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
-            .vMin = PRESS_SENSOR_RAW_MIN, .vMax = PRESS_SENSOR_RAW_MAX,
-            .alertLow = 0.7, .warningLow = 1.0, .notifyLow = 1.0,
-            .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
-            .refR = 465, .convert = convertOilPress, .format = "%.1f" , .precision = 0.03,
+            .base = {
+                .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
+                .alertLow = 0.7, .warningLow = 1.0, .notifyLow = 1.0,
+                .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
+                .rawMin = PRESS_SENSOR_RAW_MIN, .rawMax = PRESS_SENSOR_RAW_MAX,
+                .format = "%.1f" , .precision = 0.03,
+            },
+            .refR = 465, .convert = convertOilPress,
         },
     },
     {
@@ -72,10 +84,13 @@ static const Sensor sensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         {},
         {},
         {
-            .vMin = VDD_RAW_MIN, .vMax = VDD_RAW_MAX,
-            .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
-            .notifyHigh = VDD_RAW_MAX * 2, .warningHigh = VDD_RAW_MAX * 2, .alertHigh = VDD_RAW_MAX * 2,
-            .refR = 0, .convert = convertVdd, .format = "%.0f" , .precision = 2,
+            .base = {
+                .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
+                .notifyHigh = VDD_RAW_MAX * 2, .warningHigh = VDD_RAW_MAX * 2, .alertHigh = VDD_RAW_MAX * 2,
+                .rawMin = VDD_RAW_MIN, .rawMax = VDD_RAW_MAX,
+                .format = "%.0f" , .precision = 2,
+            },
+            .refR = 0, .convert = convertVdd,
         },
     }
 };
