@@ -22,6 +22,11 @@
 
 #define GET_FRAME_REGISTER 0x40
 
+#define RPM_FRAME_INDEX 2
+#define COOLANT_TEMP_FRAME_INDEX 3
+
+#define CAN_SENSORS_COUNT 1
+
 guint8 maskValue[] = { 0x0, 0x0, 0x0, 0x07, 0xFF };
 guint8 filter0Value[] = { 0x0, 0x0, 0x0, 0x02, 0x02 };
 guint8 filter1Value[] = { 0x0, 0x0, 0x0, 0x0, 0x86 };
@@ -37,16 +42,39 @@ static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
     {.canId = 0x420, .refreshIntervalMillis = 500},
 };
 
-#define RPM_SIGNAL_FRAME_INDEX 2
-
-gint32 getEngineRpm() {
-    const CanFrame* frame = &canFrames[RPM_SIGNAL_FRAME_INDEX];
-    CanFrameState* frameState = &workerData.canBusData.frames[RPM_SIGNAL_FRAME_INDEX];
+gboolean isFrameTooOld(guint8 frameIndex) {
+    const CanFrame* frame = &canFrames[frameIndex];
+    CanFrameState* state = &workerData.canBusData.frames[frameIndex];
 
     gint64 currentTimestamp = g_get_monotonic_time();
-    if (frameState->timestamp + (3 * frame->refreshIntervalMillis * 1000) < currentTimestamp) return -1;
-
-    return (frameState->data[0] << 8 | frameState->data[1]) / 4;
+    return state->timestamp + (3 * frame->refreshIntervalMillis * 1000) < currentTimestamp ? TRUE : FALSE;
 }
+
+gint32 getEngineRpm() {
+    if (isFrameTooOld(RPM_FRAME_INDEX)) return -1;
+
+    CanFrameState* state = &workerData.canBusData.frames[RPM_FRAME_INDEX];
+    return (state->data[0] << 8 | state->data[1]) / 4;
+}
+
+gint32 getCoolantTemp() {
+    if (isFrameTooOld(COOLANT_TEMP_FRAME_INDEX)) return -1;
+
+    CanFrameState* state = &workerData.canBusData.frames[COOLANT_TEMP_FRAME_INDEX];
+    return state->data[0] - 30;
+}
+
+static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
+    {
+        .base = {
+            .labelId = "coolantTemp", .frameId = "coolantTempFrame", .labelMinId = "coolantTempMin", .labelMaxId = "coolantTempMax",
+            .alertLow = -25, .warningLow = -25, .notifyLow = 80,
+                .notifyHigh = 110, .warningHigh = 110, .alertHigh = 120,
+                .rawMin = -30, .rawMax = 150,
+                .format = "%.0f" , .precision = 0.3,
+        },
+            .getValue = getCoolantTemp,
+    },
+};
 
 #endif

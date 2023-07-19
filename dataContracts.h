@@ -48,6 +48,12 @@ typedef struct {
     gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
 } AdcSensor;
 
+typedef struct {
+    SensorBase base;
+
+    gint32(*getValue)();
+} CanSensor;
+
 typedef enum {
     StateAlertLow = -3,
     StateWarningLow = -2,
