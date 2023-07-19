@@ -8,6 +8,7 @@
 #include "ui.c"
 
 #define CANBUS_WORKER_SHUTDOWN_LOOP_INTERVAL 500
+#define ENABLE_CAN_READ_ERROR_LOGGING FALSE
 
 #define I2C_ADDRESS 0x25
 #define I2C_REQUEST_DELAY 1e3
@@ -71,7 +72,9 @@ gboolean stopCanBusWorker() {
 
 #define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3) {\
     workerData.canBusData.errorCount++;\
-    if (!frameState->receiveFailed)  g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3);\
+    if (ENABLE_CAN_READ_ERROR_LOGGING && !frameState->receiveFailed) {\
+         g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3);\
+    }\
     frameState->receiveFailed = TRUE;\
     return G_SOURCE_CONTINUE;\
 }\
@@ -152,6 +155,10 @@ gboolean getFrameFromCAN(gpointer data) {
 
     g_mutex_unlock(&frameState->lock);
     return G_SOURCE_CONTINUE;
+}
+
+gboolean sendAdcSensorsToBluetooth() {
+
 }
 
 gpointer canBusWorkerLoop() {
