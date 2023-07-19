@@ -34,9 +34,9 @@ guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 guint8 filter5Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 
 static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
-    {.canId = 0x78, .refreshIntervalMillis = 33},
-    {.canId = 0x86, .refreshIntervalMillis = 33},
-    {.canId = 0x202, .refreshIntervalMillis = 33},
+    {.canId = 0x78, .refreshIntervalMillis = 40},
+    {.canId = 0x86, .refreshIntervalMillis = 40},
+    {.canId = 0x202, .refreshIntervalMillis = 40},
     {.canId = 0x420, .refreshIntervalMillis = 500},
 };
 
