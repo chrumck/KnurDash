@@ -25,8 +25,6 @@
 #define RPM_FRAME_INDEX 2
 #define COOLANT_TEMP_FRAME_INDEX 3
 
-#define CAN_SENSORS_COUNT 1
-
 guint8 maskValue[] = { 0x0, 0x0, 0x0, 0x07, 0xFF };
 guint8 filter0Value[] = { 0x0, 0x0, 0x0, 0x02, 0x02 };
 guint8 filter1Value[] = { 0x0, 0x0, 0x0, 0x0, 0x86 };
@@ -50,18 +48,18 @@ gboolean isFrameTooOld(guint8 frameIndex) {
     return state->timestamp + (3 * frame->refreshIntervalMillis * 1000) < currentTimestamp ? TRUE : FALSE;
 }
 
-gint32 getEngineRpm() {
+gdouble getEngineRpm() {
     if (isFrameTooOld(RPM_FRAME_INDEX)) return -1;
 
     CanFrameState* state = &workerData.canBusData.frames[RPM_FRAME_INDEX];
-    return (state->data[0] << 8 | state->data[1]) / 4;
+    return (gdouble)((state->data[0] << 8 | state->data[1]) / 4);
 }
 
-gint32 getCoolantTemp() {
-    if (isFrameTooOld(COOLANT_TEMP_FRAME_INDEX)) return -1;
+gdouble getCoolantTemp() {
+    if (isFrameTooOld(COOLANT_TEMP_FRAME_INDEX)) return -100;
 
     CanFrameState* state = &workerData.canBusData.frames[COOLANT_TEMP_FRAME_INDEX];
-    return state->data[0] - 30;
+    return (gdouble)(state->data[0] - 30);
 }
 
 static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
@@ -69,9 +67,9 @@ static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
         .base = {
             .labelId = "coolantTemp", .frameId = "coolantTempFrame", .labelMinId = "coolantTempMin", .labelMaxId = "coolantTempMax",
             .alertLow = -25, .warningLow = -25, .notifyLow = 80,
-                .notifyHigh = 110, .warningHigh = 110, .alertHigh = 120,
-                .rawMin = -30, .rawMax = 150,
-                .format = "%.0f" , .precision = 0.3,
+            .notifyHigh = 110, .warningHigh = 110, .alertHigh = 120,
+            .rawMin = -30, .rawMax = 150,
+            .format = "%.0f" , .precision = 0.3,
         },
             .getValue = getCoolantTemp,
     },

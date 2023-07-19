@@ -26,7 +26,9 @@
 #define OIL_PRESS_ADC 0
 #define OIL_PRESS_CHANNEL 3
 
-#define FAULTY_READING_LABEL "--"
+#define COOLANT_TEMP_CAN_SENSOR_INDEX 0
+
+#define NO_READING_LABEL "--"
 #define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
 
@@ -36,13 +38,6 @@
 #define ADC_CHANNEL_MASK 0x60
 #define getAdcChannelValue(config) (((config) & ADC_CHANNEL_MASK) >> 5)
 #define getAdcChannelBits(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
-
-#define handleFault()\
-    if (wasFaulty == TRUE) return;\
-    reading->isFaulty = TRUE;\
-    reading->value = FAULTY_READING_VALUE;\
-    setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
-    setFrame(widgets->frame, StateNormal);\
 
 //-------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +66,11 @@ void resetReadingsValues() {
             workerData.sensorData.adcReadings[i][j].isFaulty = TRUE;
         }
     }
+    for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
+        workerData.sensorData.canReadings[i].value = FAULTY_READING_VALUE;
+        workerData.sensorData.canReadings[i].isFaulty = TRUE;
+
+    }
 };
 
 void resetReadingsMinMax() {
@@ -80,20 +80,32 @@ void resetReadingsMinMax() {
             workerData.sensorData.adcReadings[i][j].max = -G_MAXDOUBLE;
         }
     }
+    for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
+        workerData.sensorData.canReadings[i].min = G_MAXDOUBLE;
+        workerData.sensorData.canReadings[i].max = -G_MAXDOUBLE;
+    }
 };
 
-void setWidgets() {
+void setSingleSensorWidgets(const SensorBase* sensor, SensorWidgets* widgets) {
     GtkBuilder* builder = workerData.builder;
+    if (sensor->labelId != NULL) widgets->label = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelId));
+    if (sensor->frameId != NULL) widgets->frame = GTK_FRAME(gtk_builder_get_object(builder, sensor->frameId));
+    if (sensor->labelMinId != NULL) widgets->labelMin = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelMinId));
+    if (sensor->labelMaxId != NULL) widgets->labelMax = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelMaxId));
+}
 
+void setWidgets() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            const AdcSensor* sensor = &adcSensors[i][j];
+            const SensorBase* sensor = &adcSensors[i][j].base;
             SensorWidgets* widgets = &workerData.sensorData.adcWidgets[i][j];
-            if (sensor->base.labelId != NULL) widgets->label = GTK_LABEL(gtk_builder_get_object(builder, sensor->base.labelId));
-            if (sensor->base.frameId != NULL) widgets->frame = GTK_FRAME(gtk_builder_get_object(builder, sensor->base.frameId));
-            if (sensor->base.labelMinId != NULL) widgets->labelMin = GTK_LABEL(gtk_builder_get_object(builder, sensor->base.labelMinId));
-            if (sensor->base.labelMaxId != NULL) widgets->labelMax = GTK_LABEL(gtk_builder_get_object(builder, sensor->base.labelMaxId));
+            setSingleSensorWidgets(sensor, widgets);
         }
+    }
+    for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
+        const SensorBase* sensor = &canSensors[i].base;
+        SensorWidgets* widgets = &workerData.sensorData.canWidgets[i];
+        setSingleSensorWidgets(sensor, widgets);
     }
 };
 
@@ -101,9 +113,15 @@ void resetMinMaxLabels() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const SensorWidgets* widgets = &workerData.sensorData.adcWidgets[i][j];
-            setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
-            setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
+            setLabel(widgets->labelMin, NO_READING_LABEL, 0);
+            setLabel(widgets->labelMax, NO_READING_LABEL, 0);
         }
+    }
+    for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
+        const SensorWidgets* widgets = &workerData.sensorData.canWidgets[i];
+        setLabel(widgets->labelMin, NO_READING_LABEL, 0);
+        setLabel(widgets->labelMax, NO_READING_LABEL, 0);
+
     }
 };
 
@@ -119,9 +137,49 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
     return StateNormal;
 }
 
+#define handleSensorReadFault()\
+    if (wasFaulty == TRUE) return;\
+    reading->isFaulty = TRUE;\
+    reading->value = FAULTY_READING_VALUE;\
+    setLabel(widgets->label, NO_READING_LABEL, 0);\
+    setFrame(widgets->frame, StateNormal);\
+
+void setSensorWidgets(
+    gdouble value,
+    gboolean wasFaulty,
+    SensorReading* reading,
+    const SensorBase* sensor,
+    const SensorWidgets* widgets) {
+
+    if (!wasFaulty &&
+        value < reading->value + sensor->precision &&
+        value > reading->value - sensor->precision &&
+        value >= reading->min - sensor->precision &&
+        value <= reading->max + sensor->precision) return;
+
+    reading->value = value;
+    setLabel(widgets->label, sensor->format, value);
+
+    if (reading->min > value) {
+        reading->min = value;
+        setLabel(widgets->labelMin, sensor->format, value);
+    }
+
+    if (reading->max < value) {
+        reading->max = value;
+        setLabel(widgets->labelMax, sensor->format, value);
+    }
+
+    const SensorState state = getSensorState(sensor, value);
+    if (wasFaulty == TRUE || state != reading->state) {
+        reading->state = state;
+        setFrame(widgets->frame, state);
+    }
+}
+
 //-------------------------------------------------------------------------------------------------------------
 
-void readAdcChannel(int adc, int channel) {
+void readAdcSensor(int adc, int channel) {
     const AdcSensor* sensor = &adcSensors[adc][channel];
     SensorData* sensorData = &workerData.sensorData;
     const SensorWidgets* widgets = &sensorData->adcWidgets[adc][channel];
@@ -131,7 +189,7 @@ void readAdcChannel(int adc, int channel) {
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], newConfig);
     if (writeResult != 0) {
-        handleFault();
+        handleSensorReadFault();
         g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
         return;
     }
@@ -141,14 +199,14 @@ void readAdcChannel(int adc, int channel) {
     guint8 buf[3];
     int readResult = i2c_read_device(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], buf, 3);
     if (readResult != 3) {
-        handleFault();
+        handleSensorReadFault();
         g_warning("Could not read adc bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
         return;
     }
 
     int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
-        handleFault();
+        handleSensorReadFault();
         g_warning("Channel received %d does not match required - adc:%d, channel:%d", receivedChannel, adc, channel);
         return;
     }
@@ -156,9 +214,9 @@ void readAdcChannel(int adc, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 v = signExtend32(temp, 12);
 
-    if ((wasFaulty == FALSE && (v < sensor->base.rawMin || v > sensor->base.rawMax)) ||
-        (wasFaulty == TRUE && (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND))) {
-        handleFault();
+    if ((!wasFaulty && (v < sensor->base.rawMin || v > sensor->base.rawMax)) ||
+        (wasFaulty && (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND))) {
+        handleSensorReadFault();
         g_warning("Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ", v, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
         return;
     }
@@ -169,30 +227,28 @@ void readAdcChannel(int adc, int channel) {
     const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
     reading->isFaulty = FALSE;
 
-    if (wasFaulty == FALSE &&
-        value < reading->value + sensor->base.precision &&
-        value > reading->value - sensor->base.precision &&
-        value >= reading->min - sensor->base.precision &&
-        value <= reading->max + sensor->base.precision) return;
+    setSensorWidgets(value, wasFaulty, reading, &sensor->base, widgets);
+}
 
-    reading->value = value;
-    setLabel(widgets->label, sensor->base.format, value);
+void readCanSensor(int canSensorIndex) {
+    const CanSensor* sensor = &canSensors[canSensorIndex];
+    SensorData* sensorData = &workerData.sensorData;
+    const SensorWidgets* widgets = &sensorData->canWidgets[canSensorIndex];
+    SensorReading* reading = &sensorData->canReadings[canSensorIndex];
+    gboolean wasFaulty = reading->isFaulty;
 
-    if (reading->min > value) {
-        reading->min = value;
-        setLabel(widgets->labelMin, sensor->base.format, value);
+    const gdouble value = sensor->getValue();
+
+    if ((!wasFaulty && (value < sensor->base.rawMin || value > sensor->base.rawMax)) ||
+        (wasFaulty && (value < sensor->base.rawMin + ADC_READING_DEADBAND || value > sensor->base.rawMax - ADC_READING_DEADBAND))) {
+        handleSensorReadFault();
+        g_warning("CAN sensor value %f out of bounds: %d~%d - sensor index:%d", value, sensor->base.rawMin, sensor->base.rawMax, canSensorIndex);
+        return;
     }
 
-    if (reading->max < value) {
-        reading->max = value;
-        setLabel(widgets->labelMax, sensor->base.format, value);
-    }
+    reading->isFaulty = FALSE;
 
-    const SensorState state = getSensorState(&sensor->base, value);
-    if (wasFaulty == TRUE || state != reading->state) {
-        reading->state = state;
-        setFrame(widgets->frame, state);
-    }
+    setSensorWidgets(value, wasFaulty, reading, &sensor->base, widgets);
 }
 
 gpointer sensorWorkerLoop() {
@@ -270,10 +326,12 @@ gpointer sensorWorkerLoop() {
         }
 #endif
 
-        readAdcChannel(VDD_ADC, VDD_CHANNEL);
+        readAdcSensor(VDD_ADC, VDD_CHANNEL);
 
-        readAdcChannel(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
-        readAdcChannel(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+        readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
+        readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+
+        readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }

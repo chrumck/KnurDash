@@ -10,6 +10,7 @@
 
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
+#define CAN_SENSORS_COUNT 1
 #define FORMATTED_READING_LENGTH 10
 
 #define CAN_DATA_SIZE 8
@@ -51,7 +52,7 @@ typedef struct {
 typedef struct {
     SensorBase base;
 
-    gint32(*getValue)();
+    gdouble(*getValue)();
 } CanSensor;
 
 typedef enum {
@@ -86,6 +87,9 @@ typedef struct {
 
     SensorReading adcReadings[ADC_COUNT][ADC_CHANNEL_COUNT];
     SensorWidgets adcWidgets[ADC_COUNT][ADC_CHANNEL_COUNT];
+
+    SensorReading canReadings[CAN_SENSORS_COUNT];
+    SensorWidgets canWidgets[CAN_SENSORS_COUNT];
 } SensorData;
 
 typedef struct {
