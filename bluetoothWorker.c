@@ -15,9 +15,9 @@
 #include "workerData.c"
 
 #define SERVICE_BT_NAME "KnurDash BLE" 
-#define SERVICE_UUID "00001ff8-0000-1000-8000-00805f9b34fb" 
-#define CHAR_UUID_MAIN "00000001-0000-1000-8000-00805f9b34fb"
-#define CHAR_UUID_FILTER "00000002-0000-1000-8000-00805f9b34fb"
+#define SERVICE_ID "00001ff8-0000-1000-8000-00805f9b34fb" 
+#define CHAR_ID_MAIN "00000001-0000-1000-8000-00805f9b34fb"
+#define CHAR_ID_FILTER "00000002-0000-1000-8000-00805f9b34fb"
 
 #define BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
@@ -39,19 +39,22 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
     else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, knurDashAdv);
 }
 
-const char* onCharRead(const Application* application, const char* address, const char* service_uuid, const char* char_uuid) {
-    if (g_str_equal(service_uuid, SERVICE_UUID) && g_str_equal(char_uuid, CHAR_UUID_MAIN)) {
-        const guint8 bytes[] = { 0x06, 0x6f, 0x01, 0x00, 0xff, 0xe6, 0x07, 0x03, 0x03, 0x10, 0x04, 0x00, 0x01 };
-        GByteArray* byteArray = g_byte_array_sized_new(sizeof(bytes));
-        g_byte_array_append(byteArray, bytes, sizeof(bytes));
-        binc_application_set_char_value(application, service_uuid, char_uuid, byteArray);
-        return NULL;
-    }
-    return BLUEZ_ERROR_REJECTED;
+const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
+    g_message("onCharRead, address:%s, service:%s, char:%s", address, serviceId, charId);
+    return NULL;
 }
 
-const char* onCharWrite(const Application* application, const char* address, const char* service_uuid, const char* char_uuid, GByteArray* byteArray) {
-    g_message("Write received on: %s, length:%d, values:%x,%x,%x  ", char_uuid, byteArray->len, byteArray->data[0], byteArray->data[1], byteArray->data[2]);
+const char* onCharWrite(const Application* app, const char* address, const char* serviceId, const char* charId, GByteArray* received) {
+    g_message("onCharWrite char:%s, length:%d, data:%x,%x,%x  ", charId, received->len, received->data[0], received->data[1], received->data[2]);
+}
+
+void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
+    g_message("onCharStartNotify, service:%s, char:%s", serviceId, charId);
+
+}
+
+void onCharStopNotify(const Application* app, const char* serviceId, const char* charId) {
+    g_message("onCharStopNotify, service:%s, char:%s", serviceId, charId);
 }
 
 gboolean stopBtWorker() {
@@ -63,10 +66,10 @@ gboolean stopBtWorker() {
 
     Adapter* adapter = workerData.bluetoothData.adapter;
 
-    if (workerData.bluetoothData.application != NULL) {
-        binc_adapter_unregister_application(adapter, workerData.bluetoothData.application);
-        binc_application_free(workerData.bluetoothData.application);
-        workerData.bluetoothData.application = NULL;
+    if (workerData.bluetoothData.app != NULL) {
+        binc_adapter_unregister_application(adapter, workerData.bluetoothData.app);
+        binc_application_free(workerData.bluetoothData.app);
+        workerData.bluetoothData.app = NULL;
     }
 
     if (knurDashAdv != NULL) {
@@ -79,9 +82,9 @@ gboolean stopBtWorker() {
         workerData.bluetoothData.adapter = NULL;
     }
 
-    if (workerData.bluetoothData.connection != NULL) {
-        g_dbus_connection_close_sync(workerData.bluetoothData.connection, NULL, NULL);
-        g_object_unref(workerData.bluetoothData.connection);
+    if (workerData.bluetoothData.dbusConn != NULL) {
+        g_dbus_connection_close_sync(workerData.bluetoothData.dbusConn, NULL, NULL);
+        g_object_unref(workerData.bluetoothData.dbusConn);
     }
 
     g_main_loop_quit(workerData.bluetoothData.mainLoop);
@@ -96,10 +99,10 @@ gpointer bluetoothWorkerLoop() {
     log_set_level(LOG_WARN);
 #endif
 
-    GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
-    workerData.bluetoothData.connection = connection;
+    GDBusConnection* dbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
+    workerData.bluetoothData.dbusConn = dbusConn;
 
-    Adapter* adapter = binc_adapter_get_default(connection);
+    Adapter* adapter = binc_adapter_get_default(dbusConn);
     workerData.bluetoothData.adapter = adapter;
 
     if (adapter == NULL) {
@@ -115,7 +118,7 @@ gpointer bluetoothWorkerLoop() {
     binc_adapter_set_remote_central_cb(adapter, &onCentralStateChanged);
 
     GPtrArray* advServiceUuids = g_ptr_array_new();
-    g_ptr_array_add(advServiceUuids, SERVICE_UUID);
+    g_ptr_array_add(advServiceUuids, SERVICE_ID);
 
     knurDashAdv = binc_advertisement_create();
 
@@ -124,27 +127,19 @@ gpointer bluetoothWorkerLoop() {
     g_ptr_array_free(advServiceUuids, TRUE);
     binc_adapter_start_advertising(adapter, knurDashAdv);
 
-    Application* application = binc_create_application(adapter);
-    workerData.bluetoothData.application = application;
+    Application* app = binc_create_application(adapter);
+    workerData.bluetoothData.app = app;
 
-    binc_application_add_service(application, SERVICE_UUID);
+    binc_application_add_service(app, SERVICE_ID);
+    binc_application_add_characteristic(app, SERVICE_ID, CHAR_ID_MAIN, GATT_CHR_PROP_READ | GATT_CHR_PROP_NOTIFY);
+    binc_application_add_characteristic(app, SERVICE_ID, CHAR_ID_FILTER, GATT_CHR_PROP_WRITE);
 
-    binc_application_add_characteristic(
-        application,
-        SERVICE_UUID,
-        CHAR_UUID_MAIN,
-        GATT_CHR_PROP_READ | GATT_CHR_PROP_NOTIFY);
+    binc_application_set_char_read_cb(app, &onCharRead);
+    binc_application_set_char_write_cb(app, &onCharWrite);
+    binc_application_set_char_start_notify_cb(app, &onCharStartNotify);
+    binc_application_set_char_stop_notify_cb(app, &onCharStopNotify);
 
-    binc_application_add_characteristic(
-        application,
-        SERVICE_UUID,
-        CHAR_UUID_FILTER,
-        GATT_CHR_PROP_WRITE);
-
-    binc_application_set_char_read_cb(application, &onCharRead);
-    binc_application_set_char_write_cb(application, &onCharWrite);
-
-    binc_adapter_register_application(adapter, application);
+    binc_adapter_register_application(adapter, app);
 
     GMainContext* workerContext = g_main_context_new();
     g_main_context_push_thread_default(workerContext);

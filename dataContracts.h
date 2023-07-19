@@ -126,9 +126,9 @@ typedef struct {
 typedef struct {
     GMainLoop* mainLoop;
 
-    GDBusConnection* connection;
+    GDBusConnection* dbusConn;
     Adapter* adapter;
-    Application* application;
+    Application* app;
 } BluetoothData;
 
 typedef struct {
