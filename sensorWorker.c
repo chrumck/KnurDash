@@ -240,7 +240,7 @@ void readCanSensor(int canSensorIndex) {
     const gdouble value = sensor->getValue();
 
     if ((!wasFaulty && (value < sensor->base.rawMin || value > sensor->base.rawMax)) ||
-        (wasFaulty && (value < sensor->base.rawMin + ADC_READING_DEADBAND || value > sensor->base.rawMax - ADC_READING_DEADBAND))) {
+        (wasFaulty && (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision))) {
         handleSensorReadFault();
         g_warning("CAN sensor value %f out of bounds: %d~%d - sensor index:%d", value, sensor->base.rawMin, sensor->base.rawMax, canSensorIndex);
         return;
