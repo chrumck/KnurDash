@@ -61,7 +61,7 @@ static const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         {
             .base = {
                 .labelId = "oilTemp", .frameId = "oilTempFrame", .labelMinId = "oilTempMin", .labelMaxId = "oilTempMax",
-                .alertLow = -25, .warningLow = -25, .notifyLow = 80,
+                .alertLow = -30, .warningLow = -30, .notifyLow = 80,
                 .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
