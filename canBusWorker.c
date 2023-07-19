@@ -69,9 +69,9 @@ gboolean stopCanBusWorker() {
     frameIdArray[2] = (_frameId >> 8) & 0xFF;\
     frameIdArray[3] = _frameId & 0xFF;\
 
-#define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2) {\
+#define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3) {\
     workerData.canBusData.errorCount++;\
-    if (!frameState->receiveFailed)  g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2);\
+    if (!frameState->receiveFailed)  g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3);\
     frameState->receiveFailed = TRUE;\
     return G_SOURCE_CONTINUE;\
 }\
@@ -103,34 +103,40 @@ gboolean getFrameFromCAN(gpointer data) {
         FRAME_ID_LENGTH);
 
 
-    if (requestResult != 0) handleGetFrameError("Failed request for CAN frame id:0x%x, error:%d", frame->canId, requestResult);
+    if (requestResult != 0) {
+        handleGetFrameError("Failed request for CAN frame id:0x%x, error:%d", frame->canId, requestResult, NULL);
+    }
 
     g_usleep(I2C_REQUEST_DELAY);
 
     guint8 frameData[FRAME_LENGTH] = { 0 };
     int readResult = i2c_read_device(canBusData->i2cPiHandle, canBusData->i2cCanHandle, frameData, FRAME_LENGTH);
 
-    if (readResult != FRAME_LENGTH) handleGetFrameError("Failed receive for CAN frame id:0x%x, error:%d", frame->canId, requestResult);
+    if (readResult != FRAME_LENGTH) {
+        handleGetFrameError("Failed receive for CAN frame id:0x%x, error:%d", frame->canId, requestResult, NULL);
+    }
 
     guint32 receivedFrameId = frameData[0] << 24 | frameData[1] << 16 | frameData[2] << 8 | frameData[3];
 
     if (receivedFrameId == NO_FRAMES_AVAILABLE_RESPONSE) return G_SOURCE_CONTINUE;
 
     if (receivedFrameId == RECEIVE_REJECTED_RESPONSE || receivedFrameId == RESPONSE_NOT_READY_RESPONSE) {
-        handleGetFrameError("Got error frame id for CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId);
+        handleGetFrameError("Got error frame id for CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId, NULL);
     }
 
     if (frameData[6] < 0 || frameData[6] > CAN_DATA_SIZE) {
-        handleGetFrameError("Invalid data length for CAN frame id:0x%x, length:%d", frame->canId, frameData[6]);
+        handleGetFrameError("Invalid data length for CAN frame id:0x%x, length:%d", frame->canId, frameData[6], NULL);
     }
 
     if (receivedFrameId != frame->canId) {
-        handleGetFrameError("Invalid received id CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId);
+        handleGetFrameError("Invalid received id CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId, NULL);
     }
 
     guint8 checksum = getChecksum(frameData, 15);
     if (checksum != frameData[15]) {
-        handleGetFrameError("Invalid checksum for CAN frame id:0x%x, expected:0x%x", frame->canId, checksum);
+        handleGetFrameError(
+            "Invalid checksum for CAN frame id:0x%x, received:0x%x expected:0x%x",
+            frame->canId, frameData[15], checksum);
     }
 
     g_mutex_lock(&frameState->lock);
