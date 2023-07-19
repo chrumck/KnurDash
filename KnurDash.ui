@@ -333,8 +333,9 @@
               <object class="GtkButton" id="resetMinMax">
                 <property name="label" translatable="yes">Reset Min / Max</property>
                 <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
+                <property name="can-focus">False</property>
+                <property name="focus-on-click">False</property>
+                <property name="receives-default">False</property>
                 <property name="relief">none</property>
               </object>
               <packing>
@@ -351,11 +352,10 @@
                 <child>
                   <object class="GtkButton" id="brightnessDown">
                     <property name="visible">True</property>
-                    <property name="can-focus">True</property>
+                    <property name="can-focus">False</property>
                     <property name="focus-on-click">False</property>
                     <property name="receives-default">False</property>
                     <property name="relief">none</property>
-                    <property name="always-show-image">True</property>
                     <child>
                       <object class="GtkLabel">
                         <property name="visible">True</property>
@@ -375,7 +375,7 @@ Down</property>
                 <child>
                   <object class="GtkButton" id="brightnessUp">
                     <property name="visible">True</property>
-                    <property name="can-focus">True</property>
+                    <property name="can-focus">False</property>
                     <property name="focus-on-click">False</property>
                     <property name="receives-default">False</property>
                     <property name="relief">none</property>
@@ -424,7 +424,7 @@ Up</property>
               <object class="GtkButton" id="turnOff">
                 <property name="label" translatable="yes">Turn Off</property>
                 <property name="visible">True</property>
-                <property name="can-focus">True</property>
+                <property name="can-focus">False</property>
                 <property name="focus-on-click">False</property>
                 <property name="receives-default">False</property>
                 <property name="relief">none</property>
