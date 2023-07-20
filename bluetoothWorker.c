@@ -21,8 +21,6 @@
 
 #define BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
-Advertisement* knurDashAdv;
-
 void onPoweredStateChanged(Adapter* adapter, gboolean state) {
     g_message("BT adapter powered '%s' (%s)", state ? "on" : "off", binc_adapter_get_path(adapter));
     if (state == TRUE) return;
@@ -35,8 +33,8 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
     g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
 
     ConnectionState state = binc_device_get_connection_state(device);
-    if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, knurDashAdv);
-    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, knurDashAdv);
+    if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, workerData.bluetoothData.adv);
+    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, workerData.bluetoothData.adv);
 }
 
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
@@ -72,9 +70,9 @@ gboolean stopBtWorker() {
         workerData.bluetoothData.app = NULL;
     }
 
-    if (knurDashAdv != NULL) {
-        binc_adapter_stop_advertising(adapter, knurDashAdv);
-        binc_advertisement_free(knurDashAdv);
+    if (workerData.bluetoothData.adv != NULL) {
+        binc_adapter_stop_advertising(adapter, workerData.bluetoothData.adv);
+        binc_advertisement_free(workerData.bluetoothData.adv);
     }
 
     if (adapter != NULL) {
@@ -120,12 +118,12 @@ gpointer bluetoothWorkerLoop() {
     GPtrArray* advServiceUuids = g_ptr_array_new();
     g_ptr_array_add(advServiceUuids, SERVICE_ID);
 
-    knurDashAdv = binc_advertisement_create();
+    workerData.bluetoothData.adv = binc_advertisement_create();
 
-    binc_advertisement_set_local_name(knurDashAdv, SERVICE_BT_NAME);
-    binc_advertisement_set_services(knurDashAdv, advServiceUuids);
+    binc_advertisement_set_local_name(workerData.bluetoothData.adv, SERVICE_BT_NAME);
+    binc_advertisement_set_services(workerData.bluetoothData.adv, advServiceUuids);
     g_ptr_array_free(advServiceUuids, TRUE);
-    binc_adapter_start_advertising(adapter, knurDashAdv);
+    binc_adapter_start_advertising(adapter, workerData.bluetoothData.adv);
 
     Application* app = binc_create_application(adapter);
     workerData.bluetoothData.app = app;

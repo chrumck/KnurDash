@@ -129,6 +129,7 @@ typedef struct {
     GDBusConnection* dbusConn;
     Adapter* adapter;
     Application* app;
+    Advertisement* adv;
 } BluetoothData;
 
 typedef struct {
