@@ -108,6 +108,7 @@ typedef struct {
 
     GMutex lock;
 
+    guint btNotifyingSourceId;
     gboolean btWasSent;
 } CanFrameState;
 
@@ -125,6 +126,9 @@ typedef struct {
 
 typedef struct {
     GMainLoop* mainLoop;
+
+    gboolean isNotifying;
+    guint btAdcNotifyingSourceId;
 
     GDBusConnection* dbusConn;
     Adapter* adapter;

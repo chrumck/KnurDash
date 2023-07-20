@@ -47,12 +47,19 @@ const char* onCharWrite(const Application* app, const char* address, const char*
 }
 
 void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
-    g_message("onCharStartNotify, service:%s, char:%s", serviceId, charId);
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_REJECTED;
 
+    workerData.bluetoothData.isNotifying = TRUE;
+    g_message("BT notify start");
+    return NULL;
 }
 
 void onCharStopNotify(const Application* app, const char* serviceId, const char* charId) {
-    g_message("onCharStopNotify, service:%s, char:%s", serviceId, charId);
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_REJECTED;
+
+    workerData.bluetoothData.isNotifying = FALSE;
+    g_message("BT notify stop");
+    return NULL;
 }
 
 gboolean stopBtWorker() {
