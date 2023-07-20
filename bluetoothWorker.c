@@ -38,16 +38,20 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
 }
 
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
+
     g_message("onCharRead, address:%s, service:%s, char:%s", address, serviceId, charId);
     return NULL;
 }
 
 const char* onCharWrite(const Application* app, const char* address, const char* serviceId, const char* charId, GByteArray* received) {
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_FILTER)) return BLUEZ_ERROR_NOT_PERMITTED;
+
     g_message("onCharWrite char:%s, length:%d, data:%x,%x,%x  ", charId, received->len, received->data[0], received->data[1], received->data[2]);
 }
 
 void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
-    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_REJECTED;
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
 
     workerData.bluetoothData.isNotifying = TRUE;
     g_message("BT notify start");
@@ -55,7 +59,7 @@ void onCharStartNotify(const Application* app, const char* serviceId, const char
 }
 
 void onCharStopNotify(const Application* app, const char* serviceId, const char* charId) {
-    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_REJECTED;
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
 
     workerData.bluetoothData.isNotifying = FALSE;
     g_message("BT notify stop");
