@@ -152,6 +152,7 @@ gboolean getFrameFromCAN(gpointer data) {
     memcpy(frameState->data, frameData + 7, frameData[6]);
     frameState->receiveFailed = FALSE;
     frameState->timestamp = g_get_monotonic_time();
+    frameState->btWasSent = FALSE;
 
     g_mutex_unlock(&frameState->lock);
     return G_SOURCE_CONTINUE;
