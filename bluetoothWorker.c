@@ -51,19 +51,17 @@ const char* onCharWrite(const Application* app, const char* address, const char*
 }
 
 void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
-    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return;
 
     workerData.bluetoothData.isNotifying = TRUE;
     g_message("BT notify start");
-    return NULL;
 }
 
 void onCharStopNotify(const Application* app, const char* serviceId, const char* charId) {
-    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
+    if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return;
 
     workerData.bluetoothData.isNotifying = FALSE;
     g_message("BT notify stop");
-    return NULL;
 }
 
 gboolean stopBtWorker() {
