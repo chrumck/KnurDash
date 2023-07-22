@@ -330,8 +330,8 @@ gpointer sensorWorkerLoop() {
 
         readAdcSensor(VDD_ADC, VDD_CHANNEL);
 
-        readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
         readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+        readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
 
         readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX);
 
