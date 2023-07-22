@@ -53,14 +53,19 @@ void setFrame(GtkFrame* frame, const SensorState state) {
 void resetReadingsValues() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            workerData.sensorData.adcReadings[i][j].value = FAULTY_READING_VALUE;
-            workerData.sensorData.adcReadings[i][j].isFaulty = TRUE;
+            SensorReading* reading = &workerData.sensorData.adcReadings[i][j];
+            g_mutex_lock(&reading->lock);
+            reading->value = FAULTY_READING_VALUE;
+            reading->isFaulty = TRUE;
+            g_mutex_unlock(&reading->lock);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        workerData.sensorData.canReadings[i].value = FAULTY_READING_VALUE;
-        workerData.sensorData.canReadings[i].isFaulty = TRUE;
-
+        SensorReading* reading = &workerData.sensorData.canReadings[i];
+        g_mutex_lock(&reading->lock);
+        reading->value = FAULTY_READING_VALUE;
+        reading->isFaulty = TRUE;
+        g_mutex_unlock(&reading->lock);
     }
 };
 
@@ -220,7 +225,7 @@ void readAdcSensor(int adc, int channel) {
     }
 
     SensorReading* vddReading = &sensorData->adcReadings[VDD_ADC][VDD_CHANNEL];
-    const gdouble vdd = vddReading->isFaulty == FALSE ? vddReading->value : VDD_DEFAULT;
+    const gdouble vdd = !vddReading->isFaulty ? vddReading->value : VDD_DEFAULT;
 
     const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
 
