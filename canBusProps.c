@@ -50,14 +50,23 @@ gdouble getEngineRpm() {
     if (isFrameTooOld(RPM_FRAME_INDEX)) return -1;
 
     CanFrameState* state = &workerData.canBusData.frames[RPM_FRAME_INDEX];
-    return (gdouble)((state->data[0] << 8 | state->data[1]) / 4);
+
+    g_mutex_lock(&state->lock);
+    gdouble retVal = (gdouble)((state->data[0] << 8 | state->data[1]) / 4);
+    g_mutex_unlock(&state->lock);
+
+    return retVal;
 }
 
 gdouble getCoolantTemp() {
     if (isFrameTooOld(COOLANT_TEMP_FRAME_INDEX)) return -100;
 
     CanFrameState* state = &workerData.canBusData.frames[COOLANT_TEMP_FRAME_INDEX];
-    return (gdouble)(state->data[0] - 30);
+    g_mutex_lock(&state->lock);
+    gdouble retVal = (gdouble)(state->data[0] - 30);
+    g_mutex_unlock(&state->lock);
+
+    return retVal;
 }
 
 static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
