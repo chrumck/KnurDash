@@ -1,3 +1,6 @@
+#ifndef __sensorProps_c
+#define __sensorProps_c
+
 #include <gtk/gtk.h>
 #include <math.h>
 
@@ -20,23 +23,23 @@
 #define PRESS_B 0.02529
 #define PRESS_C 0.0000350
 
-static gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
+gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
     const gdouble logSensorR = log(sensorR);
     return TEMP_A + (TEMP_B * logSensorR) + (TEMP_C * pow(logSensorR, 3));
 }
 
-static gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
+gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
     const gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
     return value < 0 ? 0 : value;
 }
 
-static gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
+gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
     return sensorV * 2;
 }
 
-static const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
+const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
     {
         {
             .base = {
@@ -94,3 +97,5 @@ static const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         },
     }
 };
+
+#endif
