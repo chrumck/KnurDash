@@ -28,9 +28,7 @@
 #define ADC_FRAME_TEMP_OFFSET 30
 #define ADC_FRAME_PRESS_FACTOR 32
 
-guint8 getAdcFrame() {
-    guint8 frame[ADC_FRAME_LENGTH] = {};
-
+void getAdcFrame(guint8* frame) {
     frame[0] = ADC_FRAME_ID & 0xFF;
     frame[1] = (ADC_FRAME_ID >> 8) & 0xFF;
     frame[2] = (ADC_FRAME_ID >> 16) & 0xFF;
