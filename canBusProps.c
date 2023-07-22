@@ -6,8 +6,6 @@
 #include "dataContracts.h"
 #include "workerData.c"
 
-#define KNURDASH_FRAME_ID 0x7F0
-
 #define BAUD_REGISTER 0x03
 #define BAUD_VALUE 16
 

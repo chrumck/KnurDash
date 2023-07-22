@@ -21,6 +21,16 @@
 
 #define BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
+#define ADC_FRAME_ID 0x7F0
+#define ADC_FRAME_LENGTH 8
+
+guint8 getAdcFrame() {
+    guint8 frame[ADC_FRAME_LENGTH] = {};
+
+
+}
+
+
 void onPoweredStateChanged(Adapter* adapter, gboolean state) {
     g_message("BT adapter powered '%s' (%s)", state ? "on" : "off", binc_adapter_get_path(adapter));
     if (state == TRUE) return;
