@@ -72,6 +72,8 @@ typedef struct {
 
     SensorState state;
     gboolean isFaulty;
+
+    GMutex lock;
 } SensorReading;
 
 typedef struct {

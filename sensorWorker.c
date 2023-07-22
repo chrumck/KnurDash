@@ -138,26 +138,29 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
 }
 
 #define handleSensorReadFault()\
-    if (wasFaulty == TRUE) return;\
+    if (reading->isFaulty) return;\
+    g_mutex_lock(&reading->lock);\
     reading->isFaulty = TRUE;\
     reading->value = FAULTY_READING_VALUE;\
+    g_mutex_unlock(&reading->lock);\
     setLabel(widgets->label, NO_READING_LABEL, 0);\
     setFrame(widgets->frame, StateNormal);\
 
-void setSensorWidgets(
+void setSensorReadingAndWidgets(
     gdouble value,
-    gboolean wasFaulty,
     SensorReading* reading,
     const SensorBase* sensor,
     const SensorWidgets* widgets) {
 
-    if (!wasFaulty &&
-        value < reading->value + sensor->precision &&
-        value > reading->value - sensor->precision &&
-        value >= reading->min - sensor->precision &&
-        value <= reading->max + sensor->precision) return;
+    if (!reading->isFaulty && value < reading->value + sensor->precision && value > reading->value - sensor->precision) return;
 
+    g_mutex_lock(&reading->lock);
+
+    gboolean wasFaulty = reading->isFaulty;
+
+    reading->isFaulty = FALSE;
     reading->value = value;
+
     setLabel(widgets->label, sensor->format, value);
 
     if (reading->min > value) {
@@ -175,6 +178,8 @@ void setSensorWidgets(
         reading->state = state;
         setFrame(widgets->frame, state);
     }
+
+    g_mutex_unlock(&reading->lock);
 }
 
 //-------------------------------------------------------------------------------------------------------------
@@ -184,7 +189,6 @@ void readAdcSensor(int adc, int channel) {
     SensorData* sensorData = &workerData.sensorData;
     const SensorWidgets* widgets = &sensorData->adcWidgets[adc][channel];
     SensorReading* reading = &sensorData->adcReadings[adc][channel];
-    gboolean wasFaulty = reading->isFaulty;
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], newConfig);
@@ -214,8 +218,11 @@ void readAdcSensor(int adc, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 v = signExtend32(temp, 12);
 
-    if ((!wasFaulty && (v < sensor->base.rawMin || v > sensor->base.rawMax)) ||
-        (wasFaulty && (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND))) {
+    if (reading->isFaulty && (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) {
+        return;
+    }
+
+    if (!reading->isFaulty && (v < sensor->base.rawMin || v > sensor->base.rawMax)) {
         handleSensorReadFault();
         g_warning("Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ", v, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
         return;
@@ -225,9 +232,8 @@ void readAdcSensor(int adc, int channel) {
     const gdouble vdd = vddReading->isFaulty == FALSE ? vddReading->value : VDD_DEFAULT;
 
     const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
-    reading->isFaulty = FALSE;
 
-    setSensorWidgets(value, wasFaulty, reading, &sensor->base, widgets);
+    setSensorReadingAndWidgets(value, reading, &sensor->base, widgets);
 }
 
 void readCanSensor(int canSensorIndex) {
@@ -235,20 +241,20 @@ void readCanSensor(int canSensorIndex) {
     SensorData* sensorData = &workerData.sensorData;
     const SensorWidgets* widgets = &sensorData->canWidgets[canSensorIndex];
     SensorReading* reading = &sensorData->canReadings[canSensorIndex];
-    gboolean wasFaulty = reading->isFaulty;
 
     const gdouble value = sensor->getValue();
 
-    if ((!wasFaulty && (value < sensor->base.rawMin || value > sensor->base.rawMax)) ||
-        (wasFaulty && (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision))) {
+    if (reading->isFaulty && (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) {
+        return;
+    }
+
+    if (!reading->isFaulty && (value < sensor->base.rawMin || value > sensor->base.rawMax)) {
         handleSensorReadFault();
         g_warning("CAN sensor value %f out of bounds: %d~%d - sensor index:%d", value, sensor->base.rawMin, sensor->base.rawMax, canSensorIndex);
         return;
     }
 
-    reading->isFaulty = FALSE;
-
-    setSensorWidgets(value, wasFaulty, reading, &sensor->base, widgets);
+    setSensorReadingAndWidgets(value, reading, &sensor->base, widgets);
 }
 
 gpointer sensorWorkerLoop() {
