@@ -39,22 +39,22 @@ guint8 getAdcFrame() {
     SensorReading* transTemp = &workerData.sensorData.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
     g_mutex_lock(&transTemp->lock);
     frame[4] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(transTemp->value + ADC_FRAME_TEMP_OFFSET);
-    g_mutex_lock(&transTemp->lock);
+    g_mutex_unlock(&transTemp->lock);
 
     SensorReading* diffTemp = &workerData.sensorData.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
     g_mutex_lock(&diffTemp->lock);
     frame[4] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(diffTemp->value + ADC_FRAME_TEMP_OFFSET);
-    g_mutex_lock(&diffTemp->lock);
+    g_mutex_unlock(&diffTemp->lock);
 
     SensorReading* oilTemp = &workerData.sensorData.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
     g_mutex_lock(&oilTemp->lock);
     frame[4] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilTemp->value + ADC_FRAME_TEMP_OFFSET);
-    g_mutex_lock(&oilTemp->lock);
+    g_mutex_unlock(&oilTemp->lock);
 
     SensorReading* oilPress = &workerData.sensorData.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
     g_mutex_lock(&oilPress->lock);
     frame[4] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilPress->value * 32);
-    g_mutex_lock(&oilPress->lock);
+    g_mutex_unlock(&oilPress->lock);
 }
 
 
