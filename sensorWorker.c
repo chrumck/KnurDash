@@ -17,15 +17,6 @@
 #define IGN_GPIO_PIN 22
 #define BUZZER_GPIO_PIN 27
 
-#define VDD_DEFAULT 3350
-#define VDD_ADC 1
-#define VDD_CHANNEL 3
-
-#define OIL_TEMP_ADC 0
-#define OIL_TEMP_CHANNEL 2
-#define OIL_PRESS_ADC 0
-#define OIL_PRESS_CHANNEL 3
-
 #define COOLANT_TEMP_CAN_SENSOR_INDEX 0
 
 #define NO_READING_LABEL "--"

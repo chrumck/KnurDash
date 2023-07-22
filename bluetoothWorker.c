@@ -13,6 +13,7 @@
 
 #include "dataContracts.h"
 #include "workerData.c"
+#include "sensorProps.c"
 
 #define SERVICE_BT_NAME "KnurDash BLE" 
 #define SERVICE_ID "00001ff8-0000-1000-8000-00805f9b34fb" 
@@ -21,13 +22,39 @@
 
 #define BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
-#define ADC_FRAME_ID 0x7F0
+#define ADC_FRAME_ID 0x000007F0
 #define ADC_FRAME_LENGTH 8
+#define ADC_FRAME_FAULTY_VALUE 0xFF
+#define ADC_FRAME_TEMP_OFFSET 30
+#define ADC_FRAME_PRESS_FACTOR 32
 
 guint8 getAdcFrame() {
     guint8 frame[ADC_FRAME_LENGTH] = {};
 
+    frame[0] = ADC_FRAME_ID & 0xFF;
+    frame[1] = (ADC_FRAME_ID >> 8) & 0xFF;
+    frame[2] = (ADC_FRAME_ID >> 16) & 0xFF;
+    frame[3] = (ADC_FRAME_ID >> 24) & 0xFF;
 
+    SensorReading* transTemp = &workerData.sensorData.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
+    g_mutex_lock(&transTemp->lock);
+    frame[4] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(transTemp->value + ADC_FRAME_TEMP_OFFSET);
+    g_mutex_lock(&transTemp->lock);
+
+    SensorReading* diffTemp = &workerData.sensorData.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
+    g_mutex_lock(&diffTemp->lock);
+    frame[4] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(diffTemp->value + ADC_FRAME_TEMP_OFFSET);
+    g_mutex_lock(&diffTemp->lock);
+
+    SensorReading* oilTemp = &workerData.sensorData.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
+    g_mutex_lock(&oilTemp->lock);
+    frame[4] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilTemp->value + ADC_FRAME_TEMP_OFFSET);
+    g_mutex_lock(&oilTemp->lock);
+
+    SensorReading* oilPress = &workerData.sensorData.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+    g_mutex_lock(&oilPress->lock);
+    frame[4] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilPress->value * 32);
+    g_mutex_lock(&oilPress->lock);
 }
 
 

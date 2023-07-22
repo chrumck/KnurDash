@@ -6,6 +6,19 @@
 
 #include "dataContracts.h"
 
+#define VDD_DEFAULT 3350
+#define VDD_ADC 1
+#define VDD_CHANNEL 3
+
+#define TRANS_TEMP_ADC 0
+#define TRANS_TEMP_CHANNEL 0
+#define DIFF_TEMP_ADC 0
+#define DIFF_TEMP_CHANNEL 1
+#define OIL_TEMP_ADC 0
+#define OIL_TEMP_CHANNEL 2
+#define OIL_PRESS_ADC 0
+#define OIL_PRESS_CHANNEL 3
+
 #define TEMP_SENSOR_RAW_MIN 30
 #define TEMP_SENSOR_RAW_MAX 2030
 
