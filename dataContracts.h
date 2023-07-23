@@ -153,7 +153,7 @@ typedef struct {
     SensorData sensors;
     gboolean isSensorWorkerRunning;
 
-    CanBusData canBusData;
+    CanBusData canBus;
     gboolean isCanBusWorkerRunning;
 
     BluetoothData bluetoothData;

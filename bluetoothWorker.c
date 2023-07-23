@@ -41,10 +41,10 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
 
-    CanFrameState* frameToSend = !workerData.canBusData.adcFrame.btWasSent ? &workerData.canBusData.adcFrame : NULL;
+    CanFrameState* frameToSend = !workerData.canBus.adcFrame.btWasSent ? &workerData.canBus.adcFrame : NULL;
     for (guint i = 0; i < CAN_FRAMES_COUNT; i++)
     {
-        CanFrameState* frame = &workerData.canBusData.frames[i];
+        CanFrameState* frame = &workerData.canBus.frames[i];
         if (frame->btWasSent) continue;
         if (frameToSend != NULL && frame->timestamp <= frameToSend->timestamp) continue;
         frameToSend = frame;

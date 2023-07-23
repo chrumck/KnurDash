@@ -244,7 +244,7 @@ void readCanSensor(int canSensorIndex) {
 }
 
 void setAdcCanFrame() {
-    CanFrameState* adcFrame = &workerData.canBusData.adcFrame;
+    CanFrameState* adcFrame = &workerData.canBus.adcFrame;
 
     g_mutex_lock(&adcFrame->lock);
 
@@ -299,7 +299,7 @@ gpointer sensorWorkerLoop() {
     resetReadingsMinMax();
     setWidgets();
 
-    CanFrameState* adcFrame = &workerData.canBusData.adcFrame;
+    CanFrameState* adcFrame = &workerData.canBus.adcFrame;
     g_mutex_lock(&adcFrame->lock);
     adcFrame->canId = ADC_FRAME_ID;
     adcFrame->isExtended = FALSE;
