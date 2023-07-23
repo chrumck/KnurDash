@@ -150,6 +150,16 @@ gpointer bluetoothWorkerLoop() {
 
     g_message("Bluetooth worker starting, adapter '%s'", binc_adapter_get_path(adapter));
 
+    GMainContext* workerContext = g_main_context_new();
+    g_main_context_push_thread_default(workerContext);
+    GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
+    workerData.bluetooth.mainLoop = mainLoop;
+
+    GSource* stopBtWorkerSource = g_timeout_source_new(BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL);
+    g_source_set_callback(stopBtWorkerSource, stopBtWorker, NULL, NULL);
+    g_source_attach(stopBtWorkerSource, workerContext);
+    g_source_unref(stopBtWorkerSource);
+
     binc_adapter_set_powered_state_cb(adapter, &onPoweredStateChanged);
     if (!binc_adapter_get_powered_state(adapter)) binc_adapter_power_on(adapter);
 
@@ -178,16 +188,6 @@ gpointer bluetoothWorkerLoop() {
     binc_application_set_char_stop_notify_cb(app, &onCharStopNotify);
 
     binc_adapter_register_application(adapter, app);
-
-    GMainContext* workerContext = g_main_context_new();
-    g_main_context_push_thread_default(workerContext);
-    GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
-    workerData.bluetooth.mainLoop = mainLoop;
-
-    GSource* stopBtWorkerSource = g_timeout_source_new(BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL);
-    g_source_set_callback(stopBtWorkerSource, stopBtWorker, NULL, NULL);
-    g_source_attach(stopBtWorkerSource, workerContext);
-    g_source_unref(stopBtWorkerSource);
 
     workerData.isBluetoothWorkerRunning = TRUE;
 
