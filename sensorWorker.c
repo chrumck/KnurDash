@@ -53,13 +53,13 @@ void setFrame(GtkFrame* frame, const SensorState state) {
 void resetReadingsValues() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            SensorReading* reading = &workerData.sensorData.adcReadings[i][j];
+            SensorReading* reading = &workerData.sensors.adcReadings[i][j];
             reading->value = FAULTY_READING_VALUE;
             reading->isFaulty = TRUE;
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        SensorReading* reading = &workerData.sensorData.canReadings[i];
+        SensorReading* reading = &workerData.sensors.canReadings[i];
         reading->value = FAULTY_READING_VALUE;
         reading->isFaulty = TRUE;
     }
@@ -68,13 +68,13 @@ void resetReadingsValues() {
 void resetReadingsMinMax() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            workerData.sensorData.adcReadings[i][j].min = G_MAXDOUBLE;
-            workerData.sensorData.adcReadings[i][j].max = -G_MAXDOUBLE;
+            workerData.sensors.adcReadings[i][j].min = G_MAXDOUBLE;
+            workerData.sensors.adcReadings[i][j].max = -G_MAXDOUBLE;
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        workerData.sensorData.canReadings[i].min = G_MAXDOUBLE;
-        workerData.sensorData.canReadings[i].max = -G_MAXDOUBLE;
+        workerData.sensors.canReadings[i].min = G_MAXDOUBLE;
+        workerData.sensors.canReadings[i].max = -G_MAXDOUBLE;
     }
 };
 
@@ -90,13 +90,13 @@ void setWidgets() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const SensorBase* sensor = &adcSensors[i][j].base;
-            SensorWidgets* widgets = &workerData.sensorData.adcWidgets[i][j];
+            SensorWidgets* widgets = &workerData.sensors.adcWidgets[i][j];
             setSingleSensorWidgets(sensor, widgets);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
         const SensorBase* sensor = &canSensors[i].base;
-        SensorWidgets* widgets = &workerData.sensorData.canWidgets[i];
+        SensorWidgets* widgets = &workerData.sensors.canWidgets[i];
         setSingleSensorWidgets(sensor, widgets);
     }
 };
@@ -104,13 +104,13 @@ void setWidgets() {
 void resetMinMaxLabels() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            const SensorWidgets* widgets = &workerData.sensorData.adcWidgets[i][j];
+            const SensorWidgets* widgets = &workerData.sensors.adcWidgets[i][j];
             setLabel(widgets->labelMin, NO_READING_LABEL, 0);
             setLabel(widgets->labelMax, NO_READING_LABEL, 0);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        const SensorWidgets* widgets = &workerData.sensorData.canWidgets[i];
+        const SensorWidgets* widgets = &workerData.sensors.canWidgets[i];
         setLabel(widgets->labelMin, NO_READING_LABEL, 0);
         setLabel(widgets->labelMax, NO_READING_LABEL, 0);
 
@@ -172,12 +172,12 @@ void setSensorReadingAndWidgets(
 
 void readAdcSensor(int adc, int channel) {
     const AdcSensor* sensor = &adcSensors[adc][channel];
-    SensorData* sensorData = &workerData.sensorData;
-    const SensorWidgets* widgets = &sensorData->adcWidgets[adc][channel];
-    SensorReading* reading = &sensorData->adcReadings[adc][channel];
+    SensorData* sensors = &workerData.sensors;
+    const SensorWidgets* widgets = &sensors->adcWidgets[adc][channel];
+    SensorReading* reading = &sensors->adcReadings[adc][channel];
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
-    int writeResult = i2c_write_byte(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], newConfig);
+    int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], newConfig);
     if (writeResult != 0) {
         handleSensorReadFault();
         g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
@@ -187,7 +187,7 @@ void readAdcSensor(int adc, int channel) {
     g_usleep(ADC_SWITCH_CHANNEL_SLEEP);
 
     guint8 buf[3];
-    int readResult = i2c_read_device(sensorData->i2cPiHandle, sensorData->i2cAdcHandles[adc], buf, 3);
+    int readResult = i2c_read_device(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], buf, 3);
     if (readResult != 3) {
         handleSensorReadFault();
         g_warning("Could not read adc bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
@@ -214,7 +214,7 @@ void readAdcSensor(int adc, int channel) {
         return;
     }
 
-    SensorReading* vddReading = &sensorData->adcReadings[VDD_ADC][VDD_CHANNEL];
+    SensorReading* vddReading = &sensors->adcReadings[VDD_ADC][VDD_CHANNEL];
     const gdouble vdd = !vddReading->isFaulty ? vddReading->value : VDD_DEFAULT;
 
     const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
@@ -224,9 +224,9 @@ void readAdcSensor(int adc, int channel) {
 
 void readCanSensor(int canSensorIndex) {
     const CanSensor* sensor = &canSensors[canSensorIndex];
-    SensorData* sensorData = &workerData.sensorData;
-    const SensorWidgets* widgets = &sensorData->canWidgets[canSensorIndex];
-    SensorReading* reading = &sensorData->canReadings[canSensorIndex];
+    SensorData* sensors = &workerData.sensors;
+    const SensorWidgets* widgets = &sensors->canWidgets[canSensorIndex];
+    SensorReading* reading = &sensors->canReadings[canSensorIndex];
 
     const gdouble value = sensor->getValue();
 
@@ -250,16 +250,16 @@ void setAdcCanFrame() {
 
     memset(adcFrame->data, 0, CAN_DATA_SIZE);
 
-    SensorReading* transTemp = &workerData.sensorData.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
+    SensorReading* transTemp = &workerData.sensors.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
     adcFrame->data[0] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(transTemp->value + ADC_FRAME_TEMP_OFFSET);
 
-    SensorReading* diffTemp = &workerData.sensorData.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
+    SensorReading* diffTemp = &workerData.sensors.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
     adcFrame->data[1] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(diffTemp->value + ADC_FRAME_TEMP_OFFSET);
 
-    SensorReading* oilTemp = &workerData.sensorData.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
+    SensorReading* oilTemp = &workerData.sensors.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
     adcFrame->data[2] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilTemp->value + ADC_FRAME_TEMP_OFFSET);
 
-    SensorReading* oilPress = &workerData.sensorData.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+    SensorReading* oilPress = &workerData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
     adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilPress->value * 32);
 
     adcFrame->timestamp = g_get_monotonic_time();
@@ -273,15 +273,15 @@ gpointer sensorWorkerLoop() {
 
     int i2cPiHandle = pigpio_start(NULL, NULL);
     if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
-    workerData.sensorData.i2cPiHandle = i2cPiHandle;
+    workerData.sensors.i2cPiHandle = i2cPiHandle;
 
     int adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
     if (adc0Handle < 0)  g_error("Could not get adc0 handle: %d", adc0Handle);
-    workerData.sensorData.i2cAdcHandles[0] = adc0Handle;
+    workerData.sensors.i2cAdcHandles[0] = adc0Handle;
 
     int adc1Handle = i2c_open(i2cPiHandle, 1, ADC1_I2C_ADDRESS, 0);
     if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
-    workerData.sensorData.i2cAdcHandles[1] = adc1Handle;
+    workerData.sensors.i2cAdcHandles[1] = adc1Handle;
 
     int setIgnPinMode = set_mode(i2cPiHandle, IGN_GPIO_PIN, PI_INPUT);
     if (setIgnPinMode != 0) g_error("Could not set GPIO pin mode for IGN_IN: %d", setIgnPinMode);
@@ -319,7 +319,7 @@ gpointer sensorWorkerLoop() {
 
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
 
-        SensorReading* pressureReading = &(workerData.sensorData.adcReadings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        SensorReading* pressureReading = &(workerData.sensors.adcReadings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
         const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
         if (workerData.wasEngineStarted == FALSE &&

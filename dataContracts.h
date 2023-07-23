@@ -150,7 +150,7 @@ typedef struct {
 
     gboolean wasEngineStarted;
 
-    SensorData sensorData;
+    SensorData sensors;
     gboolean isSensorWorkerRunning;
 
     CanBusData canBusData;
