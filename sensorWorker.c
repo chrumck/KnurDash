@@ -253,6 +253,31 @@ void readCanSensor(int canSensorIndex) {
     setSensorReadingAndWidgets(value, reading, &sensor->base, widgets);
 }
 
+void setAdcCanFrame() {
+    CanFrameState* adcFrame = &workerData.canBusData.adcFrame;
+
+    g_mutex_lock(&adcFrame->lock);
+
+    memset(adcFrame->data, 0, CAN_DATA_SIZE);
+
+    SensorReading* transTemp = &workerData.sensorData.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
+    adcFrame->data[0] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(transTemp->value + ADC_FRAME_TEMP_OFFSET);
+
+    SensorReading* diffTemp = &workerData.sensorData.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
+    adcFrame->data[1] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(diffTemp->value + ADC_FRAME_TEMP_OFFSET);
+
+    SensorReading* oilTemp = &workerData.sensorData.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
+    adcFrame->data[2] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilTemp->value + ADC_FRAME_TEMP_OFFSET);
+
+    SensorReading* oilPress = &workerData.sensorData.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+    adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilPress->value * 32);
+
+    adcFrame->timestamp = g_get_monotonic_time();
+    adcFrame->btWasSent = FALSE;
+
+    g_mutex_unlock(&adcFrame->lock);
+}
+
 gpointer sensorWorkerLoop() {
     g_message("Sensor worker starting");
 
@@ -283,6 +308,12 @@ gpointer sensorWorkerLoop() {
     resetReadingsValues();
     resetReadingsMinMax();
     setWidgets();
+
+    CanFrameState* adcFrame = &workerData.canBusData.adcFrame;
+    adcFrame->canId = ADC_FRAME_ID;
+    adcFrame->isExtended = FALSE;
+    adcFrame->isRemoteRequest = FALSE;
+    adcFrame->dataLength = CAN_DATA_SIZE;
 
     workerData.isSensorWorkerRunning = TRUE;
     guint shutDownCounter = 0;
@@ -330,8 +361,10 @@ gpointer sensorWorkerLoop() {
 
         readAdcSensor(VDD_ADC, VDD_CHANNEL);
 
-        readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
         readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
+        readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+
+        setAdcCanFrame();
 
         readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX);
 

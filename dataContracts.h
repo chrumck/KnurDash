@@ -16,6 +16,11 @@
 #define CAN_DATA_SIZE 8
 #define CAN_FRAMES_COUNT 4
 
+#define ADC_FRAME_ID 0x000007F0
+#define ADC_FRAME_FAULTY_VALUE 0xFF
+#define ADC_FRAME_TEMP_OFFSET 30
+#define ADC_FRAME_PRESS_FACTOR 32
+
 typedef enum {
     AppShutdown = 0,
     SystemShutdown = 1,
@@ -124,6 +129,7 @@ typedef struct {
     GMainLoop* mainLoop;
 
     CanFrameState frames[CAN_FRAMES_COUNT];
+    CanFrameState adcFrame;
 } CanBusData;
 
 typedef struct {
