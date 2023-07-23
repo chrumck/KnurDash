@@ -88,6 +88,8 @@ guint8 getChecksum(guint8* data, int length)
 }
 
 gboolean getFrameFromCAN(gpointer data) {
+    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+
     guint frameIndex = GPOINTER_TO_UINT(data);
 
     workerData.canBus.requestCount++;
