@@ -135,13 +135,12 @@ typedef struct {
 typedef struct {
     GMainLoop* mainLoop;
 
-    gboolean isNotifying;
-    guint btAdcNotifyingSourceId;
-
     GDBusConnection* dbusConn;
     Adapter* adapter;
     Application* app;
     Advertisement* adv;
+
+    gboolean isNotifying;
 } BluetoothData;
 
 typedef struct {
