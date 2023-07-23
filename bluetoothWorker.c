@@ -196,6 +196,12 @@ gboolean stopBtWorker() {
 
     Adapter* adapter = workerData.bluetooth.adapter;
 
+    if (adapter != NULL) {
+        GList* connected = binc_adapter_get_connected_devices(adapter);
+        for (GList* iterator = connected; iterator; iterator = iterator->next) binc_device_disconnect(iterator->data);
+        g_list_free(connected);
+    }
+
     if (workerData.bluetooth.app != NULL) {
         binc_adapter_unregister_application(adapter, workerData.bluetooth.app);
         binc_application_free(workerData.bluetooth.app);

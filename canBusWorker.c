@@ -113,6 +113,8 @@ gboolean getFrameFromCAN(gpointer data) {
 
     g_usleep(I2C_REQUEST_DELAY);
 
+    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+
     guint8 frameData[FRAME_LENGTH] = { 0 };
     int readResult = i2c_read_device(canBus->i2cPiHandle, canBus->i2cCanHandle, frameData, FRAME_LENGTH);
 
@@ -157,10 +159,6 @@ gboolean getFrameFromCAN(gpointer data) {
 
     g_mutex_unlock(&frameState->lock);
     return G_SOURCE_CONTINUE;
-}
-
-gboolean sendAdcSensorsToBluetooth() {
-
 }
 
 gpointer canBusWorkerLoop() {
