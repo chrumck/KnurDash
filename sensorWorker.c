@@ -54,18 +54,14 @@ void resetReadingsValues() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             SensorReading* reading = &workerData.sensorData.adcReadings[i][j];
-            g_mutex_lock(&reading->lock);
             reading->value = FAULTY_READING_VALUE;
             reading->isFaulty = TRUE;
-            g_mutex_unlock(&reading->lock);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
         SensorReading* reading = &workerData.sensorData.canReadings[i];
-        g_mutex_lock(&reading->lock);
         reading->value = FAULTY_READING_VALUE;
         reading->isFaulty = TRUE;
-        g_mutex_unlock(&reading->lock);
     }
 };
 
@@ -135,10 +131,8 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
 
 #define handleSensorReadFault()\
     if (reading->isFaulty) return;\
-    g_mutex_lock(&reading->lock);\
     reading->isFaulty = TRUE;\
     reading->value = FAULTY_READING_VALUE;\
-    g_mutex_unlock(&reading->lock);\
     setLabel(widgets->label, NO_READING_LABEL, 0);\
     setFrame(widgets->frame, StateNormal);\
 
@@ -149,8 +143,6 @@ void setSensorReadingAndWidgets(
     const SensorWidgets* widgets) {
 
     if (!reading->isFaulty && value < reading->value + sensor->precision && value > reading->value - sensor->precision) return;
-
-    g_mutex_lock(&reading->lock);
 
     gboolean wasFaulty = reading->isFaulty;
 
@@ -174,8 +166,6 @@ void setSensorReadingAndWidgets(
         reading->state = state;
         setFrame(widgets->frame, state);
     }
-
-    g_mutex_unlock(&reading->lock);
 }
 
 //-------------------------------------------------------------------------------------------------------------
