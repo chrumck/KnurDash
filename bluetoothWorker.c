@@ -85,23 +85,35 @@ const char* onCharRead(const Application* app, const char* address, const char* 
     return NULL;
 }
 
-void removeSource(GMainContext* context, guint sourceId) {
-    if (sourceId <= 0) return;
-    GSource* toRemove = g_main_context_find_source_by_id(context, sourceId);
-    g_source_destroy(toRemove);
+void addSource(GMainContext* context, CanFrameState* frame, guint notifyInterval) {
+    GSource* source = g_timeout_source_new(notifyInterval);
+    g_source_set_callback(source, sendCanFrameToBt, frame, NULL);
+    frame->btNotifyingSourceId = g_source_attach(source, context);
+    g_source_unref(source);
 }
+
+void removeSource(GMainContext* context, CanFrameState* frame) {
+    if (frame->btNotifyingSourceId <= 0) return;
+    GSource* sourceToRemove = g_main_context_find_source_by_id(context, frame->btNotifyingSourceId);
+    g_source_destroy(sourceToRemove);
+    frame->btNotifyingSourceId = 0;
+}
+
+#define getNotifyInterval(_receivedData)\
+    guint16 notifyInterval = _receivedData[1] << 8 | _receivedData[2];\
+    if (notifyInterval < BLUETOOTH_NOTIFY_INTERVAL_MIN || notifyInterval > BLUETOOTH_NOTIFY_INTERVAL_MAX) {\
+        g_warning("Received invalid BT notify interval:%d", notifyInterval);\
+        return BLUEZ_ERROR_REJECTED;\
+    }\
 
 gboolean sendCanFrameToBt(gpointer data) {
     if (workerData.requestShutdown) return G_SOURCE_REMOVE;
     if (!workerData.bluetooth.isNotifying) return G_SOURCE_CONTINUE;
 
-    gint frameIndex = GPOINTER_TO_INT(data);
-
-    CanFrameState* frame = frameIndex == ADC_FRAME_INDEX ? &workerData.canBus.adcFrame : &workerData.canBus.frames[frameIndex];
+    CanFrameState* frame = (CanFrameState*)data;
     if (frame->btWasSent) return G_SOURCE_CONTINUE;
 
     GByteArray* arrayToSend = getArrayToSend(frame);
-
     binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
     g_byte_array_free(arrayToSend, TRUE);
 }
@@ -116,27 +128,31 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
 
     if (received->len == 1) {
-        removeSource(context, workerData.canBus.adcFrame.btNotifyingSourceId);
-        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, workerData.canBus.frames[i].btNotifyingSourceId);
+        removeSource(context, &workerData.canBus.adcFrame);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &workerData.canBus.frames[i]);
         return NULL;
     }
+
+    getNotifyInterval(received->data);
 
     if (received->len == 3) {
-        guint16 interval = received->data[1] << 8 | received->data[2];
-        if (interval < BLUETOOTH_NOTIFY_INTERVAL_MIN || interval > BLUETOOTH_NOTIFY_INTERVAL_MAX) {
-            g_warning("Received invalid BT notify interval:%d", interval);
-            return BLUEZ_ERROR_REJECTED;
-        }
+        removeSource(context, &workerData.canBus.adcFrame);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &workerData.canBus.frames[i]);
 
-        removeSource(context, workerData.canBus.adcFrame.btNotifyingSourceId);
-        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, workerData.canBus.frames[i].btNotifyingSourceId);
-
-        // add all sources here
+        addSource(context, &workerData.canBus.adcFrame, notifyInterval);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) addSource(context, &workerData.canBus.frames[i], notifyInterval);
 
         return NULL;
     }
 
-    // add single source here
+    guint32 frameId = received->data[3] << 24 | received->data[4] << 16 | received->data[5] << 8 | received->data[6];
+    CanFrameState* frame = frameId == ADC_FRAME_ID ? &workerData.canBus.adcFrame : NULL;
+    for (guint i = 0; i < CAN_FRAMES_COUNT; i++) if (frameId == workerData.canBus.frames[i].canId) frame = &workerData.canBus.frames[i];
+
+    if (frame == NULL) return BLUEZ_ERROR_REJECTED;
+
+    removeSource(context, frame);
+    addSource(context, frame, notifyInterval);
 
     g_message("Received BT write request, length:%d, command:%d", charId, received->len, received->data[0]);
     return NULL;
