@@ -21,6 +21,8 @@
 #define CHAR_ID_FILTER "00000002-0000-1000-8000-00805f9b34fb"
 
 #define BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL 500
+#define BLUETOOTH_NOTIFY_INTERVAL_MIN 5
+#define BLUETOOTH_NOTIFY_INTERVAL_MAX 5000
 
 #define RACECHRONO_DENY_ALL 0x00
 #define RACECHRONO_ALLOW_ALL 0x01
@@ -42,6 +44,28 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
     else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
 }
 
+GByteArray* getArrayToSend(CanFrameState* frame) {
+    GByteArray* arrayToSend = g_byte_array_sized_new(sizeof(CAN_FRAME_ID_LENGTH + CAN_DATA_SIZE));
+
+    g_mutex_lock(&frame->lock);
+
+    guint8 frameId[CAN_FRAME_ID_LENGTH] = {
+        frame->canId & 0xFF,
+        (frame->canId >> 8) & 0xFF,
+        (frame->canId >> 16) & 0xFF,
+        (frame->canId >> 24) & 0xFF,
+    };
+
+    g_byte_array_append(arrayToSend, frameId, sizeof(CAN_FRAME_ID_LENGTH));
+    g_byte_array_append(arrayToSend, frame->data, sizeof(CAN_DATA_SIZE));
+
+    frame->btWasSent = TRUE;
+
+    g_mutex_unlock(&frame->lock);
+
+    return arrayToSend;
+}
+
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
 
@@ -56,25 +80,7 @@ const char* onCharRead(const Application* app, const char* address, const char* 
 
     if (frameToSend == NULL) return NULL;
 
-    GByteArray* arrayToSend = g_byte_array_sized_new(sizeof(CAN_FRAME_ID_LENGTH + CAN_DATA_SIZE));
-
-    g_mutex_lock(&frameToSend->lock);
-
-    guint8 frameId[CAN_FRAME_ID_LENGTH] = {
-        frameToSend->canId & 0xFF,
-        (frameToSend->canId >> 8) & 0xFF,
-        (frameToSend->canId >> 16) & 0xFF,
-        (frameToSend->canId >> 24) & 0xFF,
-    };
-
-    g_byte_array_append(arrayToSend, frameId, sizeof(CAN_FRAME_ID_LENGTH));
-    g_byte_array_append(arrayToSend, frameToSend->data, sizeof(CAN_DATA_SIZE));
-
-    frameToSend->btWasSent = TRUE;
-
-    g_mutex_unlock(&frameToSend->lock);
-
-    binc_application_set_char_value(workerData.bluetooth.app, serviceId, charId, arrayToSend);
+    binc_application_set_char_value(workerData.bluetooth.app, serviceId, charId, getArrayToSend(frameToSend));
 
     return NULL;
 }
@@ -83,6 +89,21 @@ void removeSource(GMainContext* context, guint sourceId) {
     if (sourceId <= 0) return;
     GSource* toRemove = g_main_context_find_source_by_id(context, sourceId);
     g_source_destroy(toRemove);
+}
+
+gboolean sendCanFrameToBt(gpointer data) {
+    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+    if (!workerData.bluetooth.isNotifying) return G_SOURCE_CONTINUE;
+
+    gint frameIndex = GPOINTER_TO_INT(data);
+
+    CanFrameState* frame = frameIndex == ADC_FRAME_INDEX ? &workerData.canBus.adcFrame : &workerData.canBus.frames[frameIndex];
+    if (frame->btWasSent) return G_SOURCE_CONTINUE;
+
+    GByteArray* arrayToSend = getArrayToSend(frame);
+
+    binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
+    g_byte_array_free(arrayToSend, TRUE);
 }
 
 const char* onCharWrite(const Application* app, const char* address, const char* serviceId, const char* charId, GByteArray* received) {
@@ -101,8 +122,21 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     }
 
     if (received->len == 3) {
+        guint16 interval = received->data[1] << 8 | received->data[2];
+        if (interval < BLUETOOTH_NOTIFY_INTERVAL_MIN || interval > BLUETOOTH_NOTIFY_INTERVAL_MAX) {
+            g_warning("Received invalid BT notify interval:%d", interval);
+            return BLUEZ_ERROR_REJECTED;
+        }
 
+        removeSource(context, workerData.canBus.adcFrame.btNotifyingSourceId);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, workerData.canBus.frames[i].btNotifyingSourceId);
+
+        // add all sources here
+
+        return NULL;
     }
+
+    // add single source here
 
     g_message("Received BT write request, length:%d, command:%d", charId, received->len, received->data[0]);
     return NULL;
@@ -123,8 +157,7 @@ void onCharStopNotify(const Application* app, const char* serviceId, const char*
 }
 
 gboolean stopBtWorker() {
-
-    if (workerData.requestShutdown == FALSE) return G_SOURCE_CONTINUE;
+    if (!workerData.requestShutdown) return G_SOURCE_CONTINUE;
 
     GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
