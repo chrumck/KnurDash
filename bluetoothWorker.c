@@ -22,6 +22,10 @@
 
 #define BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 
+#define RACECHRONO_DENY_ALL 0x00
+#define RACECHRONO_ALLOW_ALL 0x01
+#define RACECHRONO_ALLOW_SINGLE 0x02
+
 void onPoweredStateChanged(Adapter* adapter, gboolean state) {
     g_message("BT adapter powered '%s' (%s)", state ? "on" : "off", binc_adapter_get_path(adapter));
     if (state == TRUE) return;
@@ -75,10 +79,33 @@ const char* onCharRead(const Application* app, const char* address, const char* 
     return NULL;
 }
 
+void removeSource(GMainContext* context, guint sourceId) {
+    if (sourceId <= 0) return;
+    GSource* toRemove = g_main_context_find_source_by_id(context, sourceId);
+    g_source_destroy(toRemove);
+}
+
 const char* onCharWrite(const Application* app, const char* address, const char* serviceId, const char* charId, GByteArray* received) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_FILTER)) return BLUEZ_ERROR_NOT_PERMITTED;
+    if (received->len != 1 && received->len != 3 && received->len != 7) return BLUEZ_ERROR_REJECTED;
+    if (received->len == 1 && received->data[0] != RACECHRONO_DENY_ALL) return BLUEZ_ERROR_REJECTED;
+    if (received->len == 3 && received->data[0] != RACECHRONO_ALLOW_ALL) return BLUEZ_ERROR_REJECTED;
+    if (received->len == 7 && received->data[0] != RACECHRONO_ALLOW_SINGLE) return BLUEZ_ERROR_REJECTED;
 
-    g_message("onCharWrite char:%s, length:%d, data:%x,%x,%x  ", charId, received->len, received->data[0], received->data[1], received->data[2]);
+    GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
+
+    if (received->len == 1) {
+        removeSource(context, workerData.canBus.adcFrame.btNotifyingSourceId);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, workerData.canBus.frames[i].btNotifyingSourceId);
+        return NULL;
+    }
+
+    if (received->len == 3) {
+
+    }
+
+    g_message("Received BT write request, length:%d, command:%d", charId, received->len, received->data[0]);
+    return NULL;
 }
 
 void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
