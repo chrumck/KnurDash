@@ -34,8 +34,8 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
     g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
 
     ConnectionState state = binc_device_get_connection_state(device);
-    if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, workerData.bluetoothData.adv);
-    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, workerData.bluetoothData.adv);
+    if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
+    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
 }
 
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
@@ -70,7 +70,7 @@ const char* onCharRead(const Application* app, const char* address, const char* 
 
     g_mutex_unlock(&frameToSend->lock);
 
-    binc_application_set_char_value(workerData.bluetoothData.app, serviceId, charId, arrayToSend);
+    binc_application_set_char_value(workerData.bluetooth.app, serviceId, charId, arrayToSend);
 
     return NULL;
 }
@@ -84,14 +84,14 @@ const char* onCharWrite(const Application* app, const char* address, const char*
 void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return;
 
-    workerData.bluetoothData.isNotifying = TRUE;
+    workerData.bluetooth.isNotifying = TRUE;
     g_message("BT notify start");
 }
 
 void onCharStopNotify(const Application* app, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return;
 
-    workerData.bluetoothData.isNotifying = FALSE;
+    workerData.bluetooth.isNotifying = FALSE;
     g_message("BT notify stop");
 }
 
@@ -99,33 +99,33 @@ gboolean stopBtWorker() {
 
     if (workerData.requestShutdown == FALSE) return G_SOURCE_CONTINUE;
 
-    GMainContext* context = g_main_loop_get_context(workerData.bluetoothData.mainLoop);
+    GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
-    Adapter* adapter = workerData.bluetoothData.adapter;
+    Adapter* adapter = workerData.bluetooth.adapter;
 
-    if (workerData.bluetoothData.app != NULL) {
-        binc_adapter_unregister_application(adapter, workerData.bluetoothData.app);
-        binc_application_free(workerData.bluetoothData.app);
-        workerData.bluetoothData.app = NULL;
+    if (workerData.bluetooth.app != NULL) {
+        binc_adapter_unregister_application(adapter, workerData.bluetooth.app);
+        binc_application_free(workerData.bluetooth.app);
+        workerData.bluetooth.app = NULL;
     }
 
-    if (workerData.bluetoothData.adv != NULL) {
-        binc_adapter_stop_advertising(adapter, workerData.bluetoothData.adv);
-        binc_advertisement_free(workerData.bluetoothData.adv);
+    if (workerData.bluetooth.adv != NULL) {
+        binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
+        binc_advertisement_free(workerData.bluetooth.adv);
     }
 
     if (adapter != NULL) {
         binc_adapter_free(adapter);
-        workerData.bluetoothData.adapter = NULL;
+        workerData.bluetooth.adapter = NULL;
     }
 
-    if (workerData.bluetoothData.dbusConn != NULL) {
-        g_dbus_connection_close_sync(workerData.bluetoothData.dbusConn, NULL, NULL);
-        g_object_unref(workerData.bluetoothData.dbusConn);
+    if (workerData.bluetooth.dbusConn != NULL) {
+        g_dbus_connection_close_sync(workerData.bluetooth.dbusConn, NULL, NULL);
+        g_object_unref(workerData.bluetooth.dbusConn);
     }
 
-    g_main_loop_quit(workerData.bluetoothData.mainLoop);
+    g_main_loop_quit(workerData.bluetooth.mainLoop);
 
     g_message("Bluetooth Worker stopBtWorker done");
 
@@ -138,10 +138,10 @@ gpointer bluetoothWorkerLoop() {
 #endif
 
     GDBusConnection* dbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
-    workerData.bluetoothData.dbusConn = dbusConn;
+    workerData.bluetooth.dbusConn = dbusConn;
 
     Adapter* adapter = binc_adapter_get_default(dbusConn);
-    workerData.bluetoothData.adapter = adapter;
+    workerData.bluetooth.adapter = adapter;
 
     if (adapter == NULL) {
         g_error("No adapter found");
@@ -158,15 +158,15 @@ gpointer bluetoothWorkerLoop() {
     GPtrArray* advServiceUuids = g_ptr_array_new();
     g_ptr_array_add(advServiceUuids, SERVICE_ID);
 
-    workerData.bluetoothData.adv = binc_advertisement_create();
+    workerData.bluetooth.adv = binc_advertisement_create();
 
-    binc_advertisement_set_local_name(workerData.bluetoothData.adv, SERVICE_BT_NAME);
-    binc_advertisement_set_services(workerData.bluetoothData.adv, advServiceUuids);
+    binc_advertisement_set_local_name(workerData.bluetooth.adv, SERVICE_BT_NAME);
+    binc_advertisement_set_services(workerData.bluetooth.adv, advServiceUuids);
     g_ptr_array_free(advServiceUuids, TRUE);
-    binc_adapter_start_advertising(adapter, workerData.bluetoothData.adv);
+    binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
 
     Application* app = binc_create_application(adapter);
-    workerData.bluetoothData.app = app;
+    workerData.bluetooth.app = app;
 
     binc_application_add_service(app, SERVICE_ID);
     binc_application_add_characteristic(app, SERVICE_ID, CHAR_ID_MAIN, GATT_CHR_PROP_READ | GATT_CHR_PROP_NOTIFY);
@@ -182,7 +182,7 @@ gpointer bluetoothWorkerLoop() {
     GMainContext* workerContext = g_main_context_new();
     g_main_context_push_thread_default(workerContext);
     GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
-    workerData.bluetoothData.mainLoop = mainLoop;
+    workerData.bluetooth.mainLoop = mainLoop;
 
     GSource* stopBtWorkerSource = g_timeout_source_new(BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL);
     g_source_set_callback(stopBtWorkerSource, stopBtWorker, NULL, NULL);
