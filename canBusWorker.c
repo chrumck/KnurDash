@@ -33,7 +33,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
             "Request rejected when getting CAN mask/filter, shutting down app, register:0x%x, response:%d",
             i2cRegister, response);
 
-        g_idle_add(shutDown, GINT_TO_POINTER(AppShutdown));
+        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
         return;
     }
 
@@ -88,7 +88,7 @@ guint8 getChecksum(guint8* data, int length)
 }
 
 gboolean getFrameFromCAN(gpointer data) {
-    int frameIndex = GPOINTER_TO_INT(data);
+    guint frameIndex = GPOINTER_TO_UINT(data);
 
     workerData.canBus.requestCount++;
 
@@ -202,7 +202,7 @@ gpointer canBusWorkerLoop() {
     for (int i = 0; i < CAN_FRAMES_COUNT; i++)
     {
         GSource* frameRefreshSource = g_timeout_source_new(canFrames[i].refreshIntervalMillis);
-        g_source_set_callback(frameRefreshSource, getFrameFromCAN, GINT_TO_POINTER(i), NULL);
+        g_source_set_callback(frameRefreshSource, getFrameFromCAN, GUINT_TO_POINTER(i), NULL);
         g_source_attach(frameRefreshSource, workerContext);
         g_source_unref(frameRefreshSource);
     }

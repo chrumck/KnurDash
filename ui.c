@@ -62,7 +62,7 @@ gboolean shutDown(gpointer data)
 {
     if (workerData.requestShutdown) return G_SOURCE_REMOVE;
 
-    int shutdownType = GPOINTER_TO_INT(data);
+    guint shutdownType = GPOINTER_TO_UINT(data);
     g_message("KnurDash shutdown request received, type:%d", shutdownType);
 
     workerData.requestShutdown = TRUE;
@@ -106,7 +106,7 @@ void buttonShutDown(GtkWidget* button) {
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
     g_mutex_unlock(&guiLock);
 
-    shutDown(GINT_TO_POINTER(SystemShutdown));
+    shutDown(GUINT_TO_POINTER(SystemShutdown));
 }
 
 gboolean setLabelText(gpointer data) {

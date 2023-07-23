@@ -222,7 +222,7 @@ void readAdcSensor(int adc, int channel) {
     setSensorReadingAndWidgets(value, reading, &sensor->base, widgets);
 }
 
-void readCanSensor(int canSensorIndex) {
+void readCanSensor(guint canSensorIndex) {
     const CanSensor* sensor = &canSensors[canSensorIndex];
     SensorData* sensors = &workerData.sensors;
     const SensorWidgets* widgets = &sensors->canWidgets[canSensorIndex];
@@ -346,7 +346,7 @@ gpointer sensorWorkerLoop() {
         if ((workerData.wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
             g_message("Ignition off, requesting system shutdown");
-            g_idle_add(shutDown, GINT_TO_POINTER(SystemShutdown));
+            g_idle_add(shutDown, GUINT_TO_POINTER(SystemShutdown));
             break;
         }
 #endif
