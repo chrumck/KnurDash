@@ -85,6 +85,18 @@ const char* onCharRead(const Application* app, const char* address, const char* 
     return NULL;
 }
 
+gboolean sendCanFrameToBt(gpointer data) {
+    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+    if (!workerData.bluetooth.isNotifying) return G_SOURCE_CONTINUE;
+
+    CanFrameState* frame = (CanFrameState*)data;
+    if (frame->btWasSent) return G_SOURCE_CONTINUE;
+
+    GByteArray* arrayToSend = getArrayToSend(frame);
+    binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
+    g_byte_array_free(arrayToSend, TRUE);
+}
+
 void addSource(GMainContext* context, CanFrameState* frame, guint notifyInterval) {
     GSource* source = g_timeout_source_new(notifyInterval);
     g_source_set_callback(source, sendCanFrameToBt, frame, NULL);
@@ -105,18 +117,6 @@ void removeSource(GMainContext* context, CanFrameState* frame) {
         g_warning("Received invalid BT notify interval:%d", notifyInterval);\
         return BLUEZ_ERROR_REJECTED;\
     }\
-
-gboolean sendCanFrameToBt(gpointer data) {
-    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
-    if (!workerData.bluetooth.isNotifying) return G_SOURCE_CONTINUE;
-
-    CanFrameState* frame = (CanFrameState*)data;
-    if (frame->btWasSent) return G_SOURCE_CONTINUE;
-
-    GByteArray* arrayToSend = getArrayToSend(frame);
-    binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
-    g_byte_array_free(arrayToSend, TRUE);
-}
 
 const char* onCharWrite(const Application* app, const char* address, const char* serviceId, const char* charId, GByteArray* received) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_FILTER)) return BLUEZ_ERROR_NOT_PERMITTED;
