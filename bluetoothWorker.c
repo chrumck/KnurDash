@@ -78,9 +78,17 @@ const char* onCharRead(const Application* app, const char* address, const char* 
         frameToSend = frame;
     }
 
-    if (frameToSend == NULL) return NULL;
+    if (frameToSend == NULL) {
+#ifdef IS_DEBUG
+        g_message("Received BT read request, but no frame ready to be sent");
+#endif
+        return NULL;
+    }
 
     binc_application_set_char_value(workerData.bluetooth.app, serviceId, charId, getArrayToSend(frameToSend));
+#ifdef IS_DEBUG
+    g_message("Received BT read request, sending frame:0x%x", frameToSend->canId);
+#endif
 
     return NULL;
 }
@@ -125,17 +133,24 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     if (received->len == 3 && received->data[0] != RACECHRONO_ALLOW_ALL) return BLUEZ_ERROR_REJECTED;
     if (received->len == 7 && received->data[0] != RACECHRONO_ALLOW_SINGLE) return BLUEZ_ERROR_REJECTED;
 
+    g_message("Received BT write request, command:%d", received->data[0]);
+
     GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
 
     if (received->len == 1) {
+        g_message("BT request to deny all");
+
         removeSource(context, &workerData.canBus.adcFrame);
         for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &workerData.canBus.frames[i]);
+
         return NULL;
     }
 
     getNotifyInterval(received->data);
 
     if (received->len == 3) {
+        g_message("BT request to allow all, interval: %dms", notifyInterval);
+
         removeSource(context, &workerData.canBus.adcFrame);
         for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &workerData.canBus.frames[i]);
 
@@ -151,10 +166,11 @@ const char* onCharWrite(const Application* app, const char* address, const char*
 
     if (frame == NULL) return BLUEZ_ERROR_REJECTED;
 
+    g_message("BT request to allow single, interval:%d, frame:0x%x", notifyInterval, frame->canId);
+
     removeSource(context, frame);
     addSource(context, frame, notifyInterval);
 
-    g_message("Received BT write request, length:%d, command:%d", charId, received->len, received->data[0]);
     return NULL;
 }
 
@@ -209,7 +225,9 @@ gboolean stopBtWorker() {
 }
 
 gpointer bluetoothWorkerLoop() {
-#ifndef IS_DEBUG
+#ifdef IS_DEBUG
+    log_set_level(LOG_INFO);
+#else
     log_set_level(LOG_WARN);
 #endif
 
