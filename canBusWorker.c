@@ -55,7 +55,7 @@ gboolean stopCanBusWorker() {
     if (workerData.requestShutdown == FALSE) return G_SOURCE_CONTINUE;
 
     GMainContext* context = g_main_loop_get_context(workerData.canBus.mainLoop);
-    while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
+    while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
 
     g_main_loop_quit(workerData.canBus.mainLoop);
 
