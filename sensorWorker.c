@@ -300,10 +300,12 @@ gpointer sensorWorkerLoop() {
     setWidgets();
 
     CanFrameState* adcFrame = &workerData.canBusData.adcFrame;
+    g_mutex_lock(&adcFrame->lock);
     adcFrame->canId = ADC_FRAME_ID;
     adcFrame->isExtended = FALSE;
     adcFrame->isRemoteRequest = FALSE;
     adcFrame->dataLength = CAN_DATA_SIZE;
+    g_mutex_unlock(&adcFrame->lock);
 
     workerData.isSensorWorkerRunning = TRUE;
     guint shutDownCounter = 0;
