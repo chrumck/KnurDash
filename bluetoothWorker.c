@@ -41,7 +41,37 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
 
-    g_message("onCharRead, address:%s, service:%s, char:%s", address, serviceId, charId);
+    CanFrameState* frameToSend = !workerData.canBusData.adcFrame.btWasSent ? &workerData.canBusData.adcFrame : NULL;
+    for (guint i = 0; i < CAN_FRAMES_COUNT; i++)
+    {
+        CanFrameState* frame = &workerData.canBusData.frames[i];
+        if (frame->btWasSent) continue;
+        if (frameToSend != NULL && frame->timestamp <= frameToSend->timestamp) continue;
+        frameToSend = frame;
+    }
+
+    if (frameToSend == NULL) return NULL;
+
+    GByteArray* arrayToSend = g_byte_array_sized_new(sizeof(CAN_FRAME_ID_LENGTH + CAN_DATA_SIZE));
+
+    g_mutex_lock(&frameToSend->lock);
+
+    guint8 frameId[CAN_FRAME_ID_LENGTH] = {
+        frameToSend->canId & 0xFF,
+        (frameToSend->canId >> 8) & 0xFF,
+        (frameToSend->canId >> 16) & 0xFF,
+        (frameToSend->canId >> 24) & 0xFF,
+    };
+
+    g_byte_array_append(arrayToSend, frameId, sizeof(CAN_FRAME_ID_LENGTH));
+    g_byte_array_append(arrayToSend, frameToSend->data, sizeof(CAN_DATA_SIZE));
+
+    frameToSend->btWasSent = TRUE;
+
+    g_mutex_unlock(&frameToSend->lock);
+
+    binc_application_set_char_value(workerData.bluetoothData.app, serviceId, charId, arrayToSend);
+
     return NULL;
 }
 
