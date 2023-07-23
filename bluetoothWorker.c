@@ -45,7 +45,7 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
 }
 
 GByteArray* getArrayToSend(CanFrameState* frame) {
-    GByteArray* arrayToSend = g_byte_array_sized_new(sizeof(CAN_FRAME_ID_LENGTH + CAN_DATA_SIZE));
+    GByteArray* arrayToSend = g_byte_array_sized_new(CAN_FRAME_ID_LENGTH + CAN_DATA_SIZE);
 
     g_mutex_lock(&frame->lock);
 
@@ -56,8 +56,8 @@ GByteArray* getArrayToSend(CanFrameState* frame) {
         (frame->canId >> 24) & 0xFF,
     };
 
-    g_byte_array_append(arrayToSend, frameId, sizeof(CAN_FRAME_ID_LENGTH));
-    g_byte_array_append(arrayToSend, frame->data, sizeof(CAN_DATA_SIZE));
+    g_byte_array_append(arrayToSend, frameId, CAN_FRAME_ID_LENGTH);
+    g_byte_array_append(arrayToSend, frame->data, CAN_DATA_SIZE);
 
     frame->btWasSent = TRUE;
 
