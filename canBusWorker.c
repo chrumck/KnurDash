@@ -14,7 +14,6 @@
 #define I2C_REQUEST_DELAY 1e3
 
 #define MASK_FILTER_LENGTH  5
-#define FRAME_ID_LENGTH  4
 #define FRAME_LENGTH  16
 
 #define NO_FRAMES_AVAILABLE_RESPONSE 0x00000000
@@ -64,7 +63,7 @@ gboolean stopCanBusWorker() {
 }
 
 #define getFrameIdArray(_frameId)\
-    guint8 frameIdArray[FRAME_ID_LENGTH];\
+    guint8 frameIdArray[CAN_FRAME_ID_LENGTH];\
     frameIdArray[0] = (_frameId >> 24) & 0xFF;\
     frameIdArray[1] = (_frameId >> 16) & 0xFF;\
     frameIdArray[2] = (_frameId >> 8) & 0xFF;\
@@ -103,7 +102,7 @@ gboolean getFrameFromCAN(gpointer data) {
         canBusData->i2cCanHandle,
         GET_FRAME_REGISTER,
         frameIdArray,
-        FRAME_ID_LENGTH);
+        CAN_FRAME_ID_LENGTH);
 
 
     if (requestResult != 0) {
