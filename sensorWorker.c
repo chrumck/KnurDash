@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <pigpiod_if2.h>
+#include <math.h>
 
 #include "dataContracts.h"
 #include "workerData.c"
@@ -251,16 +252,16 @@ void setAdcCanFrame() {
     memset(adcFrame->data, 0, CAN_DATA_SIZE);
 
     SensorReading* transTemp = &workerData.sensors.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
-    adcFrame->data[0] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(transTemp->value + ADC_FRAME_TEMP_OFFSET);
+    adcFrame->data[0] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(transTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* diffTemp = &workerData.sensors.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
-    adcFrame->data[1] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(diffTemp->value + ADC_FRAME_TEMP_OFFSET);
+    adcFrame->data[1] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(diffTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* oilTemp = &workerData.sensors.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
-    adcFrame->data[2] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilTemp->value + ADC_FRAME_TEMP_OFFSET);
+    adcFrame->data[2] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* oilPress = &workerData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
-    adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(oilPress->value * 32);
+    adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value) * ADC_FRAME_PRESS_FACTOR);
 
     adcFrame->timestamp = g_get_monotonic_time();
     adcFrame->btWasSent = FALSE;
