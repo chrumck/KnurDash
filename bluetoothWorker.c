@@ -37,11 +37,17 @@ void onPoweredStateChanged(Adapter* adapter, gboolean state) {
 }
 
 void onCentralStateChanged(Adapter* adapter, Device* device) {
-    g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
-
     ConnectionState state = binc_device_get_connection_state(device);
-    if (state == CONNECTED)  binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
-    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
+    g_message("Remote central %s is %s", binc_device_get_address(device), state);
+
+    if (state == CONNECTED) {
+        workerData.bluetooth.isConnected = TRUE;
+        binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
+    }
+    else if (state == DISCONNECTED) {
+        workerData.bluetooth.isConnected = FALSE;
+        binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
+    }
 }
 
 GByteArray* getArrayToSend(CanFrameState* frame) {
@@ -94,7 +100,7 @@ const char* onCharRead(const Application* app, const char* address, const char* 
 }
 
 gboolean sendCanFrameToBt(gpointer data) {
-    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+    if (workerData.requestShutdown || !workerData.bluetooth.isConnected) return G_SOURCE_REMOVE;
     if (!workerData.bluetooth.isNotifying) return G_SOURCE_CONTINUE;
 
     CanFrameState* frame = (CanFrameState*)data;
