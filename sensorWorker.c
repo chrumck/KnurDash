@@ -131,6 +131,7 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
 }
 
 #define handleSensorReadFault()\
+    sensors->errorCount++;\
     if (reading->isFaulty) return;\
     reading->isFaulty = TRUE;\
     reading->value = FAULTY_READING_VALUE;\
@@ -180,6 +181,8 @@ void readAdcSensor(int adc, int channel) {
     SensorData* sensors = &workerData.sensors;
     const SensorWidgets* widgets = &sensors->adcWidgets[adc][channel];
     SensorReading* reading = &sensors->adcReadings[adc][channel];
+
+    sensors->requestCount++;
 
     guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], newConfig);
@@ -232,6 +235,8 @@ void readCanSensor(guint canSensorIndex) {
     SensorData* sensors = &workerData.sensors;
     const SensorWidgets* widgets = &sensors->canWidgets[canSensorIndex];
     SensorReading* reading = &sensors->canReadings[canSensorIndex];
+
+    sensors->requestCount++;
 
     const gdouble value = sensor->getValue();
 
@@ -316,6 +321,12 @@ gpointer sensorWorkerLoop() {
     guint shutDownCounter = 0;
 
     while (workerData.requestShutdown == FALSE) {
+        float errorRate = (float)workerData.sensors.errorCount / workerData.sensors.requestCount;
+        if (errorRate > 0.95) {
+            g_warning("ADC sensors excessive error rate:%2f, shutting down app", errorRate);
+            g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
+        }
+
         if (workerData.requestMinMaxReset == TRUE) {
             resetReadingsMinMax();
             resetMinMaxLabels();
@@ -372,6 +383,12 @@ gpointer sensorWorkerLoop() {
     i2c_close(i2cPiHandle, adc0Handle);
     i2c_close(i2cPiHandle, adc1Handle);
     pigpio_stop(i2cPiHandle);
+
+    g_message(
+        "ADC sensors requests:%d, errors:%d, rate:%.4f",
+        workerData.sensors.requestCount,
+        workerData.sensors.errorCount,
+        (float)workerData.sensors.errorCount / workerData.sensors.requestCount);
 
     g_message("Sensor worker shutting down");
     workerData.isSensorWorkerRunning = FALSE;

@@ -91,6 +91,9 @@ typedef struct {
     int i2cPiHandle;
     int i2cAdcHandles[ADC_COUNT];
 
+    guint32 requestCount;
+    guint32 errorCount;
+
     SensorReading adcReadings[ADC_COUNT][ADC_CHANNEL_COUNT];
     SensorWidgets adcWidgets[ADC_COUNT][ADC_CHANNEL_COUNT];
 
