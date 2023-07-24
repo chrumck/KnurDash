@@ -100,11 +100,14 @@ const char* onCharRead(const Application* app, const char* address, const char* 
 }
 
 gboolean sendCanFrameToBt(gpointer data) {
-    if (workerData.requestShutdown || !workerData.bluetooth.isConnected) return G_SOURCE_REMOVE;
-    if (!workerData.bluetooth.isNotifying) return G_SOURCE_CONTINUE;
-
     CanFrameState* frame = (CanFrameState*)data;
-    if (frame->btWasSent) return G_SOURCE_CONTINUE;
+
+    if (workerData.requestShutdown || !workerData.bluetooth.isConnected) {
+        frame->btNotifyingSourceId = 0;
+        return G_SOURCE_REMOVE;
+    }
+
+    if (!workerData.bluetooth.isNotifying || frame->btWasSent) return G_SOURCE_CONTINUE;
 
     GByteArray* arrayToSend = getArrayToSend(frame);
     binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
@@ -121,7 +124,7 @@ void addSource(GMainContext* context, CanFrameState* frame, guint notifyInterval
 void removeSource(GMainContext* context, CanFrameState* frame) {
     if (frame->btNotifyingSourceId <= 0) return;
     GSource* sourceToRemove = g_main_context_find_source_by_id(context, frame->btNotifyingSourceId);
-    g_source_destroy(sourceToRemove);
+    if (sourceToRemove != NULL) g_source_destroy(sourceToRemove);
     frame->btNotifyingSourceId = 0;
 }
 
