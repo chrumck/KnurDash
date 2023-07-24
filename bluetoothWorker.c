@@ -107,6 +107,8 @@ gboolean sendCanFrameToBt(gpointer data) {
     GByteArray* arrayToSend = getArrayToSend(frame);
     binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
     g_byte_array_free(arrayToSend, TRUE);
+
+    return G_SOURCE_CONTINUE;
 }
 
 void addSource(GMainContext* context, CanFrameState* frame, guint notifyInterval) {
