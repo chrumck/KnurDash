@@ -202,7 +202,11 @@ gboolean stopBtWorker() {
 
     if (adapter != NULL) {
         GList* connected = binc_adapter_get_connected_devices(adapter);
-        for (GList* iterator = connected; iterator; iterator = iterator->next) binc_device_disconnect(iterator->data);
+        for (GList* iterator = connected; iterator; iterator = iterator->next) {
+            Device* device = (Device*)iterator->data;
+            binc_device_disconnect(device);
+            g_message("Disconnecting central %s", binc_device_get_address(device));
+        }
         g_list_free(connected);
     }
 
