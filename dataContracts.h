@@ -1,7 +1,7 @@
 #ifndef __dataContracts_h
 #define __dataContracts_h
 
-#define IS_DEBUG
+// #define IS_DEBUG
 
 #include <gtk/gtk.h>
 
