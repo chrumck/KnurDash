@@ -37,9 +37,9 @@ void onPoweredStateChanged(Adapter* adapter, gboolean state) {
 }
 
 void onCentralStateChanged(Adapter* adapter, Device* device) {
-    ConnectionState state = binc_device_get_connection_state(device);
-    g_message("Remote central %s is %s", binc_device_get_address(device), state);
+    g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
 
+    ConnectionState state = binc_device_get_connection_state(device);
     if (state == CONNECTED) {
         workerData.bluetooth.isConnected = TRUE;
         binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
