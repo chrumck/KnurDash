@@ -144,7 +144,6 @@ typedef struct {
     Application* app;
     Advertisement* adv;
 
-    gboolean isConnected;
     gboolean isNotifying;
 } BluetoothData;
 
