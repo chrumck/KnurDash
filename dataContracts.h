@@ -8,6 +8,8 @@
 #include "adapter.h"
 #include "application.h"
 
+#define MAX_REQUEST_ERROR_RATE 0.50
+
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
 #define CAN_SENSORS_COUNT 1
@@ -142,6 +144,7 @@ typedef struct {
     Application* app;
     Advertisement* adv;
 
+    gboolean isConnected;
     gboolean isNotifying;
 } BluetoothData;
 
