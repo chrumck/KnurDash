@@ -164,6 +164,7 @@ gboolean getFrameFromCAN(gpointer data) {
     frameState->btWasSent = FALSE;
 
     g_mutex_unlock(&frameState->lock);
+
     return G_SOURCE_CONTINUE;
 }
 
