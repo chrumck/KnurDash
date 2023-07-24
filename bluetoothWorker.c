@@ -235,11 +235,7 @@ gboolean stopBtWorker() {
 }
 
 gpointer bluetoothWorkerLoop() {
-#ifdef IS_DEBUG
     log_set_level(LOG_INFO);
-#else
-    log_set_level(LOG_WARN);
-#endif
 
     GDBusConnection* dbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
     workerData.bluetooth.dbusConn = dbusConn;
