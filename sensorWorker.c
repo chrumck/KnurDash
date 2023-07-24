@@ -143,7 +143,11 @@ void setSensorReadingAndWidgets(
     const SensorBase* sensor,
     const SensorWidgets* widgets) {
 
-    if (!reading->isFaulty && value < reading->value + sensor->precision && value > reading->value - sensor->precision) return;
+    if (!reading->isFaulty &&
+        value < reading->value + sensor->precision &&
+        value > reading->value - sensor->precision &&
+        reading->min != G_MAXDOUBLE &&
+        reading->max != -G_MAXDOUBLE) return;
 
     gboolean wasFaulty = reading->isFaulty;
 
