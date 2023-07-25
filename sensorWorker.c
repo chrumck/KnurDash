@@ -348,9 +348,15 @@ gpointer sensorWorkerLoop() {
         gint32 engineRpm = getEngineRpm();
         gboolean buzzerOn = gpio_read(i2cPiHandle, BUZZER_GPIO_PIN) == TRUE;
 
-        if (engineRpm < OIL_PRESSURE_ALERT_MIN_RPM && buzzerOn) gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
+        if (buzzerOn && !pressureReading->isFaulty && pressureReading->value >= pressureSensor->base.alertLow) {
+            gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
+        }
 
-        if (pressureReading->isFaulty == FALSE &&
+        if (buzzerOn && engineRpm < OIL_PRESSURE_ALERT_MIN_RPM) {
+            gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
+        }
+
+        if (!pressureReading->isFaulty &&
             pressureReading->value < pressureSensor->base.alertLow &&
             engineRpm > OIL_PRESSURE_ALERT_MIN_RPM &&
             !buzzerOn) {
