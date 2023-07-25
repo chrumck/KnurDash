@@ -270,7 +270,7 @@ void setAdcCanFrame() {
     adcFrame->data[2] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* oilPress = &workerData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
-    adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value) * ADC_FRAME_PRESS_FACTOR);
+    adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value * ADC_FRAME_PRESS_FACTOR));
 
     adcFrame->timestamp = g_get_monotonic_time();
     adcFrame->btWasSent = FALSE;
