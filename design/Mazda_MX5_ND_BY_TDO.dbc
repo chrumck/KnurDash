@@ -56,8 +56,8 @@ BO_ 120 Brake: 8 XXX
    SG_ BrakePressure : 39|16@0- (0.00152588,-40) [0|100] "%" Vector__XXX
 
 BO_ 2147484704 Temps: 8 XXX
-   SG_ 0_CoolantTemp : 7|8@0+ (1,-30) [0|1] "C" Vector__XXX
-   SG_ 7_AirTemp : 63|8@0+ (1,-30) [0|1] "C" Vector__XXX
+   SG_ 0_CoolantTemp : 7|8@0+ (1,-30) [0|1] "degC" Vector__XXX
+   SG_ 7_AirTemp : 63|8@0+ (1,-30) [0|1] "degC" Vector__XXX
 
 CM_ SG_ 533 0_Wheel1 "check_offset_if_not_32512";
 CM_ SG_ 357 6_CurrentGear "what_is_6th?";
@@ -67,8 +67,12 @@ BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
+BA_DEF_ BO_ "matchingcriteria" INT 0 0;
+BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_DEF_ "GenMsgBackgroundColor" "#ffffff";
 BA_DEF_DEF_ "GenMsgForegroundColor" "#000000";
+BA_DEF_DEF_ "matchingcriteria" 0;
+BA_DEF_DEF_ "filterlabeling" 0;
 BA_DEF_DEF_ "matchingcriteria" 0;
 BA_DEF_DEF_ "filterlabeling" 0;
 BA_ "GenMsgForegroundColor" BO_ 357 "#000000";
