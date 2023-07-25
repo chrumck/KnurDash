@@ -3,7 +3,6 @@
 #include <gtk/gtk.h>
 #include <signal.h>
 #include <glib-unix.h>
-#include <pigpiod_if2.h>
 
 #include "dataContracts.h"
 #include "workerData.c"
@@ -50,10 +49,10 @@ int main(int argc, char* argv[])
     GThread* canBusWorker = g_thread_new("canBusWorker", canBusWorkerLoop, NULL);
     GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, NULL);
 
-    g_unix_signal_add(SIGINT, windowShutDown, NULL);
-    g_unix_signal_add(SIGTERM, windowShutDown, NULL);
+    g_unix_signal_add(SIGINT, shutDown, GUINT_TO_POINTER(AppShutdown));
+    g_unix_signal_add(SIGTERM, shutDown, GUINT_TO_POINTER(AppShutdown));
 
-    g_signal_connect(window, "destroy", G_CALLBACK(windowShutDown), NULL);
+    g_signal_connect(window, "destroy", G_CALLBACK(shutDown), GUINT_TO_POINTER(AppShutdown));
 
     GObject* button = gtk_builder_get_object(builder, "resetMinMax");
     g_signal_connect(button, "clicked", G_CALLBACK(requestMinMaxReset), NULL);

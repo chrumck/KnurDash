@@ -16,15 +16,18 @@
         "gboolean",
         "gconstpointer",
         "gdouble",
+        "gfloat",
         "gint",
         "gpio",
         "gpointer",
         "guint",
+        "KNURDASH",
         "MAXDOUBLE",
         "MINDOUBLE",
         "Piboto",
         "pigpio",
         "pigpiod",
-        "printerr"
+        "printerr",
+        "RACECHRONO"
     ],
 }

@@ -54,7 +54,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -rdynamic -g"
+					"fragment" : " -rdynamic -O3 -DNDEBUG"
 				},
 				{
 					"fragment" : "-std=gnu11"

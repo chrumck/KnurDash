@@ -1,5 +1,5 @@
-#ifndef ui_c
-#define ui_c
+#ifndef __ui_c
+#define __ui_c
 
 #include <gtk/gtk.h>
 #include<fcntl.h> 
@@ -58,9 +58,12 @@ void setBrightnessDown() { setBrightness(FALSE); }
 
 void setBrightnessUp() { setBrightness(TRUE); }
 
-gboolean shutDown(gboolean systemShutdown)
+gboolean shutDown(gpointer data)
 {
-    g_message("KnurDash shutdown request received");
+    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+
+    guint shutdownType = GPOINTER_TO_UINT(data);
+    g_message("KnurDash shutdown request received, type:%d", shutdownType);
 
     workerData.requestShutdown = TRUE;
 
@@ -75,17 +78,27 @@ gboolean shutDown(gboolean systemShutdown)
 
     gtk_main_quit();
 
-#ifdef NDEBUG
-    if (systemShutdown) {
-        g_message("System shutting down...");
+    switch (shutdownType) {
+    case AppShutdown:
+        break;
+#ifndef IS_DEBUG
+    case SystemShutdown: {
+        g_message("Shutting down the system");
         system("sudo shutdown now");
+        break;
+    }
+    case SystemReboot: {
+        g_message("Rebooting the system in 1 minute");
+        system("sudo shutdown -r +1");
+        break;
     }
 #endif
+    default:
+        break;
+    }
 
-    return FALSE;
+    return G_SOURCE_REMOVE;
 }
-
-gboolean windowShutDown() { return shutDown(FALSE); }
 
 void buttonShutDown(GtkWidget* button) {
     g_mutex_lock(&guiLock);
@@ -93,7 +106,7 @@ void buttonShutDown(GtkWidget* button) {
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
     g_mutex_unlock(&guiLock);
 
-    shutDown(TRUE);
+    shutDown(GUINT_TO_POINTER(SystemShutdown));
 }
 
 gboolean setLabelText(gpointer data) {

@@ -1,7 +1,23 @@
+#ifndef __sensorProps_c
+#define __sensorProps_c
+
 #include <gtk/gtk.h>
 #include <math.h>
 
 #include "dataContracts.h"
+
+#define VDD_DEFAULT 3350
+#define VDD_ADC 1
+#define VDD_CHANNEL 3
+
+#define TRANS_TEMP_ADC 0
+#define TRANS_TEMP_CHANNEL 0
+#define DIFF_TEMP_ADC 0
+#define DIFF_TEMP_CHANNEL 1
+#define OIL_TEMP_ADC 0
+#define OIL_TEMP_CHANNEL 2
+#define OIL_PRESS_ADC 0
+#define OIL_PRESS_CHANNEL 3
 
 #define TEMP_SENSOR_RAW_MIN 30
 #define TEMP_SENSOR_RAW_MAX 2030
@@ -20,51 +36,63 @@
 #define PRESS_B 0.02529
 #define PRESS_C 0.0000350
 
-static gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
+gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
     const gdouble logSensorR = log(sensorR);
     return TEMP_A + (TEMP_B * logSensorR) + (TEMP_C * pow(logSensorR, 3));
 }
 
-static gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
+gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
     const gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
     return value < 0 ? 0 : value;
 }
 
-static gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
+gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
     return sensorV * 2;
 }
 
-static const Sensor sensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
+const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
     {
         {
-            .labelId = "transTemp", .frameId = "transTempFrame", .labelMinId = "transTempMin", .labelMaxId = "transTempMax",
-            .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
-            .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-            .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
-            .refR = 2012, .convert = convertTemp, .format = "%.0f" , .precision = 0.3,
+            .base = {
+                .labelId = "transTemp", .frameId = "transTempFrame", .labelMinId = "transTempMin", .labelMaxId = "transTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = -25,
+                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.3,
+            },
+             .refR = 2012, .convert = convertTemp,
         },
         {
-            .labelId = "diffTemp", .frameId = "diffTempFrame", .labelMinId = "diffTempMin", .labelMaxId = "diffTempMax",
-            .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
-            .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-            .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
-            .refR = 2006, .convert = convertTemp, .format = "%.0f" , .precision = 0.3,
+            .base = {
+                .labelId = "diffTemp", .frameId = "diffTempFrame", .labelMinId = "diffTempMin", .labelMaxId = "diffTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = -25,
+                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.3,
+            },
+            .refR = 2006, .convert = convertTemp,
         },
         {
-            .labelId = "oilTemp", .frameId = "oilTempFrame", .labelMinId = "oilTempMin", .labelMaxId = "oilTempMax",
-            .vMin = TEMP_SENSOR_RAW_MIN, .vMax = TEMP_SENSOR_RAW_MAX,
-            .alertLow = -25, .warningLow = -25, .notifyLow = 80,
-            .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
-            .refR = 1992, .convert = convertTemp, .format = "%.0f" , .precision = 0.3,
+            .base = {
+                .labelId = "oilTemp", .frameId = "oilTempFrame", .labelMinId = "oilTempMin", .labelMaxId = "oilTempMax",
+                .alertLow = -30, .warningLow = -30, .notifyLow = 80,
+                .notifyHigh = 125, .warningHigh = 125, .alertHigh = 135,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.3,
+            },
+            .refR = 1992, .convert = convertTemp,
         },
         {
-            .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
-            .vMin = PRESS_SENSOR_RAW_MIN, .vMax = PRESS_SENSOR_RAW_MAX,
-            .alertLow = 0.7, .warningLow = 1.0, .notifyLow = 1.0,
-            .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
-            .refR = 465, .convert = convertOilPress, .format = "%.1f" , .precision = 0.03,
+            .base = {
+                .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
+                .alertLow = 0.7, .warningLow = 1.0, .notifyLow = 1.0,
+                .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
+                .rawMin = PRESS_SENSOR_RAW_MIN, .rawMax = PRESS_SENSOR_RAW_MAX,
+                .format = "%.1f" , .precision = 0.03,
+            },
+            .refR = 465, .convert = convertOilPress,
         },
     },
     {
@@ -72,10 +100,15 @@ static const Sensor sensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         {},
         {},
         {
-            .vMin = VDD_RAW_MIN, .vMax = VDD_RAW_MAX,
-            .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
-            .notifyHigh = VDD_RAW_MAX * 2, .warningHigh = VDD_RAW_MAX * 2, .alertHigh = VDD_RAW_MAX * 2,
-            .refR = 0, .convert = convertVdd, .format = "%.0f" , .precision = 2,
+            .base = {
+                .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
+                .notifyHigh = VDD_RAW_MAX * 2, .warningHigh = VDD_RAW_MAX * 2, .alertHigh = VDD_RAW_MAX * 2,
+                .rawMin = VDD_RAW_MIN, .rawMax = VDD_RAW_MAX,
+                .format = "%.0f" , .precision = 2,
+            },
+            .refR = 0, .convert = convertVdd,
         },
     }
 };
+
+#endif

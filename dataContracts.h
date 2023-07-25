@@ -1,26 +1,40 @@
 #ifndef __dataContracts_h
 #define __dataContracts_h
 
+// #define IS_DEBUG
+
 #include <gtk/gtk.h>
 
 #include "adapter.h"
 #include "application.h"
 
+#define MAX_REQUEST_ERROR_RATE 0.50
+
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
+#define CAN_SENSORS_COUNT 1
 #define FORMATTED_READING_LENGTH 10
 
+#define CAN_FRAME_ID_LENGTH 4
 #define CAN_DATA_SIZE 8
 #define CAN_FRAMES_COUNT 4
+
+#define ADC_FRAME_ID 0x000007F0
+#define ADC_FRAME_FAULTY_VALUE 0xFF
+#define ADC_FRAME_TEMP_OFFSET 30
+#define ADC_FRAME_PRESS_FACTOR 32
+
+typedef enum {
+    AppShutdown = 0,
+    SystemShutdown = 1,
+    SystemReboot = 2,
+} ShutDownType;
 
 typedef struct {
     char* labelId;
     char* frameId;
     char* labelMinId;
     char* labelMaxId;
-
-    gint32 vMin;
-    gint32 vMax;
 
     gdouble alertLow;
     gdouble warningLow;
@@ -29,11 +43,25 @@ typedef struct {
     gdouble warningHigh;
     gdouble alertHigh;
 
-    gint32 refR;
-    gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
+    gint32 rawMin;
+    gint32 rawMax;
+
     char* format;
     gdouble precision;
-} Sensor;
+} SensorBase;
+
+typedef struct {
+    SensorBase base;
+
+    gint32 refR;
+    gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
+} AdcSensor;
+
+typedef struct {
+    SensorBase base;
+
+    gdouble(*getValue)();
+} CanSensor;
 
 typedef enum {
     StateAlertLow = -3,
@@ -65,8 +93,14 @@ typedef struct {
     int i2cPiHandle;
     int i2cAdcHandles[ADC_COUNT];
 
-    SensorReading readings[ADC_COUNT][ADC_CHANNEL_COUNT];
-    SensorWidgets widgets[ADC_COUNT][ADC_CHANNEL_COUNT];
+    guint32 requestCount;
+    guint32 errorCount;
+
+    SensorReading adcReadings[ADC_COUNT][ADC_CHANNEL_COUNT];
+    SensorWidgets adcWidgets[ADC_COUNT][ADC_CHANNEL_COUNT];
+
+    SensorReading canReadings[CAN_SENSORS_COUNT];
+    SensorWidgets canWidgets[CAN_SENSORS_COUNT];
 } SensorData;
 
 typedef struct {
@@ -80,25 +114,37 @@ typedef struct {
     gboolean isRemoteRequest;
     guint8 dataLength;
     guint8 data[CAN_DATA_SIZE];
+    gboolean receiveFailed;
     gint64 timestamp;
-    gboolean isSent;
+
+    GMutex lock;
+
+    guint btNotifyingSourceId;
+    gboolean btWasSent;
 } CanFrameState;
 
 typedef struct {
     int i2cPiHandle;
     int i2cCanHandle;
 
+    guint32 requestCount;
+    guint32 errorCount;
+
     GMainLoop* mainLoop;
 
     CanFrameState frames[CAN_FRAMES_COUNT];
+    CanFrameState adcFrame;
 } CanBusData;
 
 typedef struct {
     GMainLoop* mainLoop;
 
-    GDBusConnection* connection;
+    GDBusConnection* dbusConn;
     Adapter* adapter;
-    Application* application;
+    Application* app;
+    Advertisement* adv;
+
+    gboolean isNotifying;
 } BluetoothData;
 
 typedef struct {
@@ -109,13 +155,13 @@ typedef struct {
 
     gboolean wasEngineStarted;
 
-    SensorData sensorData;
+    SensorData sensors;
     gboolean isSensorWorkerRunning;
 
-    CanBusData canBusData;
+    CanBusData canBus;
     gboolean isCanBusWorkerRunning;
 
-    BluetoothData bluetoothData;
+    BluetoothData bluetooth;
     gboolean isBluetoothWorkerRunning;
 } WorkerData;
 
