@@ -33,38 +33,43 @@ NS_ :
 
 BS_: 
 BU_: XXX 
-BO_ 576 Steering: 8 XXX
+BO_ 576 Steering_-_not_checked_yet: 8 XXX
    SG_ SteeringCorrSignalX : 39|16@0+ (1,-32512) [0|50002] "" XXX
    SG_ Steering : 7|16@0+ (1,-32512) [0|31998] "" XXX
 
-BO_ 533 WheelSpeed: 8 XXX
+BO_ 533 WheelSpeed_-_not_checked_yet: 8 XXX
    SG_ 2_Wheel2 : 23|16@0+ (1,-10000) [0|0] "" XXX
    SG_ 6_Wheel4 : 55|16@0+ (1,-10000) [0|0] "" XXX
    SG_ 4_Wheel3 : 39|16@0+ (1,-10000) [0|0] "" XXX
    SG_ 0_Wheel1 : 7|16@0+ (1,-10000) [0|0] "" XXX
 
-BO_ 357 Clutch_Gear: 8 XXX
+BO_ 357 Clutch_Gear_-_not_checked_yet: 8 XXX
    SG_ 2_Clutch_Neutral : 23|8@0+ (1,0) [0|0] "" XXX
    SG_ 6_CurrentGear : 55|8@0+ (1,0) [0|0] "" XXX
 
 BO_ 514 ThrottleRPM: 8 XXX
-   SG_ 2_VehicleSpeed : 23|16@0+ (0.00277778,0) [0|0] "kmh" XXX
+   SG_ 2_VehicleSpeed_-_not_checked_yet : 23|16@0+ (0.01,0) [0|0] "kmh" Vector__XXX
    SG_ 4_Throttle : 39|8@0+ (0.4,0) [0|1] "percent" XXX
    SG_ 0_RPM : 7|16@0+ (0.25,0) [0|0] "rpm" XXX
 
-BO_ 120 Brake: 8 XXX
+BO_ 120 Brake_-_not_checked_yet: 8 XXX
    SG_ BrakePressure : 39|16@0- (0.00152588,-40) [0|100] "%" Vector__XXX
 
 BO_ 2147484704 Temps: 8 XXX
    SG_ 0_CoolantTemp : 7|8@0+ (1,-40) [0|1] "C" Vector__XXX
-   SG_ 7_AirTemp : 63|8@0+ (1,-70) [0|1] "C" Vector__XXX
+
+BO_ 2147484922 IAT: 8 XXX
+   SG_ 4_IntakeAirDegC : 39|8@0+ (1,-40) [0|1] "C" Vector__XXX
 
 CM_ SG_ 533 0_Wheel1 "check_offset_if_not_32512";
 CM_ SG_ 357 6_CurrentGear "what_is_6th?";
-CM_ SG_ 514 2_VehicleSpeed "1/360,_check_scale_factor";
 CM_ SG_ 120 BrakePressure "100/65536+40 ABS:negative_values";
 BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
+BA_DEF_ BO_ "matchingcriteria" INT 0 0;
+BA_DEF_ BO_ "filterlabeling" INT 0 0;
+BA_DEF_ BO_ "matchingcriteria" INT 0 0;
+BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
@@ -78,6 +83,7 @@ BA_DEF_DEF_ "filterlabeling" 0;
 BA_DEF_DEF_ "matchingcriteria" 0;
 BA_DEF_DEF_ "filterlabeling" 0;
 BA_ "GenMsgForegroundColor" BO_ 357 "#000000";
+BA_ "GenMsgForegroundColor" BO_ 120 "#000000";
 BA_ "GenMsgForegroundColor" BO_ 2147484704 "#000000";
 VAL_ 357 2_Clutch_Neutral 22 "Neutral" 25 "Clutch-In" 22 "Clutch-Out";
 VAL_ 357 6_CurrentGear 19 "Neutral_1st" 11 "2nd" 7 "3rd" 6 "4th" 5 "5th";
