@@ -59,7 +59,7 @@ BO_ 2147484704 Temps: 8 XXX
    SG_ 0_CoolantTemp : 7|8@0+ (1,-40) [0|1] "C" Vector__XXX
 
 BO_ 2147484922 IAT: 8 XXX
-   SG_ 4_IntakeAirDegC : 39|8@0+ (1,-40) [0|1] "C" Vector__XXX
+   SG_ 4_IntakeAirTemp : 39|8@0+ (1,-40) [0|1] "C" Vector__XXX
 
 CM_ SG_ 533 0_Wheel1 "check_offset_if_not_32512";
 CM_ SG_ 357 6_CurrentGear "what_is_6th?";
@@ -78,8 +78,6 @@ BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_DEF_ "GenMsgBackgroundColor" "#ffffff";
 BA_DEF_DEF_ "GenMsgForegroundColor" "#000000";
-BA_DEF_DEF_ "matchingcriteria" 0;
-BA_DEF_DEF_ "filterlabeling" 0;
 BA_DEF_DEF_ "matchingcriteria" 0;
 BA_DEF_DEF_ "filterlabeling" 0;
 BA_ "GenMsgForegroundColor" BO_ 357 "#000000";
