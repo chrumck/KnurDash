@@ -21,14 +21,17 @@
 #define GET_FRAME_REGISTER 0x40
 
 #define RPM_FRAME_INDEX 2
+#define RPM_SCALING 0.25
+
 #define COOLANT_TEMP_FRAME_INDEX 3
+#define COOLANT_TEMP_OFFSET 40
 
 guint8 maskValue[] = { 0x0, 0x0, 0x0, 0x07, 0xFF };
-guint8 filter0Value[] = { 0x0, 0x0, 0x0, 0x02, 0x02 };
+guint8 filter0Value[] = { 0x0, 0x0, 0x0, 0x0, 0x78 };
 guint8 filter1Value[] = { 0x0, 0x0, 0x0, 0x0, 0x86 };
-guint8 filter2Value[] = { 0x0, 0x0, 0x0, 0x04, 0x20 };
-guint8 filter3Value[] = { 0x0, 0x0, 0x0, 0x0, 0x78 };
-guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
+guint8 filter2Value[] = { 0x0, 0x0, 0x0, 0x02, 0x02 };
+guint8 filter3Value[] = { 0x0, 0x0, 0x0, 0x04, 0x20 };
+guint8 filter4Value[] = { 0x0, 0x0, 0x0, 0x4, 0xFA };
 guint8 filter5Value[] = { 0x0, 0x0, 0x0, 0x0, 0x0 };
 
 static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
@@ -36,6 +39,7 @@ static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
     {.canId = 0x86, .refreshIntervalMillis = 25},
     {.canId = 0x202, .refreshIntervalMillis = 25},
     {.canId = 0x420, .refreshIntervalMillis = 500},
+    {.canId = 0x4FA, .refreshIntervalMillis = 500},
 };
 
 gboolean isFrameTooOld(guint8 frameIndex) {
@@ -52,7 +56,7 @@ gdouble getEngineRpm() {
     CanFrameState* state = &workerData.canBus.frames[RPM_FRAME_INDEX];
 
     g_mutex_lock(&state->lock);
-    gdouble retVal = (gdouble)((state->data[0] << 8 | state->data[1]) / 4);
+    gdouble retVal = (gdouble)((state->data[0] << 8 | state->data[1]) * RPM_SCALING);
     g_mutex_unlock(&state->lock);
 
     return retVal;
@@ -63,7 +67,7 @@ gdouble getCoolantTemp() {
 
     CanFrameState* state = &workerData.canBus.frames[COOLANT_TEMP_FRAME_INDEX];
     g_mutex_lock(&state->lock);
-    gdouble retVal = (gdouble)(state->data[0] - 30);
+    gdouble retVal = (gdouble)(state->data[0] - COOLANT_TEMP_OFFSET);
     g_mutex_unlock(&state->lock);
 
     return retVal;
