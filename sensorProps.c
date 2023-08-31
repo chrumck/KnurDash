@@ -36,6 +36,9 @@
 #define PRESS_B 0.02529
 #define PRESS_C 0.0000350
 
+#define ROTOR_TEMP_A -250
+#define ROTOR_TEMP_B 62.5
+
 gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
     const gdouble sensorR = sensorV * refR / (driveV - sensorV);
     const gdouble logSensorR = log(sensorR);
@@ -50,6 +53,11 @@ gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
 
 gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
     return sensorV * 2;
+}
+
+gdouble convertRotorTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
+    const gdouble sensorI = sensorV / 2 / refR;
+    return ROTOR_TEMP_A + (TEMP_B * sensorI);
 }
 
 const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
@@ -97,7 +105,16 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
     },
     {
         {},
-        {},
+        {
+            .base = {
+                .labelId = "rotorTemp", .frameId = "rotorTempFrame", .labelMinId = "rotorTempMin", .labelMaxId = "rotorTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = -25,
+                .notifyHigh = 600, .warningHigh = 600, .alertHigh = 800,
+                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 10,
+            },
+            .refR = 46.8, .convert = convertRotorTemp,
+        },
         {},
         {
             .base = {
