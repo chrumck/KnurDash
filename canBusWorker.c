@@ -47,7 +47,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
     if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
 
-    g_usleep(I2C_REQUEST_DELAY);
+    g_usleep(I2C_REQUEST_DELAY * 100);
 
 }
 
