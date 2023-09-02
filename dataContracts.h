@@ -8,7 +8,7 @@
 #include "adapter.h"
 #include "application.h"
 
-#define MAX_REQUEST_ERROR_RATE 0.50
+#define MAX_REQUEST_ERROR_RATE 0.20
 
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
