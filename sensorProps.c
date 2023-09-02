@@ -6,6 +6,9 @@
 
 #include "dataContracts.h"
 
+#define ADC_DEFAULT_CONFIG 0x10
+#define ADC_CONFIG_PGA_X2 0x11
+
 #define VDD_DEFAULT 3350
 #define VDD_ADC 1
 #define VDD_CHANNEL 3
@@ -70,7 +73,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
             },
-             .refR = 2012, .convert = convertTemp,
+             .adcConfig = ADC_DEFAULT_CONFIG, .refR = 2012, .convert = convertTemp,
         },
         {
             .base = {
@@ -80,7 +83,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
             },
-            .refR = 2006, .convert = convertTemp,
+            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 2006, .convert = convertTemp,
         },
         {
             .base = {
@@ -90,7 +93,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
             },
-            .refR = 1992, .convert = convertTemp,
+            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 1992, .convert = convertTemp,
         },
         {
             .base = {
@@ -100,7 +103,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = PRESS_SENSOR_RAW_MIN, .rawMax = PRESS_SENSOR_RAW_MAX,
                 .format = "%.1f" , .precision = 0.03,
             },
-            .refR = 465, .convert = convertOilPress,
+            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 465, .convert = convertOilPress,
         },
     },
     {
@@ -113,7 +116,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 10,
             },
-            .refR = 46.8, .convert = convertRotorTemp,
+            .adcConfig = ADC_CONFIG_PGA_X2, .refR = 46.8, .convert = convertRotorTemp,
         },
         {},
         {
@@ -123,7 +126,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = VDD_RAW_MIN, .rawMax = VDD_RAW_MAX,
                 .format = "%.0f" , .precision = 2,
             },
-            .refR = 0, .convert = convertVdd,
+            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 0, .convert = convertVdd,
         },
     }
 };

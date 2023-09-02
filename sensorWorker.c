@@ -26,7 +26,6 @@
 
 #define ADC0_I2C_ADDRESS 0x6a
 #define ADC1_I2C_ADDRESS 0x6c
-#define ADC_DEFAULT_CONFIG 0x10
 #define ADC_CHANNEL_MASK 0x60
 #define getAdcChannelValue(config) (((config) & ADC_CHANNEL_MASK) >> 5)
 #define getAdcChannelBits(channel) (((channel) << 5) & ADC_CHANNEL_MASK)
@@ -184,7 +183,7 @@ void readAdcSensor(int adc, int channel) {
 
     sensors->requestCount++;
 
-    guint8 newConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel);
+    guint8 newConfig = sensor->adcConfig | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], newConfig);
     if (writeResult != 0) {
         handleSensorReadFault();

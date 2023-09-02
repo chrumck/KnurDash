@@ -53,6 +53,7 @@ typedef struct {
 typedef struct {
     SensorBase base;
 
+    guint8 adcConfig;
     gint32 refR;
     gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
 } AdcSensor;
