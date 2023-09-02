@@ -271,6 +271,9 @@ void setAdcCanFrame() {
     SensorReading* oilPress = &workerData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
     adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value * ADC_FRAME_PRESS_FACTOR));
 
+    SensorReading* rotorTemp = &workerData.sensors.adcReadings[ROTOR_TEMP_ADC][ROTOR_TEMP_CHANNEL];
+    adcFrame->data[4] = rotorTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(rotorTemp->value * ADC_FRAME_ROTOR_TEMP_FACTOR));
+
     adcFrame->timestamp = g_get_monotonic_time();
     adcFrame->btWasSent = FALSE;
 
@@ -376,6 +379,7 @@ gpointer sensorWorkerLoop() {
 
         readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
         readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
+        readAdcSensor(ROTOR_TEMP_ADC, ROTOR_TEMP_CHANNEL);
 
         setAdcCanFrame();
 

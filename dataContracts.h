@@ -21,8 +21,9 @@
 
 #define ADC_FRAME_ID 0x000007F0
 #define ADC_FRAME_FAULTY_VALUE 0xFF
-#define ADC_FRAME_TEMP_OFFSET 30
+#define ADC_FRAME_TEMP_OFFSET 40
 #define ADC_FRAME_PRESS_FACTOR 32
+#define ADC_FRAME_ROTOR_TEMP_FACTOR 0.25
 
 typedef enum {
     AppShutdown = 0,
