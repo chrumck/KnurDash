@@ -28,6 +28,9 @@
 #define TEMP_SENSOR_RAW_MIN 30
 #define TEMP_SENSOR_RAW_MAX 2030
 
+#define ROTOR_TEMP_SENSOR_RAW_MIN 350
+#define ROTOR_TEMP_SENSOR_RAW_MAX 2000
+
 #define PRESS_SENSOR_RAW_MIN 30
 #define PRESS_SENSOR_RAW_MAX 1000
 
@@ -62,8 +65,9 @@ gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
 }
 
 gdouble convertRotorTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
-    const gdouble sensorI = sensorV / 2 / refR;
-    return ROTOR_TEMP_A + (TEMP_B * sensorI);
+    const gdouble sensorI = (gdouble)(sensorV / 2) / (refR / 10);
+    const double value = ROTOR_TEMP_A + (ROTOR_TEMP_B * sensorI);
+    return value < 0 ? 0 : value;
 }
 
 const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
@@ -116,10 +120,10 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .labelId = "rotorTemp", .frameId = "rotorTempFrame", .labelMinId = "rotorTempMin", .labelMaxId = "rotorTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
                 .notifyHigh = 600, .warningHigh = 600, .alertHigh = 800,
-                .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
-                .format = "%.0f" , .precision = 10,
+                .rawMin = ROTOR_TEMP_SENSOR_RAW_MIN, .rawMax = ROTOR_TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 5,
             },
-            .adcConfig = ADC_CONFIG_PGA_X2, .refR = 46.8, .convert = convertRotorTemp,
+            .adcConfig = ADC_CONFIG_PGA_X2, .refR = 468, .convert = convertRotorTemp,
         },
         {},
         {
