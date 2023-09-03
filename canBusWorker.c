@@ -12,6 +12,7 @@
 
 #define I2C_ADDRESS 0x25
 #define I2C_REQUEST_DELAY 1e3
+#define I2C_SET_CONFIG_DELAY 100e3
 
 #define MASK_FILTER_LENGTH  5
 #define FRAME_LENGTH  16
@@ -25,6 +26,8 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, readBuf, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
         g_warning("Could not get CAN mask/filter, register:0x%x, error:%d", i2cRegister, readResult);
+        workerData.canBus.errorCount++;
+        return;
     }
 
     guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
@@ -32,8 +35,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         g_warning(
             "Request rejected when getting CAN mask/filter, shutting down app, register:0x%x, response:%d",
             i2cRegister, response);
-
-        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
+        workerData.canBus.errorCount++;
         return;
     }
 
@@ -45,15 +47,18 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     );
 
     int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
-    if (writeResult != 0) g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
+    if (writeResult != 0) {
+        g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
+        workerData.canBus.errorCount++;
+        return;
+    }
 
-    g_usleep(I2C_REQUEST_DELAY * 100);
-
+    g_usleep(I2C_SET_CONFIG_DELAY);
 }
 
 gboolean stopCanBusWorker() {
     float errorRate = (float)workerData.canBus.errorCount / workerData.canBus.requestCount;
-    if (errorRate > MAX_REQUEST_ERROR_RATE) {
+    if (errorRate > MAX_REQUEST_ERROR_RATE && !workerData.shutdownRequested) {
         g_warning("CAN requests excessive error rate:%2f, shutting down app", errorRate);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
     }
@@ -171,30 +176,70 @@ gboolean getFrameFromCAN(gpointer data) {
 gpointer canBusWorkerLoop() {
     g_message("CANBUS worker starting");
 
-    int i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
-    workerData.canBus.i2cPiHandle = i2cPiHandle;
+    int workerStartRetriesCount = 0;
+    int i2cPiHandle = -1;
+    int i2cCanHandle = -1;
 
-    int i2cCanHandle = i2c_open(i2cPiHandle, 1, I2C_ADDRESS, 0);
-    if (i2cCanHandle < 0)  g_error("Could not get CAN handle %d", i2cCanHandle);
-    workerData.canBus.i2cCanHandle = i2cCanHandle;
+    do {
+        workerStartRetriesCount++;
+        workerData.canBus.errorCount = 0;
+        if (i2cCanHandle >= 0 && i2cPiHandle >= 0) i2c_close(i2cPiHandle, i2cCanHandle);
+        if (i2cPiHandle >= 0) pigpio_stop(i2cPiHandle);
 
-    int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
-    if (baudValue < 0)  g_warning("Could not get CAN baud value: %d", baudValue);
-    if (baudValue != BAUD_VALUE) {
-        int writeResult = i2c_write_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER, BAUD_VALUE);
-        if (writeResult < 0) g_warning("Could not set CAN baud value: %d", writeResult);
-        g_usleep(I2C_REQUEST_DELAY);
+        g_usleep(I2C_REQUEST_DELAY * 10);
+
+        i2cPiHandle = pigpio_start(NULL, NULL);
+        if (i2cPiHandle < 0) {
+            g_warning("Could not connect to pigpiod: %d", i2cPiHandle);
+            workerData.canBus.errorCount++;
+            continue;
+        }
+
+        workerData.canBus.i2cPiHandle = i2cPiHandle;
+
+        i2cCanHandle = i2c_open(i2cPiHandle, 1, I2C_ADDRESS, 0);
+        if (i2cCanHandle < 0) {
+            g_warning("Could not get CAN handle %d", i2cCanHandle);
+            workerData.canBus.errorCount++;
+            continue;
+        }
+
+        workerData.canBus.i2cCanHandle = i2cCanHandle;
+
+        int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
+        if (baudValue < 0) {
+            g_warning("Could not get CAN baud value: %d", baudValue);
+            workerData.canBus.errorCount++;
+            continue;
+        }
+
+        if (baudValue != BAUD_VALUE) {
+            int writeResult = i2c_write_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER, BAUD_VALUE);
+            if (writeResult < 0) {
+                g_warning("Could not set CAN baud value: %d", writeResult);
+                workerData.canBus.errorCount++;
+                continue;
+            }
+        }
+
+        g_usleep(I2C_SET_CONFIG_DELAY);
+
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK0_REGISTER, maskValue);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK1_REGISTER, maskValue);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER0_REGISTER, filter0Value);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER1_REGISTER, filter1Value);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER2_REGISTER, filter2Value);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER3_REGISTER, filter3Value);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
+        setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
+
+    } while (workerData.canBus.errorCount > 0 && workerStartRetriesCount < 5);
+
+    if (workerData.canBus.errorCount > 0) {
+        g_warning("Failed to start CANBUS worker, error count: %d", workerData.canBus.errorCount);
+        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
+        return NULL;
     }
-
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK0_REGISTER, maskValue);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK1_REGISTER, maskValue);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER0_REGISTER, filter0Value);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER1_REGISTER, filter1Value);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER2_REGISTER, filter2Value);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER3_REGISTER, filter3Value);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
-    setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
 
     GMainContext* workerContext = g_main_context_new();
     g_main_context_push_thread_default(workerContext);
