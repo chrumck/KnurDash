@@ -58,7 +58,9 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
 
 gboolean stopCanBusWorker() {
     float errorRate = (float)workerData.canBus.errorCount / workerData.canBus.requestCount;
-    if (errorRate > MAX_REQUEST_ERROR_RATE && !workerData.shutdownRequested) {
+    if (errorRate > MAX_REQUEST_ERROR_RATE &&
+        g_get_monotonic_time() - workerData.startupTimestamp > MIN_APP_RUNNING_TIME_US &&
+        !workerData.shutdownRequested) {
         g_warning("CAN requests excessive error rate:%2f, shutting down app", errorRate);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
     }

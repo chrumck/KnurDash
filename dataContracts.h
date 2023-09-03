@@ -8,6 +8,7 @@
 #include "adapter.h"
 #include "application.h"
 
+#define MIN_APP_RUNNING_TIME_US 5e6
 #define MAX_REQUEST_ERROR_RATE 0.20
 
 #define ADC_COUNT 2
@@ -151,6 +152,8 @@ typedef struct {
 
 typedef struct {
     GtkBuilder* builder;
+
+    gint64 startupTimestamp;
 
     gboolean minMaxResetRequested;
     gboolean shutdownRequested;

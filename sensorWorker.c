@@ -333,7 +333,8 @@ gpointer sensorWorkerLoop() {
 
     while (!workerData.shutdownRequested) {
         float errorRate = (float)workerData.sensors.errorCount / workerData.sensors.requestCount;
-        if (errorRate > MAX_REQUEST_ERROR_RATE) {
+        if (errorRate > MAX_REQUEST_ERROR_RATE &&
+            g_get_monotonic_time() - workerData.startupTimestamp > MIN_APP_RUNNING_TIME_US) {
             g_warning("ADC sensors excessive error rate:%2f, shutting down app", errorRate);
             g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
             break;

@@ -15,6 +15,8 @@
 
 int main(int argc, char* argv[])
 {
+    workerData.startupTimestamp = g_get_monotonic_time();
+
     gtk_init(&argc, &argv);
 
     char exeFilePath[FILE_PATH_LENGTH];
