@@ -58,7 +58,7 @@ gboolean stopCanBusWorker() {
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
     }
 
-    if (workerData.requestShutdown == FALSE) return G_SOURCE_CONTINUE;
+    if (!workerData.shutdownRequested) return G_SOURCE_CONTINUE;
 
     GMainContext* context = g_main_loop_get_context(workerData.canBus.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
@@ -94,7 +94,7 @@ guint8 getChecksum(guint8* data, int length)
 }
 
 gboolean getFrameFromCAN(gpointer data) {
-    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
 
     guint frameIndex = GPOINTER_TO_UINT(data);
 
@@ -119,7 +119,7 @@ gboolean getFrameFromCAN(gpointer data) {
 
     g_usleep(I2C_REQUEST_DELAY);
 
-    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
 
     guint8 frameData[FRAME_LENGTH] = { 0 };
     int readResult = i2c_read_device(canBus->i2cPiHandle, canBus->i2cCanHandle, frameData, FRAME_LENGTH);

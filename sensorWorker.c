@@ -281,6 +281,15 @@ void setAdcCanFrame() {
 }
 
 gpointer sensorWorkerLoop() {
+    g_message("Sensor worker waiting for CANBUS Worker to start...");
+
+    while (!workerData.isCanBusWorkerRunning && !workerData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
+
+    if (workerData.shutdownRequested) {
+        g_warning("Sensor worker start aborted");
+        return NULL;
+    }
+
     g_message("Sensor worker starting");
 
     int i2cPiHandle = pigpio_start(NULL, NULL);
@@ -322,17 +331,18 @@ gpointer sensorWorkerLoop() {
     workerData.isSensorWorkerRunning = TRUE;
     guint shutDownCounter = 0;
 
-    while (workerData.requestShutdown == FALSE) {
+    while (!workerData.shutdownRequested) {
         float errorRate = (float)workerData.sensors.errorCount / workerData.sensors.requestCount;
         if (errorRate > MAX_REQUEST_ERROR_RATE) {
             g_warning("ADC sensors excessive error rate:%2f, shutting down app", errorRate);
             g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
+            break;
         }
 
-        if (workerData.requestMinMaxReset == TRUE) {
+        if (workerData.minMaxResetRequested) {
             resetReadingsMinMax();
             resetMinMaxLabels();
-            workerData.requestMinMaxReset = FALSE;
+            workerData.minMaxResetRequested = FALSE;
         }
 
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);

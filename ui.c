@@ -18,7 +18,7 @@ GMutex guiLock;
 
 void requestMinMaxReset()
 {
-    workerData.requestMinMaxReset = TRUE;
+    workerData.minMaxResetRequested = TRUE;
 }
 
 void setBrightness(gboolean isUp)
@@ -60,12 +60,12 @@ void setBrightnessUp() { setBrightness(TRUE); }
 
 gboolean shutDown(gpointer data)
 {
-    if (workerData.requestShutdown) return G_SOURCE_REMOVE;
+    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
 
     guint shutdownType = GPOINTER_TO_UINT(data);
     g_message("KnurDash shutdown request received, type:%d", shutdownType);
 
-    workerData.requestShutdown = TRUE;
+    workerData.shutdownRequested = TRUE;
 
     while (workerData.isSensorWorkerRunning == TRUE ||
         workerData.isCanBusWorkerRunning == TRUE ||

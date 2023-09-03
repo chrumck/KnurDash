@@ -97,7 +97,7 @@ const char* onCharRead(const Application* app, const char* address, const char* 
 gboolean sendCanFrameToBt(gpointer data) {
     CanFrameState* frame = (CanFrameState*)data;
 
-    if (workerData.requestShutdown) {
+    if (workerData.shutdownRequested) {
         frame->btNotifyingSourceId = 0;
         return G_SOURCE_REMOVE;
     }
@@ -195,7 +195,7 @@ void onCharStopNotify(const Application* app, const char* serviceId, const char*
 }
 
 gboolean stopBtWorker() {
-    if (!workerData.requestShutdown) return G_SOURCE_CONTINUE;
+    if (!workerData.shutdownRequested) return G_SOURCE_CONTINUE;
 
     GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);

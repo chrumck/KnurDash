@@ -152,8 +152,8 @@ typedef struct {
 typedef struct {
     GtkBuilder* builder;
 
-    gboolean requestMinMaxReset;
-    gboolean requestShutdown;
+    gboolean minMaxResetRequested;
+    gboolean shutdownRequested;
 
     gboolean wasEngineStarted;
 
