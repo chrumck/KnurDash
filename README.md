@@ -62,6 +62,12 @@ Future development:
     <img src="./photos/PXL_20230831_104939102.jpg" alt="KnurDash" style="height: 50%; width:50%;"/>
  </p>
 
+  <p align="center">
+    <img src="./photos/PXL_20230831_111627040.jpg" alt="KnurDash" style="height: 50%; width:50%;"/>
+ </p>
+
+### Sensors
+
  <p align="center">
     <img src="./photos/PXL_20230904_080956785.jpg" alt="KnurDash" style="height: 50%; width:50%;"/>
  </p>
