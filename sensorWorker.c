@@ -239,9 +239,11 @@ void readCanSensor(guint canSensorIndex) {
 
     const gdouble value = sensor->getValue();
 
-    if (reading->isFaulty && (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) {
-        return;
-    }
+    const gboolean isValueOutOfBounds =
+        value < sensor->base.rawMin + sensor->base.precision ||
+        value > sensor->base.rawMax - sensor->base.precision;
+
+    if (reading->isFaulty && isValueOutOfBounds) return;
 
     if (!reading->isFaulty && (value < sensor->base.rawMin || value > sensor->base.rawMax)) {
         handleSensorReadFault();
