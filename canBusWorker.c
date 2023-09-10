@@ -183,6 +183,8 @@ gpointer canBusWorkerLoop() {
     int i2cCanHandle = -1;
 
     do {
+        if (workerStartRetriesCount > 0) g_usleep(I2C_SET_CONFIG_DELAY * 10);
+
         workerStartRetriesCount++;
         workerData.canBus.errorCount = 0;
         if (i2cCanHandle >= 0 && i2cPiHandle >= 0) i2c_close(i2cPiHandle, i2cCanHandle);
