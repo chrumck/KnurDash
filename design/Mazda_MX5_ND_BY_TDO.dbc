@@ -33,9 +33,8 @@ NS_ :
 
 BS_: 
 BU_: XXX 
-BO_ 576 Steering_-_not_checked_yet: 8 XXX
-   SG_ SteeringCorrSignalX : 39|16@0+ (1,-32512) [0|50002] "" XXX
-   SG_ Steering : 7|16@0+ (1,-32512) [0|31998] "" XXX
+BO_ 576 Steering: 8 XXX
+   SG_ SteeringTorque : 7|16@0+ (1,-32512) [0|1] "" XXX
 
 BO_ 533 WheelSpeed_-_not_checked_yet: 8 XXX
    SG_ 2_Wheel2 : 23|16@0+ (1,-10000) [0|0] "" XXX
@@ -53,7 +52,7 @@ BO_ 514 ThrottleRPM: 8 XXX
    SG_ 0_RPM : 7|16@0+ (0.25,0) [0|0] "rpm" XXX
 
 BO_ 120 Brake_-_not_checked_yet: 8 XXX
-   SG_ BrakePressure : 39|16@0- (0.00152588,-40) [0|100] "%" Vector__XXX
+   SG_ BrakePressure : 39|16@0- (0.00152588,40) [0|100] "%" Vector__XXX
 
 BO_ 2147484704 Temps: 8 XXX
    SG_ 0_CoolantTemp : 7|8@0+ (1,-40) [0|1] "C" Vector__XXX
@@ -61,11 +60,16 @@ BO_ 2147484704 Temps: 8 XXX
 BO_ 2147484922 IAT: 8 XXX
    SG_ 4_IntakeAirTemp : 39|8@0+ (1,-40) [0|1] "C" Vector__XXX
 
+BO_ 2147483782 SteeringAngle: 8 XXX
+   SG_ SteeringAngleSig278 : 7|16@0+ (-0.0228,365) [0|1] "" Vector__XXX
+
 CM_ SG_ 533 0_Wheel1 "check_offset_if_not_32512";
 CM_ SG_ 357 6_CurrentGear "what_is_6th?";
-CM_ SG_ 120 BrakePressure "100/65536+40 ABS:negative_values";
+CM_ SG_ 120 BrakePressure "100/65536+40_ABS:negative_values";
 BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
+BA_DEF_ BO_ "matchingcriteria" INT 0 0;
+BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
