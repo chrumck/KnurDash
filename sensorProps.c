@@ -108,7 +108,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .alertLow = 0.7, .warningLow = 1.0, .notifyLow = 1.0,
                 .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
                 .rawMin = PRESS_SENSOR_RAW_MIN, .rawMax = PRESS_SENSOR_RAW_MAX,
-                .format = "%.1f" , .precision = 0.03,
+                .format = "%.1f" , .precision = 0.05,
             },
             .adcConfig = ADC_DEFAULT_CONFIG, .refR = 465, .convert = convertOilPress,
         },
