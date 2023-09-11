@@ -387,6 +387,8 @@ gpointer sensorWorkerLoop() {
 
         readAdcSensor(VDD_ADC, VDD_CHANNEL);
 
+        readAdcSensor(TRANS_TEMP_ADC, TRANS_TEMP_CHANNEL);
+        readAdcSensor(DIFF_TEMP_ADC, DIFF_TEMP_CHANNEL);
         readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
         readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
         readAdcSensor(ROTOR_TEMP_ADC, ROTOR_TEMP_CHANNEL);
