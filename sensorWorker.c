@@ -21,6 +21,7 @@
 #define COOLANT_TEMP_CAN_SENSOR_INDEX 0
 
 #define MAX_ERROR_COUNT 5
+#define MAX_ERROR_COUNT_LOGGING 20
 #define FAULTY_READING_LABEL "--"
 #define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
@@ -134,8 +135,8 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
 #define handleSensorReadFault(_allowMaxErrors)\
     sensors->errorCount++;\
     reading->errorCount++;\
-    if (_allowMaxErrors && (reading->errorCount < MAX_ERROR_COUNT || reading->errorCount > MAX_ERROR_COUNT)) return;\
     reading->value = FAULTY_READING_VALUE;\
+    if (_allowMaxErrors && (reading->errorCount < MAX_ERROR_COUNT || reading->errorCount > MAX_ERROR_COUNT_LOGGING)) return;\
     setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
     setFrame(widgets->frame, StateNormal);\
 
