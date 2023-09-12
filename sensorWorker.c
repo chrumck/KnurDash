@@ -190,7 +190,7 @@ void readAdcSensor(int adc, int channel) {
     int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], newConfig);
     if (writeResult != 0) {
         handleSensorReadFault(TRUE);
-        g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
+        g_warning("Could not write config to ADC: %d - adc:%d, channel:%d", writeResult, adc, channel);
         return;
     }
 
@@ -200,14 +200,14 @@ void readAdcSensor(int adc, int channel) {
     int readResult = i2c_read_device(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], buf, 3);
     if (readResult != 3) {
         handleSensorReadFault(TRUE);
-        g_warning("Could not read adc bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
+        g_warning("Could not read ADC bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
         return;
     }
 
     int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
         handleSensorReadFault(TRUE);
-        g_warning("Channel received %d does not match required - adc:%d, channel:%d", receivedChannel, adc, channel);
+        g_warning("Received ADC channel:%d does not match required - adc:%d, channel:%d", receivedChannel, adc, channel);
         return;
     }
 
