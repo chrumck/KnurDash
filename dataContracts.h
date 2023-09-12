@@ -82,7 +82,7 @@ typedef struct {
     gdouble max;
 
     SensorState state;
-    gboolean isFaulty;
+    guint32 errorCount;
 } SensorReading;
 
 typedef struct {

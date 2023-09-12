@@ -20,7 +20,8 @@
 
 #define COOLANT_TEMP_CAN_SENSOR_INDEX 0
 
-#define NO_READING_LABEL "--"
+#define MAX_ERROR_COUNT 5
+#define FAULTY_READING_LABEL "--"
 #define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
 
@@ -55,13 +56,13 @@ void resetReadingsValues() {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             SensorReading* reading = &workerData.sensors.adcReadings[i][j];
             reading->value = FAULTY_READING_VALUE;
-            reading->isFaulty = TRUE;
+            reading->errorCount = 1;
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
         SensorReading* reading = &workerData.sensors.canReadings[i];
         reading->value = FAULTY_READING_VALUE;
-        reading->isFaulty = TRUE;
+        reading->errorCount = 1;
     }
 };
 
@@ -72,6 +73,7 @@ void resetReadingsMinMax() {
             workerData.sensors.adcReadings[i][j].max = -G_MAXDOUBLE;
         }
     }
+
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
         workerData.sensors.canReadings[i].min = G_MAXDOUBLE;
         workerData.sensors.canReadings[i].max = -G_MAXDOUBLE;
@@ -105,14 +107,14 @@ void resetMinMaxLabels() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const SensorWidgets* widgets = &workerData.sensors.adcWidgets[i][j];
-            setLabel(widgets->labelMin, NO_READING_LABEL, 0);
-            setLabel(widgets->labelMax, NO_READING_LABEL, 0);
+            setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
+            setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
         const SensorWidgets* widgets = &workerData.sensors.canWidgets[i];
-        setLabel(widgets->labelMin, NO_READING_LABEL, 0);
-        setLabel(widgets->labelMax, NO_READING_LABEL, 0);
+        setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
+        setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
 
     }
 };
@@ -129,12 +131,12 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
     return StateNormal;
 }
 
-#define handleSensorReadFault()\
+#define handleSensorReadFault(_allowMaxErrors)\
     sensors->errorCount++;\
-    if (reading->isFaulty) return;\
-    reading->isFaulty = TRUE;\
+    reading->errorCount++;\
+    if (_allowMaxErrors && (reading->errorCount < MAX_ERROR_COUNT || reading->errorCount > MAX_ERROR_COUNT)) return;\
     reading->value = FAULTY_READING_VALUE;\
-    setLabel(widgets->label, NO_READING_LABEL, 0);\
+    setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
     setFrame(widgets->frame, StateNormal);\
 
 void setSensorReadingAndWidgets(
@@ -143,15 +145,16 @@ void setSensorReadingAndWidgets(
     const SensorBase* sensor,
     const SensorWidgets* widgets) {
 
-    if (!reading->isFaulty &&
-        value < reading->value + sensor->precision &&
-        value > reading->value - sensor->precision &&
+    if (!reading->errorCount &&
         reading->min != G_MAXDOUBLE &&
-        reading->max != -G_MAXDOUBLE) return;
+        reading->max != -G_MAXDOUBLE &&
+        value < reading->value + sensor->precision &&
+        value > reading->value - sensor->precision
+        ) return;
 
-    gboolean wasFaulty = reading->isFaulty;
+    gboolean wasFaulty = !!reading->errorCount;
 
-    reading->isFaulty = FALSE;
+    reading->errorCount = 0;
     reading->value = value;
 
     setLabel(widgets->label, sensor->format, value);
@@ -167,7 +170,7 @@ void setSensorReadingAndWidgets(
     }
 
     const SensorState state = getSensorState(sensor, value);
-    if (wasFaulty == TRUE || state != reading->state) {
+    if (wasFaulty || state != reading->state) {
         reading->state = state;
         setFrame(widgets->frame, state);
     }
@@ -186,7 +189,7 @@ void readAdcSensor(int adc, int channel) {
     guint8 newConfig = sensor->adcConfig | getAdcChannelBits(channel);
     int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], newConfig);
     if (writeResult != 0) {
-        handleSensorReadFault();
+        handleSensorReadFault(TRUE);
         g_warning("Could not write config to adc: %d - adc:%d, channel:%d", writeResult, adc, channel);
         return;
     }
@@ -196,14 +199,14 @@ void readAdcSensor(int adc, int channel) {
     guint8 buf[3];
     int readResult = i2c_read_device(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], buf, 3);
     if (readResult != 3) {
-        handleSensorReadFault();
+        handleSensorReadFault(TRUE);
         g_warning("Could not read adc bytes: %d - adc:%d, channel:%d", readResult, adc, channel);
         return;
     }
 
     int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
-        handleSensorReadFault();
+        handleSensorReadFault(TRUE);
         g_warning("Channel received %d does not match required - adc:%d, channel:%d", receivedChannel, adc, channel);
         return;
     }
@@ -211,18 +214,19 @@ void readAdcSensor(int adc, int channel) {
     const guint32 temp = buf[0] << 8 | buf[1];
     const gint32 v = signExtend32(temp, 12);
 
-    if (reading->isFaulty && (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) {
-        return;
-    }
+    if (reading->errorCount &&
+        (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) return;
 
-    if (!reading->isFaulty && (v < sensor->base.rawMin || v > sensor->base.rawMax)) {
-        handleSensorReadFault();
-        g_warning("Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ", v, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
+    if (!reading->errorCount && (v < sensor->base.rawMin || v > sensor->base.rawMax)) {
+        handleSensorReadFault(FALSE);
+        g_warning(
+            "Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ",
+            v, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
         return;
     }
 
     SensorReading* vddReading = &sensors->adcReadings[VDD_ADC][VDD_CHANNEL];
-    const gdouble vdd = !vddReading->isFaulty ? vddReading->value : VDD_DEFAULT;
+    const gdouble vdd = !vddReading->errorCount ? vddReading->value : VDD_DEFAULT;
 
     const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
 
@@ -239,12 +243,14 @@ void readCanSensor(guint canSensorIndex) {
 
     const gdouble value = sensor->getValue();
 
-    if (reading->isFaulty &&
+    if (reading->errorCount &&
         (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) return;
 
-    if (!reading->isFaulty && (value < sensor->base.rawMin || value > sensor->base.rawMax)) {
-        handleSensorReadFault();
-        g_warning("CAN sensor value %f out of bounds: %d~%d - sensor index:%d", value, sensor->base.rawMin, sensor->base.rawMax, canSensorIndex);
+    if (!reading->errorCount && (value < sensor->base.rawMin || value > sensor->base.rawMax)) {
+        handleSensorReadFault(FALSE);
+        g_warning(
+            "CAN sensor value %f out of bounds: %d~%d - sensor index:%d",
+            value, sensor->base.rawMin, sensor->base.rawMax, canSensorIndex);
         return;
     }
 
@@ -259,19 +265,19 @@ void setAdcCanFrame() {
     memset(adcFrame->data, 0, CAN_DATA_SIZE);
 
     SensorReading* transTemp = &workerData.sensors.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
-    adcFrame->data[0] = transTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(transTemp->value) + ADC_FRAME_TEMP_OFFSET);
+    adcFrame->data[0] = transTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(transTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* diffTemp = &workerData.sensors.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
-    adcFrame->data[1] = diffTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(diffTemp->value) + ADC_FRAME_TEMP_OFFSET);
+    adcFrame->data[1] = diffTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(diffTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* oilTemp = &workerData.sensors.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
-    adcFrame->data[2] = oilTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilTemp->value) + ADC_FRAME_TEMP_OFFSET);
+    adcFrame->data[2] = oilTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
     SensorReading* oilPress = &workerData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
-    adcFrame->data[3] = oilPress->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value * ADC_FRAME_PRESS_FACTOR));
+    adcFrame->data[3] = oilPress->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value * ADC_FRAME_PRESS_FACTOR));
 
     SensorReading* rotorTemp = &workerData.sensors.adcReadings[ROTOR_TEMP_ADC][ROTOR_TEMP_CHANNEL];
-    adcFrame->data[4] = rotorTemp->isFaulty ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(rotorTemp->value * ADC_FRAME_ROTOR_TEMP_FACTOR));
+    adcFrame->data[4] = rotorTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(rotorTemp->value * ADC_FRAME_ROTOR_TEMP_FACTOR));
 
     adcFrame->timestamp = g_get_monotonic_time();
     adcFrame->btWasSent = FALSE;
@@ -350,9 +356,9 @@ gpointer sensorWorkerLoop() {
         SensorReading* pressureReading = &(workerData.sensors.adcReadings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
         const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
-        if (workerData.wasEngineStarted == FALSE &&
-            ignOn == TRUE &&
-            pressureReading->isFaulty == FALSE &&
+        if (!workerData.wasEngineStarted &&
+            ignOn &&
+            !pressureReading->errorCount &&
             pressureReading->value > pressureSensor->base.alertLow) {
             workerData.wasEngineStarted = TRUE;
         }
@@ -360,7 +366,7 @@ gpointer sensorWorkerLoop() {
         gint32 engineRpm = getEngineRpm();
         gboolean buzzerOn = gpio_read(i2cPiHandle, BUZZER_GPIO_PIN) == TRUE;
 
-        if (buzzerOn && !pressureReading->isFaulty && pressureReading->value >= pressureSensor->base.alertLow) {
+        if (buzzerOn && !pressureReading->errorCount && pressureReading->value >= pressureSensor->base.alertLow) {
             gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
         }
 
@@ -368,7 +374,7 @@ gpointer sensorWorkerLoop() {
             gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
         }
 
-        if (!pressureReading->isFaulty &&
+        if (!pressureReading->errorCount &&
             pressureReading->value < pressureSensor->base.alertLow &&
             engineRpm > OIL_PRESSURE_ALERT_MIN_RPM &&
             !buzzerOn) {
