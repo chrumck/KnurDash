@@ -68,7 +68,10 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 
     if (!isArrayEqual(value, readBuf, MASK_FILTER_LENGTH)) {
-        g_warning("CAN mask/filter not as expected after write, register:0x%x, response:%d", i2cRegister, response);
+        g_warning(
+            "CAN mask/filter not as expected after writing register:0x%x, got values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
+            i2cRegister, readBuf[0], readBuf[1], readBuf[2], readBuf[3], readBuf[4]
+        );
         workerData.canBus.errorCount++;
     };
 }
@@ -252,9 +255,12 @@ gpointer canBusWorkerLoop() {
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
 
-    } while (workerData.canBus.errorCount > 0 && workerStartRetriesCount < 5);
+        if (workerData.canBus.errorCount && workerStartRetriesCount < 5) {
+            g_warning("Failed to initialize CAN controller, retrying...");
+        }
+    } while (workerData.canBus.errorCount && workerStartRetriesCount < 5);
 
-    if (workerData.canBus.errorCount > 0) {
+    if (workerData.canBus.errorCount) {
         g_warning("Failed to start CANBUS worker, error count: %d", workerData.canBus.errorCount);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
         return NULL;
