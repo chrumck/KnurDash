@@ -32,9 +32,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
 
     guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
     if (response == RECEIVE_REJECTED_RESPONSE) {
-        g_warning(
-            "Request rejected when getting CAN mask/filter, shutting down app, register:0x%x, response:%d",
-            i2cRegister, response);
+        g_warning("Request rejected when getting CAN mask/filter, register:0x%x, response:%d", i2cRegister, response);
         workerData.canBus.errorCount++;
         return;
     }
@@ -54,6 +52,25 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 
     g_usleep(I2C_SET_CONFIG_DELAY);
+
+    readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, readBuf, MASK_FILTER_LENGTH);
+    if (readResult != MASK_FILTER_LENGTH) {
+        g_warning("Could not get CAN mask/filter after write, register:0x%x, error:%d", i2cRegister, readResult);
+        workerData.canBus.errorCount++;
+        return;
+    }
+
+    response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
+    if (response == RECEIVE_REJECTED_RESPONSE) {
+        g_warning("Request rejected when getting CAN mask/filter after write, register:0x%x, response:%d", i2cRegister, response);
+        workerData.canBus.errorCount++;
+        return;
+    }
+
+    if (!isArrayEqual(value, readBuf, MASK_FILTER_LENGTH)) {
+        g_warning("CAN mask/filter not as expected after write, register:0x%x, response:%d", i2cRegister, response);
+        workerData.canBus.errorCount++;
+    };
 }
 
 gboolean stopCanBusWorker() {
@@ -189,8 +206,6 @@ gpointer canBusWorkerLoop() {
         workerData.canBus.errorCount = 0;
         if (i2cCanHandle >= 0 && i2cPiHandle >= 0) i2c_close(i2cPiHandle, i2cCanHandle);
         if (i2cPiHandle >= 0) pigpio_stop(i2cPiHandle);
-
-        g_usleep(I2C_REQUEST_DELAY * 10);
 
         i2cPiHandle = pigpio_start(NULL, NULL);
         if (i2cPiHandle < 0) {
