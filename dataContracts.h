@@ -30,6 +30,8 @@ typedef enum {
     AppShutdown = 0,
     SystemShutdown = 1,
     SystemReboot = 2,
+    AppShutdownDueToErrors = 3,
+    SystemShutdownByUser = 4,
 } ShutDownType;
 
 typedef struct {

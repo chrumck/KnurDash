@@ -80,9 +80,11 @@ gboolean shutDown(gpointer data)
 
     switch (shutdownType) {
     case AppShutdown:
+    case AppShutdownDueToErrors:
         break;
 #ifndef IS_DEBUG
-    case SystemShutdown: {
+    case SystemShutdown:
+    case SystemShutdownByUser: {
         g_message("Shutting down the system");
         system("sudo shutdown now");
         break;
@@ -106,7 +108,7 @@ void buttonShutDown(GtkWidget* button) {
     gtk_button_set_label(GTK_BUTTON(button), "Turning Off...");
     g_mutex_unlock(&guiLock);
 
-    shutDown(GUINT_TO_POINTER(SystemShutdown));
+    shutDown(GUINT_TO_POINTER(SystemShutdownByUser));
 }
 
 gboolean setLabelText(gpointer data) {

@@ -62,7 +62,7 @@ gboolean stopCanBusWorker() {
         g_get_monotonic_time() - workerData.startupTimestamp > MIN_APP_RUNNING_TIME_US &&
         !workerData.shutdownRequested) {
         g_warning("CAN requests excessive error rate:%2f, shutting down app", errorRate);
-        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
+        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
     }
 
     if (!workerData.shutdownRequested) return G_SOURCE_CONTINUE;
@@ -241,7 +241,7 @@ gpointer canBusWorkerLoop() {
 
     if (workerData.canBus.errorCount > 0) {
         g_warning("Failed to start CANBUS worker, error count: %d", workerData.canBus.errorCount);
-        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdown));
+        g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
         return NULL;
     }
 
