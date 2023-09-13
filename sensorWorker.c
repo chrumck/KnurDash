@@ -217,7 +217,6 @@ void readAdcSensor(int adc, int channel) {
 
     if (reading->errorCount &&
         (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) {
-        sensors->errorCount++;
         reading->errorCount++;
         return;
     }
@@ -250,7 +249,6 @@ void readCanSensor(guint canSensorIndex) {
 
     if (reading->errorCount &&
         (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) {
-        sensors->errorCount++;
         reading->errorCount++;
         return;
     }
