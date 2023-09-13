@@ -42,7 +42,7 @@ BO_ 533 WheelSpeed: 8 MX5_ND2_2019
    SG_ 4_Wheel3 : 39|16@0+ (0.01,-100) [0|0] "" MX5_ND2_2019
    SG_ 0_Wheel1 : 7|16@0+ (0.01,-100) [0|0] "" MX5_ND2_2019
 
-BO_ 357 Clutch_Gear_-_not_checked_yet: 8 MX5_ND2_2019
+BO_ 357 Gear_Clutch: 8 MX5_ND2_2019
    SG_ 2_Clutch_Neutral : 23|8@0+ (1,0) [0|0] "" MX5_ND2_2019
    SG_ 6_CurrentGear : 55|8@0+ (1,0) [0|0] "" MX5_ND2_2019
 
@@ -84,6 +84,8 @@ BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
+BA_DEF_ BO_ "matchingcriteria" INT 0 0;
+BA_DEF_ BO_ "filterlabeling" INT 0 0;
 BA_DEF_DEF_ "GenMsgBackgroundColor" "#ffffff";
 BA_DEF_DEF_ "GenMsgForegroundColor" "#000000";
 BA_DEF_DEF_ "matchingcriteria" 0;
@@ -93,5 +95,5 @@ BA_DEF_DEF_ "filterlabeling" 0;
 BA_ "GenMsgForegroundColor" BO_ 357 "#000000";
 BA_ "GenMsgForegroundColor" BO_ 120 "#000000";
 BA_ "GenMsgForegroundColor" BO_ 2147484704 "#000000";
-VAL_ 357 2_Clutch_Neutral 22 "Neutral" 25 "Clutch-In" 22 "Clutch-Out";
+VAL_ 357 2_Clutch_Neutral 22 "Neutral" 25 "Clutch-In" 23 "Clutch-Out";
 VAL_ 357 6_CurrentGear 19 "Neutral_1st" 11 "2nd" 7 "3rd" 6 "4th" 5 "5th";
