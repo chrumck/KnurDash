@@ -20,8 +20,8 @@
 
 #define COOLANT_TEMP_CAN_SENSOR_INDEX 0
 
-#define MAX_ERROR_COUNT 5
-#define MAX_ERROR_COUNT_LOGGING 20
+#define MIN_ERROR_COUNT 5
+#define MAX_ERROR_COUNT 20
 #define FAULTY_READING_LABEL "--"
 #define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
@@ -132,11 +132,11 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
     return StateNormal;
 }
 
-#define handleSensorReadFault(_allowMaxErrors)\
+#define handleSensorReadFault(_allowSomeErrors)\
     sensors->errorCount++;\
     reading->errorCount++;\
     reading->value = FAULTY_READING_VALUE;\
-    if (_allowMaxErrors && (reading->errorCount < MAX_ERROR_COUNT || reading->errorCount > MAX_ERROR_COUNT_LOGGING)) return;\
+    if (_allowSomeErrors && (reading->errorCount < MIN_ERROR_COUNT || reading->errorCount > MAX_ERROR_COUNT)) return;\
     setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
     setFrame(widgets->frame, StateNormal);\
 
@@ -216,7 +216,11 @@ void readAdcSensor(int adc, int channel) {
     const gint32 v = signExtend32(temp, 12);
 
     if (reading->errorCount &&
-        (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) return;
+        (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) {
+        sensors->errorCount++;
+        reading->errorCount++;
+        return;
+    }
 
     if (!reading->errorCount && (v < sensor->base.rawMin || v > sensor->base.rawMax)) {
         handleSensorReadFault(FALSE);
@@ -245,7 +249,11 @@ void readCanSensor(guint canSensorIndex) {
     const gdouble value = sensor->getValue();
 
     if (reading->errorCount &&
-        (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) return;
+        (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) {
+        sensors->errorCount++;
+        reading->errorCount++;
+        return;
+    }
 
     if (!reading->errorCount && (value < sensor->base.rawMin || value > sensor->base.rawMax)) {
         handleSensorReadFault(FALSE);
@@ -346,6 +354,13 @@ gpointer sensorWorkerLoop() {
             break;
         }
 
+        guint32 coolantTempReadingErrorCount = (workerData.sensors.canReadings)[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount;
+        if (workerData.wasEngineStarted && coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
+            g_warning("Coolant temp excessive error count:%d, shutting down app", coolantTempReadingErrorCount);
+            g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
+            break;
+        }
+
         if (workerData.minMaxResetRequested) {
             resetReadingsMinMax();
             resetMinMaxLabels();
@@ -384,7 +399,7 @@ gpointer sensorWorkerLoop() {
 
 #ifndef IS_DEBUG
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
-        if ((workerData.wasEngineStarted == TRUE && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
+        if ((workerData.wasEngineStarted && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
             g_message("Ignition off, requesting system shutdown");
             g_idle_add(shutDown, GUINT_TO_POINTER(SystemShutdown));
