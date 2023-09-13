@@ -84,10 +84,10 @@ gboolean stopCanBusWorker() {
 
 #define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3) {\
     workerData.canBus.errorCount++;\
-    if (ENABLE_CAN_READ_ERROR_LOGGING && !frameState->receiveFailed) {\
+    frameState->errorCount++;\
+    if (ENABLE_CAN_READ_ERROR_LOGGING && frameState->errorCount == 1) {\
          g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3);\
     }\
-    frameState->receiveFailed = TRUE;\
     return G_SOURCE_CONTINUE;\
 }\
 
@@ -166,7 +166,7 @@ gboolean getFrameFromCAN(gpointer data) {
     frameState->dataLength = frameData[6];
     memset(frameState->data, 0, CAN_DATA_SIZE);
     memcpy(frameState->data, frameData + 7, frameData[6]);
-    frameState->receiveFailed = FALSE;
+    frameState->errorCount = 0;
     frameState->timestamp = g_get_monotonic_time();
     frameState->btWasSent = FALSE;
 

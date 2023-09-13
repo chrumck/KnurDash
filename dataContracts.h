@@ -119,8 +119,9 @@ typedef struct {
     gboolean isRemoteRequest;
     guint8 dataLength;
     guint8 data[CAN_DATA_SIZE];
-    gboolean receiveFailed;
     gint64 timestamp;
+
+    guint32 errorCount;
 
     GMutex lock;
 
