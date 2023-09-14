@@ -23,8 +23,17 @@
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
     g_usleep(I2C_REQUEST_DELAY);
 
+    int writeResult = i2c_write_byte(piHandle, canHandle, i2cRegister);
+    if (writeResult != 0) {
+        g_warning("Request to get CAN mask/filter failed, register:0x%x, error:%d", i2cRegister, writeResult);
+        workerData.canBus.errorCount++;
+        return;
+    }
+
+    g_usleep(I2C_REQUEST_DELAY);
+
     guint8 readBuf[MASK_FILTER_LENGTH];
-    int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, readBuf, MASK_FILTER_LENGTH);
+    int readResult = i2c_read_device(piHandle, canHandle, readBuf, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
         g_warning("Could not get CAN mask/filter, register:0x%x, error:%d", i2cRegister, readResult);
         workerData.canBus.errorCount++;
@@ -33,7 +42,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
 
     guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
     if (response == RECEIVE_REJECTED_RESPONSE || response == RESPONSE_NOT_READY_RESPONSE) {
-        g_warning("Request rejected when getting CAN mask/filter, register:0x%x, response:%d", i2cRegister, response);
+        g_warning("Request rejected when getting CAN mask/filter, register:0x%x, response:%X", i2cRegister, response);
         workerData.canBus.errorCount++;
         return;
     }
@@ -45,7 +54,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         i2cRegister, value[0], value[1], value[2], value[3], value[4]
     );
 
-    int writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
+    writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
     if (writeResult != 0) {
         g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
         workerData.canBus.errorCount++;
@@ -53,28 +62,6 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 
     g_usleep(I2C_SET_CONFIG_DELAY);
-
-    readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, readBuf, MASK_FILTER_LENGTH);
-    if (readResult != MASK_FILTER_LENGTH) {
-        g_warning("Could not get CAN mask/filter after write, register:0x%x, error:%d", i2cRegister, readResult);
-        workerData.canBus.errorCount++;
-        return;
-    }
-
-    response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
-    if (response == RECEIVE_REJECTED_RESPONSE || response == RESPONSE_NOT_READY_RESPONSE) {
-        g_warning("Request rejected when getting CAN mask/filter after write, register:0x%x, response:%d", i2cRegister, response);
-        workerData.canBus.errorCount++;
-        return;
-    }
-
-    if (!isArrayEqual(value, readBuf, MASK_FILTER_LENGTH)) {
-        g_warning(
-            "CAN mask/filter not as expected after writing register:0x%x, got values: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
-            i2cRegister, readBuf[0], readBuf[1], readBuf[2], readBuf[3], readBuf[4]
-        );
-        workerData.canBus.errorCount++;
-    };
 }
 
 gboolean stopCanBusWorker() {
