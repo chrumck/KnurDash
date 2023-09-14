@@ -353,11 +353,11 @@ gpointer sensorWorkerLoop() {
         }
 
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
+
         guint32* coolantTempReadingErrorCount = &(workerData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount);
+        if (!ignOn) *coolantTempReadingErrorCount = 0;
 
-        if (!ignOn && *coolantTempReadingErrorCount > MAX_ERROR_COUNT) *coolantTempReadingErrorCount = MAX_ERROR_COUNT;
-
-        if (workerData.wasEngineStarted && ignOn && *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
+        if (ignOn && workerData.wasEngineStarted && *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
             g_warning("Coolant temp excessive error count:%d, shutting down app", *coolantTempReadingErrorCount);
             g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
             break;
