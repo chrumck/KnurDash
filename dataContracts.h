@@ -9,7 +9,7 @@
 #include "application.h"
 
 #define MIN_APP_RUNNING_TIME_US 8e6
-#define MAX_REQUEST_ERROR_RATE 0.20
+#define MAX_REQUEST_ERROR_RATE 0.50
 
 #define ADC_COUNT 2
 #define ADC_CHANNEL_COUNT 4
