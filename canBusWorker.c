@@ -14,12 +14,11 @@
 #define I2C_REQUEST_DELAY 1e3
 #define I2C_SET_CONFIG_DELAY 100e3
 
-#define MASK_FILTER_LENGTH  5
 #define FRAME_LENGTH  16
 
 #define NO_FRAMES_AVAILABLE_RESPONSE 0x00000000
-#define RECEIVE_REJECTED_RESPONSE 0x00000001
-#define RESPONSE_NOT_READY_RESPONSE 0x00000002
+#define RECEIVE_REJECTED_RESPONSE 0x01010101
+#define RESPONSE_NOT_READY_RESPONSE 0x01010102
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
     g_usleep(I2C_REQUEST_DELAY);
@@ -63,7 +62,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 
     response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
-    if (response == RECEIVE_REJECTED_RESPONSE) {
+    if (response == RECEIVE_REJECTED_RESPONSE || response == RESPONSE_NOT_READY_RESPONSE) {
         g_warning("Request rejected when getting CAN mask/filter after write, register:0x%x, response:%d", i2cRegister, response);
         workerData.canBus.errorCount++;
         return;
