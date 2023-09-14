@@ -22,6 +22,8 @@
 #define RESPONSE_NOT_READY_RESPONSE 0x00000002
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
+    g_usleep(I2C_REQUEST_DELAY);
+
     guint8 readBuf[MASK_FILTER_LENGTH];
     int readResult = i2c_read_i2c_block_data(piHandle, canHandle, i2cRegister, readBuf, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
@@ -31,7 +33,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 
     guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
-    if (response == RECEIVE_REJECTED_RESPONSE) {
+    if (response == RECEIVE_REJECTED_RESPONSE || response == RESPONSE_NOT_READY_RESPONSE) {
         g_warning("Request rejected when getting CAN mask/filter, register:0x%x, response:%d", i2cRegister, response);
         workerData.canBus.errorCount++;
         return;
