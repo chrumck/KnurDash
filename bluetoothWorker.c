@@ -139,7 +139,7 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     if (received->len == 3 && received->data[0] != RACECHRONO_ALLOW_ALL) return BLUEZ_ERROR_REJECTED;
     if (received->len == 7 && received->data[0] != RACECHRONO_ALLOW_SINGLE) return BLUEZ_ERROR_REJECTED;
 
-    g_message("Received BT write request, command:%d", received->data[0]);
+    g_message("Received BT write request, command:%d, data length:%d", received->data[0], received->len);
 
     GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
 
@@ -170,7 +170,10 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     CanFrameState* frame = frameId == ADC_FRAME_ID ? &workerData.canBus.adcFrame : NULL;
     for (guint i = 0; i < CAN_FRAMES_COUNT; i++) if (frameId == workerData.canBus.frames[i].canId) frame = &workerData.canBus.frames[i];
 
-    if (frame == NULL) return BLUEZ_ERROR_REJECTED;
+    if (frame == NULL) {
+        g_warning("No frame found for BT notify request:0x%x, rejecting request", frameId);
+        return BLUEZ_ERROR_REJECTED;
+    }
 
     g_message("BT request to allow single, interval:%d, frame:0x%x", notifyInterval, frame->canId);
 
