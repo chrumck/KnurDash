@@ -237,7 +237,7 @@ void readAdcSensor(int adc, int channel) {
     setSensorReadingAndWidgets(value, reading, &sensor->base, widgets);
 }
 
-void readCanSensor(guint canSensorIndex) {
+void readCanSensor(guint canSensorIndex, gboolean ignOn) {
     const CanSensor* sensor = &canSensors[canSensorIndex];
     SensorData* sensors = &workerData.sensors;
     const SensorWidgets* widgets = &sensors->canWidgets[canSensorIndex];
@@ -245,11 +245,16 @@ void readCanSensor(guint canSensorIndex) {
 
     sensors->requestCount++;
 
+    if (!ignOn && !reading->errorCount) {
+        handleSensorReadFault(FALSE);
+        return;
+    }
+
     const gdouble value = sensor->getValue();
 
     if (reading->errorCount &&
         (value < sensor->base.rawMin + sensor->base.precision || value > sensor->base.rawMax - sensor->base.precision)) {
-        reading->errorCount++;
+        if (ignOn) reading->errorCount++;
         return;
     }
 
@@ -355,8 +360,6 @@ gpointer sensorWorkerLoop() {
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
 
         guint32* coolantTempReadingErrorCount = &(workerData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount);
-        if (!ignOn) *coolantTempReadingErrorCount = 0;
-
         if (ignOn && workerData.wasEngineStarted && *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
             g_warning("Coolant temp excessive error count:%d, shutting down app", *coolantTempReadingErrorCount);
             g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
@@ -417,7 +420,7 @@ gpointer sensorWorkerLoop() {
 
         setAdcCanFrame();
 
-        readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX);
+        readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX, ignOn);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
     }
