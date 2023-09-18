@@ -10,6 +10,8 @@
 #define CANBUS_WORKER_SHUTDOWN_LOOP_INTERVAL 500
 #define ENABLE_CAN_READ_ERROR_LOGGING FALSE
 
+#define CAN_CTRL_SWITCH_GPIO_PIN 4
+
 #define I2C_ADDRESS 0x25
 #define I2C_REQUEST_DELAY 1e3
 #define I2C_SET_CONFIG_DELAY 100e3
@@ -191,10 +193,15 @@ gpointer canBusWorkerLoop() {
     int i2cCanHandle = -1;
 
     do {
-        if (workerStartRetriesCount > 0) g_usleep(I2C_SET_CONFIG_DELAY * 10);
+        if (workerStartRetriesCount > 0) {
+            g_warning("Failed to initialize CAN controller, retrying...");
+            if (i2cPiHandle >= 0) gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
+            g_usleep(I2C_SET_CONFIG_DELAY * 10);
+        }
 
         workerStartRetriesCount++;
         workerData.canBus.errorCount = 0;
+
         if (i2cCanHandle >= 0 && i2cPiHandle >= 0) i2c_close(i2cPiHandle, i2cCanHandle);
         if (i2cPiHandle >= 0) pigpio_stop(i2cPiHandle);
 
@@ -215,6 +222,15 @@ gpointer canBusWorkerLoop() {
         }
 
         workerData.canBus.i2cCanHandle = i2cCanHandle;
+
+        int setCanCtrOnPullDown = set_pull_up_down(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_PUD_UP);
+        if (setCanCtrOnPullDown != 0) g_error("Could not set GPIO pin pulldown for CAN_CTRL_SWITCH: %d", setCanCtrOnPullDown);
+
+        int setCanCtrOnPinMode = set_mode(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_OUTPUT);
+        if (setCanCtrOnPinMode != 0) g_error("Could not set GPIO pin mode for CAN_CTRL_SWITCH: %d", setCanCtrOnPinMode);
+
+        gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, FALSE);
+        g_usleep(I2C_SET_CONFIG_DELAY * 20);
 
         int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
         if (baudValue < 0) {
@@ -242,10 +258,6 @@ gpointer canBusWorkerLoop() {
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER3_REGISTER, filter3Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
-
-        if (workerData.canBus.errorCount && workerStartRetriesCount < 5) {
-            g_warning("Failed to initialize CAN controller, retrying...");
-        }
     } while (workerData.canBus.errorCount && workerStartRetriesCount < 5);
 
     if (workerData.canBus.errorCount) {
@@ -278,6 +290,7 @@ gpointer canBusWorkerLoop() {
 
     g_main_loop_unref(mainLoop);
 
+    gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
     i2c_close(i2cPiHandle, i2cCanHandle);
     pigpio_stop(i2cPiHandle);
 
