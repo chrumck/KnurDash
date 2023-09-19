@@ -238,6 +238,8 @@ void readAdcSensor(int adc, int channel) {
 }
 
 void readCanSensor(guint canSensorIndex, gboolean ignOn) {
+    if (workerData.canBusRestartRequested) return;
+
     const CanSensor* sensor = &canSensors[canSensorIndex];
     SensorData* sensors = &workerData.sensors;
     const SensorWidgets* widgets = &sensors->canWidgets[canSensorIndex];
@@ -360,10 +362,13 @@ gpointer sensorWorkerLoop() {
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
 
         guint32* coolantTempReadingErrorCount = &(workerData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount);
-        if (ignOn && workerData.wasEngineStarted && *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
-            g_warning("Coolant temp excessive error count:%d, shutting down app", *coolantTempReadingErrorCount);
-            g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
-            break;
+        if (ignOn &&
+            workerData.wasEngineStarted &&
+            !workerData.canBusRestartRequested &&
+            *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
+            g_warning("Coolant temp excessive error count:%d, requesting CAN restart", *coolantTempReadingErrorCount);
+            *coolantTempReadingErrorCount = 1;
+            workerData.canBusRestartRequested = TRUE;
         }
 
         if (workerData.minMaxResetRequested) {

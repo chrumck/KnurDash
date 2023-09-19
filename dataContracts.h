@@ -168,6 +168,7 @@ typedef struct {
 
     CanBusData canBus;
     gboolean isCanBusWorkerRunning;
+    gboolean canBusRestartRequested;
 
     BluetoothData bluetooth;
     gboolean isBluetoothWorkerRunning;

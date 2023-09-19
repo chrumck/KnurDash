@@ -5,6 +5,9 @@
 
 #include "dataContracts.h"
 
-static WorkerData workerData = { 0 };
+static WorkerData workerData = {
+    .canBus = {.i2cPiHandle = -1, .i2cCanHandle = -1},
+    .sensors = {.i2cPiHandle = -1, .i2cAdcHandles = {-1, -1}}
+};
 
 #endif
