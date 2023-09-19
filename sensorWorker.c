@@ -245,8 +245,8 @@ void readCanSensor(guint canSensorIndex, gboolean ignOn) {
 
     sensors->requestCount++;
 
-    if (!ignOn && !reading->errorCount) {
-        handleSensorReadFault(FALSE);
+    if (!ignOn) {
+        if (!reading->errorCount) handleSensorReadFault(FALSE);
         return;
     }
 
