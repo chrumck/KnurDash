@@ -158,7 +158,7 @@ gboolean restartCanBus() {
     if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
     if (!workerData.canBusRestartRequested) return G_SOURCE_CONTINUE;
 
-    if (workerData.canBus.i2cPiHandle <= 0) {
+    if (workerData.canBus.i2cPiHandle < 0) {
         g_warning("Cannot restart CAN, invalid i2c handle:%2d", workerData.canBus.i2cPiHandle);
         workerData.canBusRestartRequested = FALSE;
         return G_SOURCE_CONTINUE;
