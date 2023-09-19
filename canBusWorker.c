@@ -167,8 +167,12 @@ gboolean restartCanBus() {
     GMainContext* context = g_main_loop_get_context(workerData.canBus.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
 
+    g_message("Switching CAN off with i2c handle:%2d", workerData.canBus.i2cPiHandle);
+
     gpio_write(workerData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
     g_usleep(I2C_SET_CONFIG_DELAY * 10);
+
+    g_message("Restarting CAN controller...");
 
     gboolean started = startCanBus();
     if (!started) return G_SOURCE_REMOVE;
