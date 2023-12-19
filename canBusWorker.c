@@ -2,7 +2,7 @@
 #include <pigpiod_if2.h>
 
 #include "dataContracts.h"
-#include "workerData.c"
+#include "appData.c"
 #include "helpers.c"
 #include "canBusProps.c"
 #include "ui.c"
@@ -28,7 +28,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     int writeResult = i2c_write_byte(piHandle, canHandle, i2cRegister);
     if (writeResult != 0) {
         g_warning("Request to get CAN mask/filter failed, register:0x%x, error:%d", i2cRegister, writeResult);
-        workerData.canBus.errorCount++;
+        appData.canBus.errorCount++;
         return;
     }
 
@@ -38,14 +38,14 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     int readResult = i2c_read_device(piHandle, canHandle, readBuf, MASK_FILTER_LENGTH);
     if (readResult != MASK_FILTER_LENGTH) {
         g_warning("Could not get CAN mask/filter, register:0x%x, error:%d", i2cRegister, readResult);
-        workerData.canBus.errorCount++;
+        appData.canBus.errorCount++;
         return;
     }
 
     guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
     if (response == RECEIVE_REJECTED_RESPONSE || response == RESPONSE_NOT_READY_RESPONSE) {
         g_warning("Request rejected when getting CAN mask/filter, register:0x%x, response:%X", i2cRegister, response);
-        workerData.canBus.errorCount++;
+        appData.canBus.errorCount++;
         return;
     }
 
@@ -59,7 +59,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     writeResult = i2c_write_i2c_block_data(piHandle, canHandle, i2cRegister, value, MASK_FILTER_LENGTH);
     if (writeResult != 0) {
         g_warning("Could not set CAN mask/filter, register:0x%x, error:%d", i2cRegister, writeResult);
-        workerData.canBus.errorCount++;
+        appData.canBus.errorCount++;
         return;
     }
 
@@ -68,8 +68,8 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
 
 gboolean startCanBus() {
     int workerStartRetriesCount = 0;
-    int i2cPiHandle = workerData.canBus.i2cPiHandle;
-    int i2cCanHandle = workerData.canBus.i2cCanHandle;
+    int i2cPiHandle = appData.canBus.i2cPiHandle;
+    int i2cCanHandle = appData.canBus.i2cCanHandle;
 
     do {
         if (workerStartRetriesCount > 0) {
@@ -79,7 +79,7 @@ gboolean startCanBus() {
         }
 
         workerStartRetriesCount++;
-        workerData.canBus.errorCount = 0;
+        appData.canBus.errorCount = 0;
 
         if (i2cCanHandle >= 0 && i2cPiHandle >= 0) i2c_close(i2cPiHandle, i2cCanHandle);
         if (i2cPiHandle >= 0) pigpio_stop(i2cPiHandle);
@@ -87,20 +87,20 @@ gboolean startCanBus() {
         i2cPiHandle = pigpio_start(NULL, NULL);
         if (i2cPiHandle < 0) {
             g_warning("Could not connect to pigpiod: %d", i2cPiHandle);
-            workerData.canBus.errorCount++;
+            appData.canBus.errorCount++;
             continue;
         }
 
-        workerData.canBus.i2cPiHandle = i2cPiHandle;
+        appData.canBus.i2cPiHandle = i2cPiHandle;
 
         i2cCanHandle = i2c_open(i2cPiHandle, 1, I2C_ADDRESS, 0);
         if (i2cCanHandle < 0) {
             g_warning("Could not get CAN handle %d", i2cCanHandle);
-            workerData.canBus.errorCount++;
+            appData.canBus.errorCount++;
             continue;
         }
 
-        workerData.canBus.i2cCanHandle = i2cCanHandle;
+        appData.canBus.i2cCanHandle = i2cCanHandle;
 
         int setCanCtrOnPullDown = set_pull_up_down(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_PUD_UP);
         if (setCanCtrOnPullDown != 0) g_error("Could not set GPIO pin pulldown for CAN_CTRL_SWITCH: %d", setCanCtrOnPullDown);
@@ -111,7 +111,7 @@ gboolean startCanBus() {
         int setCanCtrlSwitchResult = gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, FALSE);
         if (setCanCtrlSwitchResult != 0) {
             g_warning("Failed to switch CAN controller on, GPIO write result:%d", setCanCtrlSwitchResult);
-            workerData.canBus.errorCount++;
+            appData.canBus.errorCount++;
             continue;
         }
 
@@ -120,7 +120,7 @@ gboolean startCanBus() {
         int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
         if (baudValue < 0) {
             g_warning("Could not get CAN baud value: %d", baudValue);
-            workerData.canBus.errorCount++;
+            appData.canBus.errorCount++;
             continue;
         }
 
@@ -128,7 +128,7 @@ gboolean startCanBus() {
             int writeResult = i2c_write_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER, BAUD_VALUE);
             if (writeResult < 0) {
                 g_warning("Could not set CAN baud value: %d", writeResult);
-                workerData.canBus.errorCount++;
+                appData.canBus.errorCount++;
                 continue;
             }
         }
@@ -143,10 +143,10 @@ gboolean startCanBus() {
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER3_REGISTER, filter3Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
-    } while (workerData.canBus.errorCount && workerStartRetriesCount < 5);
+    } while (appData.canBus.errorCount && workerStartRetriesCount < 5);
 
-    if (workerData.canBus.errorCount) {
-        g_warning("Failed to start CANBUS worker, error count: %d", workerData.canBus.errorCount);
+    if (appData.canBus.errorCount) {
+        g_warning("Failed to start CANBUS worker, error count: %d", appData.canBus.errorCount);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
         return FALSE;
     }
@@ -155,21 +155,21 @@ gboolean startCanBus() {
 }
 
 gboolean restartCanBus() {
-    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
-    if (!workerData.canBusRestartRequested) return G_SOURCE_CONTINUE;
+    if (appData.shutdownRequested) return G_SOURCE_REMOVE;
+    if (!appData.canBusRestartRequested) return G_SOURCE_CONTINUE;
 
-    if (workerData.canBus.i2cPiHandle < 0) {
-        g_warning("Cannot restart CAN, invalid i2c handle:%2d", workerData.canBus.i2cPiHandle);
-        workerData.canBusRestartRequested = FALSE;
+    if (appData.canBus.i2cPiHandle < 0) {
+        g_warning("Cannot restart CAN, invalid i2c handle:%2d", appData.canBus.i2cPiHandle);
+        appData.canBusRestartRequested = FALSE;
         return G_SOURCE_CONTINUE;
     }
 
-    GMainContext* context = g_main_loop_get_context(workerData.canBus.mainLoop);
+    GMainContext* context = g_main_loop_get_context(appData.canBus.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
 
-    g_message("Switching CAN off with i2c handle:%2d", workerData.canBus.i2cPiHandle);
+    g_message("Switching CAN off with i2c handle:%2d", appData.canBus.i2cPiHandle);
 
-    gpio_write(workerData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
+    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
     g_usleep(I2C_SET_CONFIG_DELAY * 10);
 
     g_message("Restarting CAN controller...");
@@ -177,25 +177,25 @@ gboolean restartCanBus() {
     gboolean started = startCanBus();
     if (!started) return G_SOURCE_REMOVE;
 
-    workerData.canBusRestartRequested = FALSE;
+    appData.canBusRestartRequested = FALSE;
     return G_SOURCE_CONTINUE;
 }
 
 gboolean stopCanBusWorker() {
-    float errorRate = (float)workerData.canBus.errorCount / workerData.canBus.requestCount;
+    float errorRate = (float)appData.canBus.errorCount / appData.canBus.requestCount;
     if (errorRate > MAX_REQUEST_ERROR_RATE &&
-        g_get_monotonic_time() - workerData.startupTimestamp > MIN_APP_RUNNING_TIME_US &&
-        !workerData.shutdownRequested) {
+        g_get_monotonic_time() - appData.startupTimestamp > MIN_APP_RUNNING_TIME_US &&
+        !appData.shutdownRequested) {
         g_warning("CAN requests excessive error rate:%2f, shutting down app", errorRate);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
     }
 
-    if (!workerData.shutdownRequested) return G_SOURCE_CONTINUE;
+    if (!appData.shutdownRequested) return G_SOURCE_CONTINUE;
 
-    GMainContext* context = g_main_loop_get_context(workerData.canBus.mainLoop);
+    GMainContext* context = g_main_loop_get_context(appData.canBus.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
 
-    g_main_loop_quit(workerData.canBus.mainLoop);
+    g_main_loop_quit(appData.canBus.mainLoop);
 
     return G_SOURCE_REMOVE;
 }
@@ -208,7 +208,7 @@ gboolean stopCanBusWorker() {
     frameIdArray[3] = _frameId & 0xFF;\
 
 #define handleGetFrameError(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3) {\
-    workerData.canBus.errorCount++;\
+    appData.canBus.errorCount++;\
     frameState->errorCount++;\
     if (ENABLE_CAN_READ_ERROR_LOGGING && frameState->errorCount == 1) {\
          g_warning(_warningMessage, _warningMessageArg1, _warningMessageArg2, _warningMessageArg3);\
@@ -226,15 +226,15 @@ guint8 getChecksum(guint8* data, int length)
 }
 
 gboolean getFrameFromCAN(gpointer data) {
-    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
-    if (workerData.canBusRestartRequested) return G_SOURCE_CONTINUE;
+    if (appData.shutdownRequested) return G_SOURCE_REMOVE;
+    if (appData.canBusRestartRequested) return G_SOURCE_CONTINUE;
 
     guint frameIndex = GPOINTER_TO_UINT(data);
 
-    workerData.canBus.requestCount++;
+    appData.canBus.requestCount++;
 
     const CanFrame* frame = &canFrames[frameIndex];
-    CanBusData* canBus = &workerData.canBus;
+    CanBusData* canBus = &appData.canBus;
     CanFrameState* frameState = &canBus->frames[frameIndex];
 
     getFrameIdArray(frame->canId);
@@ -252,7 +252,7 @@ gboolean getFrameFromCAN(gpointer data) {
 
     g_usleep(I2C_REQUEST_DELAY);
 
-    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
+    if (appData.shutdownRequested) return G_SOURCE_REMOVE;
 
     guint8 frameData[FRAME_LENGTH] = { 0 };
     int readResult = i2c_read_device(canBus->i2cPiHandle, canBus->i2cCanHandle, frameData, FRAME_LENGTH);
@@ -310,7 +310,7 @@ gpointer canBusWorkerLoop() {
     GMainContext* workerContext = g_main_context_new();
     g_main_context_push_thread_default(workerContext);
     GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
-    workerData.canBus.mainLoop = mainLoop;
+    appData.canBus.mainLoop = mainLoop;
 
     GSource* stopCanBusWorkerSource = g_timeout_source_new(CANBUS_MAINTENANCE_LOOP_INTERVAL_MS);
     g_source_set_callback(stopCanBusWorkerSource, stopCanBusWorker, NULL, NULL);
@@ -330,25 +330,25 @@ gpointer canBusWorkerLoop() {
         g_source_unref(frameRefreshSource);
     }
 
-    workerData.isCanBusWorkerRunning = TRUE;
+    appData.isCanBusWorkerRunning = TRUE;
 
     g_main_loop_run(mainLoop);
 
     g_main_loop_unref(mainLoop);
 
-    gpio_write(workerData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
-    i2c_close(workerData.canBus.i2cPiHandle, workerData.canBus.i2cCanHandle);
-    pigpio_stop(workerData.canBus.i2cPiHandle);
+    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
+    i2c_close(appData.canBus.i2cPiHandle, appData.canBus.i2cCanHandle);
+    pigpio_stop(appData.canBus.i2cPiHandle);
 
 
     g_message(
         "CAN requests:%d, errors:%d, rate:%.4f",
-        workerData.canBus.requestCount,
-        workerData.canBus.errorCount,
-        (float)workerData.canBus.errorCount / workerData.canBus.requestCount);
+        appData.canBus.requestCount,
+        appData.canBus.errorCount,
+        (float)appData.canBus.errorCount / appData.canBus.requestCount);
 
     g_message("CANBUS worker shutting down");
-    workerData.isCanBusWorkerRunning = FALSE;
+    appData.isCanBusWorkerRunning = FALSE;
 
     return NULL;
 }

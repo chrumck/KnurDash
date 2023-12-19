@@ -12,7 +12,7 @@
 #include "logger.h"
 
 #include "dataContracts.h"
-#include "workerData.c"
+#include "appData.c"
 #include "sensorProps.c"
 
 #define SERVICE_BT_NAME "KnurDash BLE" 
@@ -40,8 +40,8 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
     g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
 
     ConnectionState state = binc_device_get_connection_state(device);
-    if (state == CONNECTED) binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
-    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
+    if (state == CONNECTED) binc_adapter_stop_advertising(adapter, appData.bluetooth.adv);
+    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, appData.bluetooth.adv);
 
 }
 
@@ -70,10 +70,10 @@ GByteArray* getArrayToSend(CanFrameState* frame) {
 const char* onCharRead(const Application* app, const char* address, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return BLUEZ_ERROR_NOT_PERMITTED;
 
-    CanFrameState* frameToSend = !workerData.canBus.adcFrame.btWasSent ? &workerData.canBus.adcFrame : NULL;
+    CanFrameState* frameToSend = !appData.canBus.adcFrame.btWasSent ? &appData.canBus.adcFrame : NULL;
     for (guint i = 0; i < CAN_FRAMES_COUNT; i++)
     {
-        CanFrameState* frame = &workerData.canBus.frames[i];
+        CanFrameState* frame = &appData.canBus.frames[i];
         if (frame->btWasSent) continue;
         if (frameToSend != NULL && frame->timestamp <= frameToSend->timestamp) continue;
         frameToSend = frame;
@@ -86,7 +86,7 @@ const char* onCharRead(const Application* app, const char* address, const char* 
         return NULL;
     }
 
-    binc_application_set_char_value(workerData.bluetooth.app, serviceId, charId, getArrayToSend(frameToSend));
+    binc_application_set_char_value(appData.bluetooth.app, serviceId, charId, getArrayToSend(frameToSend));
 #ifdef IS_DEBUG
     g_message("Received BT read request, sending frame:0x%x", frameToSend->canId);
 #endif
@@ -97,15 +97,15 @@ const char* onCharRead(const Application* app, const char* address, const char* 
 gboolean sendCanFrameToBt(gpointer data) {
     CanFrameState* frame = (CanFrameState*)data;
 
-    if (workerData.shutdownRequested) {
+    if (appData.shutdownRequested) {
         frame->btNotifyingSourceId = 0;
         return G_SOURCE_REMOVE;
     }
 
-    if (!workerData.bluetooth.isNotifying || frame->btWasSent) return G_SOURCE_CONTINUE;
+    if (!appData.bluetooth.isNotifying || frame->btWasSent) return G_SOURCE_CONTINUE;
 
     GByteArray* arrayToSend = getArrayToSend(frame);
-    binc_application_notify(workerData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
+    binc_application_notify(appData.bluetooth.app, SERVICE_ID, CHAR_ID_MAIN, arrayToSend);
     g_byte_array_free(arrayToSend, TRUE);
 
     return G_SOURCE_CONTINUE;
@@ -141,13 +141,13 @@ const char* onCharWrite(const Application* app, const char* address, const char*
 
     g_message("Received BT write request, command:%d, data length:%d", received->data[0], received->len);
 
-    GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
+    GMainContext* context = g_main_loop_get_context(appData.bluetooth.mainLoop);
 
     if (received->len == 1) {
         g_message("BT request to deny all");
 
-        removeSource(context, &workerData.canBus.adcFrame);
-        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &workerData.canBus.frames[i]);
+        removeSource(context, &appData.canBus.adcFrame);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &appData.canBus.frames[i]);
 
         return NULL;
     }
@@ -157,18 +157,18 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     if (received->len == 3) {
         g_message("BT request to allow all, interval: %dms", notifyInterval);
 
-        removeSource(context, &workerData.canBus.adcFrame);
-        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &workerData.canBus.frames[i]);
+        removeSource(context, &appData.canBus.adcFrame);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) removeSource(context, &appData.canBus.frames[i]);
 
-        addSource(context, &workerData.canBus.adcFrame, notifyInterval);
-        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) addSource(context, &workerData.canBus.frames[i], notifyInterval);
+        addSource(context, &appData.canBus.adcFrame, notifyInterval);
+        for (guint i = 0; i < CAN_FRAMES_COUNT; i++) addSource(context, &appData.canBus.frames[i], notifyInterval);
 
         return NULL;
     }
 
     guint32 frameId = received->data[3] << 24 | received->data[4] << 16 | received->data[5] << 8 | received->data[6];
-    CanFrameState* frame = frameId == ADC_FRAME_ID ? &workerData.canBus.adcFrame : NULL;
-    for (guint i = 0; i < CAN_FRAMES_COUNT; i++) if (frameId == workerData.canBus.frames[i].canId) frame = &workerData.canBus.frames[i];
+    CanFrameState* frame = frameId == ADC_FRAME_ID ? &appData.canBus.adcFrame : NULL;
+    for (guint i = 0; i < CAN_FRAMES_COUNT; i++) if (frameId == appData.canBus.frames[i].canId) frame = &appData.canBus.frames[i];
 
     if (frame == NULL) {
         g_warning("No frame found for BT notify request:0x%x, rejecting request", frameId);
@@ -186,24 +186,24 @@ const char* onCharWrite(const Application* app, const char* address, const char*
 void onCharStartNotify(const Application* app, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return;
 
-    workerData.bluetooth.isNotifying = TRUE;
+    appData.bluetooth.isNotifying = TRUE;
     g_message("BT notify start");
 }
 
 void onCharStopNotify(const Application* app, const char* serviceId, const char* charId) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_MAIN)) return;
 
-    workerData.bluetooth.isNotifying = FALSE;
+    appData.bluetooth.isNotifying = FALSE;
     g_message("BT notify stop");
 }
 
 gboolean stopBtWorker() {
-    if (!workerData.shutdownRequested) return G_SOURCE_CONTINUE;
+    if (!appData.shutdownRequested) return G_SOURCE_CONTINUE;
 
-    GMainContext* context = g_main_loop_get_context(workerData.bluetooth.mainLoop);
+    GMainContext* context = g_main_loop_get_context(appData.bluetooth.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
 
-    Adapter* adapter = workerData.bluetooth.adapter;
+    Adapter* adapter = appData.bluetooth.adapter;
 
     if (adapter != NULL) {
         GList* connected = binc_adapter_get_connected_devices(adapter);
@@ -215,28 +215,28 @@ gboolean stopBtWorker() {
         g_list_free(connected);
     }
 
-    if (workerData.bluetooth.app != NULL) {
-        binc_adapter_unregister_application(adapter, workerData.bluetooth.app);
-        binc_application_free(workerData.bluetooth.app);
-        workerData.bluetooth.app = NULL;
+    if (appData.bluetooth.app != NULL) {
+        binc_adapter_unregister_application(adapter, appData.bluetooth.app);
+        binc_application_free(appData.bluetooth.app);
+        appData.bluetooth.app = NULL;
     }
 
-    if (workerData.bluetooth.adv != NULL) {
-        binc_adapter_stop_advertising(adapter, workerData.bluetooth.adv);
-        binc_advertisement_free(workerData.bluetooth.adv);
+    if (appData.bluetooth.adv != NULL) {
+        binc_adapter_stop_advertising(adapter, appData.bluetooth.adv);
+        binc_advertisement_free(appData.bluetooth.adv);
     }
 
     if (adapter != NULL) {
         binc_adapter_free(adapter);
-        workerData.bluetooth.adapter = NULL;
+        appData.bluetooth.adapter = NULL;
     }
 
-    if (workerData.bluetooth.dbusConn != NULL) {
-        g_dbus_connection_close_sync(workerData.bluetooth.dbusConn, NULL, NULL);
-        g_object_unref(workerData.bluetooth.dbusConn);
+    if (appData.bluetooth.dbusConn != NULL) {
+        g_dbus_connection_close_sync(appData.bluetooth.dbusConn, NULL, NULL);
+        g_object_unref(appData.bluetooth.dbusConn);
     }
 
-    g_main_loop_quit(workerData.bluetooth.mainLoop);
+    g_main_loop_quit(appData.bluetooth.mainLoop);
 
     g_message("Bluetooth Worker stopBtWorker done");
 
@@ -247,10 +247,10 @@ gpointer bluetoothWorkerLoop() {
     log_set_level(LOG_INFO);
 
     GDBusConnection* dbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, NULL);
-    workerData.bluetooth.dbusConn = dbusConn;
+    appData.bluetooth.dbusConn = dbusConn;
 
     Adapter* adapter = binc_adapter_get_default(dbusConn);
-    workerData.bluetooth.adapter = adapter;
+    appData.bluetooth.adapter = adapter;
 
     if (adapter == NULL) {
         g_error("No adapter found");
@@ -262,7 +262,7 @@ gpointer bluetoothWorkerLoop() {
     GMainContext* workerContext = g_main_context_new();
     g_main_context_push_thread_default(workerContext);
     GMainLoop* mainLoop = g_main_loop_new(workerContext, FALSE);
-    workerData.bluetooth.mainLoop = mainLoop;
+    appData.bluetooth.mainLoop = mainLoop;
 
     GSource* stopBtWorkerSource = g_timeout_source_new(BLUETOOTH_WORKER_SHUTDOWN_LOOP_INTERVAL);
     g_source_set_callback(stopBtWorkerSource, stopBtWorker, NULL, NULL);
@@ -277,15 +277,15 @@ gpointer bluetoothWorkerLoop() {
     GPtrArray* advServiceUuids = g_ptr_array_new();
     g_ptr_array_add(advServiceUuids, SERVICE_ID);
 
-    workerData.bluetooth.adv = binc_advertisement_create();
+    appData.bluetooth.adv = binc_advertisement_create();
 
-    binc_advertisement_set_local_name(workerData.bluetooth.adv, SERVICE_BT_NAME);
-    binc_advertisement_set_services(workerData.bluetooth.adv, advServiceUuids);
+    binc_advertisement_set_local_name(appData.bluetooth.adv, SERVICE_BT_NAME);
+    binc_advertisement_set_services(appData.bluetooth.adv, advServiceUuids);
     g_ptr_array_free(advServiceUuids, TRUE);
-    binc_adapter_start_advertising(adapter, workerData.bluetooth.adv);
+    binc_adapter_start_advertising(adapter, appData.bluetooth.adv);
 
     Application* app = binc_create_application(adapter);
-    workerData.bluetooth.app = app;
+    appData.bluetooth.app = app;
 
     binc_application_add_service(app, SERVICE_ID);
     binc_application_add_characteristic(app, SERVICE_ID, CHAR_ID_MAIN, GATT_CHR_PROP_READ | GATT_CHR_PROP_NOTIFY);
@@ -298,14 +298,14 @@ gpointer bluetoothWorkerLoop() {
 
     binc_adapter_register_application(adapter, app);
 
-    workerData.isBluetoothWorkerRunning = TRUE;
+    appData.isBluetoothWorkerRunning = TRUE;
 
     g_main_loop_run(mainLoop);
 
     g_main_loop_unref(mainLoop);
 
     g_message("Bluetooth worker shutting down");
-    workerData.isBluetoothWorkerRunning = FALSE;
+    appData.isBluetoothWorkerRunning = FALSE;
 
     return NULL;
 }

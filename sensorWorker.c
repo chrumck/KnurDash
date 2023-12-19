@@ -3,7 +3,7 @@
 #include <math.h>
 
 #include "dataContracts.h"
-#include "workerData.c"
+#include "appData.c"
 #include "helpers.c"
 #include "sensorProps.c"
 #include "canBusProps.c"
@@ -55,13 +55,13 @@ void setFrame(GtkFrame* frame, const SensorState state) {
 void resetReadingsValues() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            SensorReading* reading = &workerData.sensors.adcReadings[i][j];
+            SensorReading* reading = &appData.sensors.adcReadings[i][j];
             reading->value = FAULTY_READING_VALUE;
             reading->errorCount = 1;
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        SensorReading* reading = &workerData.sensors.canReadings[i];
+        SensorReading* reading = &appData.sensors.canReadings[i];
         reading->value = FAULTY_READING_VALUE;
         reading->errorCount = 1;
     }
@@ -70,19 +70,19 @@ void resetReadingsValues() {
 void resetReadingsMinMax() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            workerData.sensors.adcReadings[i][j].min = G_MAXDOUBLE;
-            workerData.sensors.adcReadings[i][j].max = -G_MAXDOUBLE;
+            appData.sensors.adcReadings[i][j].min = G_MAXDOUBLE;
+            appData.sensors.adcReadings[i][j].max = -G_MAXDOUBLE;
         }
     }
 
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        workerData.sensors.canReadings[i].min = G_MAXDOUBLE;
-        workerData.sensors.canReadings[i].max = -G_MAXDOUBLE;
+        appData.sensors.canReadings[i].min = G_MAXDOUBLE;
+        appData.sensors.canReadings[i].max = -G_MAXDOUBLE;
     }
 };
 
 void setSingleSensorWidgets(const SensorBase* sensor, SensorWidgets* widgets) {
-    GtkBuilder* builder = workerData.builder;
+    GtkBuilder* builder = appData.builder;
     if (sensor->labelId != NULL) widgets->label = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelId));
     if (sensor->frameId != NULL) widgets->frame = GTK_FRAME(gtk_builder_get_object(builder, sensor->frameId));
     if (sensor->labelMinId != NULL) widgets->labelMin = GTK_LABEL(gtk_builder_get_object(builder, sensor->labelMinId));
@@ -93,13 +93,13 @@ void setWidgets() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
             const SensorBase* sensor = &adcSensors[i][j].base;
-            SensorWidgets* widgets = &workerData.sensors.adcWidgets[i][j];
+            SensorWidgets* widgets = &appData.sensors.adcWidgets[i][j];
             setSingleSensorWidgets(sensor, widgets);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
         const SensorBase* sensor = &canSensors[i].base;
-        SensorWidgets* widgets = &workerData.sensors.canWidgets[i];
+        SensorWidgets* widgets = &appData.sensors.canWidgets[i];
         setSingleSensorWidgets(sensor, widgets);
     }
 };
@@ -107,13 +107,13 @@ void setWidgets() {
 void resetMinMaxLabels() {
     for (int i = 0; i < ADC_COUNT; i++) {
         for (int j = 0; j < ADC_CHANNEL_COUNT; j++) {
-            const SensorWidgets* widgets = &workerData.sensors.adcWidgets[i][j];
+            const SensorWidgets* widgets = &appData.sensors.adcWidgets[i][j];
             setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
             setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
         }
     }
     for (int i = 0; i < CAN_SENSORS_COUNT; i++) {
-        const SensorWidgets* widgets = &workerData.sensors.canWidgets[i];
+        const SensorWidgets* widgets = &appData.sensors.canWidgets[i];
         setLabel(widgets->labelMin, FAULTY_READING_LABEL, 0);
         setLabel(widgets->labelMax, FAULTY_READING_LABEL, 0);
 
@@ -181,7 +181,7 @@ void setSensorReadingAndWidgets(
 
 void readAdcSensor(int adc, int channel) {
     const AdcSensor* sensor = &adcSensors[adc][channel];
-    SensorData* sensors = &workerData.sensors;
+    SensorData* sensors = &appData.sensors;
     const SensorWidgets* widgets = &sensors->adcWidgets[adc][channel];
     SensorReading* reading = &sensors->adcReadings[adc][channel];
 
@@ -238,10 +238,10 @@ void readAdcSensor(int adc, int channel) {
 }
 
 void readCanSensor(guint canSensorIndex, gboolean ignOn) {
-    if (workerData.canBusRestartRequested) return;
+    if (appData.canBusRestartRequested) return;
 
     const CanSensor* sensor = &canSensors[canSensorIndex];
-    SensorData* sensors = &workerData.sensors;
+    SensorData* sensors = &appData.sensors;
     const SensorWidgets* widgets = &sensors->canWidgets[canSensorIndex];
     SensorReading* reading = &sensors->canReadings[canSensorIndex];
 
@@ -272,25 +272,25 @@ void readCanSensor(guint canSensorIndex, gboolean ignOn) {
 }
 
 void setAdcCanFrame() {
-    CanFrameState* adcFrame = &workerData.canBus.adcFrame;
+    CanFrameState* adcFrame = &appData.canBus.adcFrame;
 
     g_mutex_lock(&adcFrame->lock);
 
     memset(adcFrame->data, 0, CAN_DATA_SIZE);
 
-    SensorReading* transTemp = &workerData.sensors.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
+    SensorReading* transTemp = &appData.sensors.adcReadings[TRANS_TEMP_ADC][TRANS_TEMP_CHANNEL];
     adcFrame->data[0] = transTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(transTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
-    SensorReading* diffTemp = &workerData.sensors.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
+    SensorReading* diffTemp = &appData.sensors.adcReadings[DIFF_TEMP_ADC][DIFF_TEMP_CHANNEL];
     adcFrame->data[1] = diffTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(diffTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
-    SensorReading* oilTemp = &workerData.sensors.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
+    SensorReading* oilTemp = &appData.sensors.adcReadings[OIL_TEMP_ADC][OIL_TEMP_CHANNEL];
     adcFrame->data[2] = oilTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilTemp->value) + ADC_FRAME_TEMP_OFFSET);
 
-    SensorReading* oilPress = &workerData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+    SensorReading* oilPress = &appData.sensors.adcReadings[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
     adcFrame->data[3] = oilPress->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(oilPress->value * ADC_FRAME_PRESS_FACTOR));
 
-    SensorReading* rotorTemp = &workerData.sensors.adcReadings[ROTOR_TEMP_ADC][ROTOR_TEMP_CHANNEL];
+    SensorReading* rotorTemp = &appData.sensors.adcReadings[ROTOR_TEMP_ADC][ROTOR_TEMP_CHANNEL];
     adcFrame->data[4] = rotorTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(rotorTemp->value * ADC_FRAME_ROTOR_TEMP_FACTOR));
 
     adcFrame->timestamp = g_get_monotonic_time();
@@ -302,9 +302,9 @@ void setAdcCanFrame() {
 gpointer sensorWorkerLoop() {
     g_message("Sensor worker waiting for CANBUS Worker to start...");
 
-    while (!workerData.isCanBusWorkerRunning && !workerData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
+    while (!appData.isCanBusWorkerRunning && !appData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
 
-    if (workerData.shutdownRequested) {
+    if (appData.shutdownRequested) {
         g_warning("Sensor worker start aborted");
         return NULL;
     }
@@ -313,15 +313,15 @@ gpointer sensorWorkerLoop() {
 
     int i2cPiHandle = pigpio_start(NULL, NULL);
     if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
-    workerData.sensors.i2cPiHandle = i2cPiHandle;
+    appData.sensors.i2cPiHandle = i2cPiHandle;
 
     int adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
     if (adc0Handle < 0)  g_error("Could not get adc0 handle: %d", adc0Handle);
-    workerData.sensors.i2cAdcHandles[0] = adc0Handle;
+    appData.sensors.i2cAdcHandles[0] = adc0Handle;
 
     int adc1Handle = i2c_open(i2cPiHandle, 1, ADC1_I2C_ADDRESS, 0);
     if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
-    workerData.sensors.i2cAdcHandles[1] = adc1Handle;
+    appData.sensors.i2cAdcHandles[1] = adc1Handle;
 
     int setIgnPinMode = set_mode(i2cPiHandle, IGN_GPIO_PIN, PI_INPUT);
     if (setIgnPinMode != 0) g_error("Could not set GPIO pin mode for IGN_IN: %d", setIgnPinMode);
@@ -339,7 +339,7 @@ gpointer sensorWorkerLoop() {
     resetReadingsMinMax();
     setWidgets();
 
-    CanFrameState* adcFrame = &workerData.canBus.adcFrame;
+    CanFrameState* adcFrame = &appData.canBus.adcFrame;
     g_mutex_lock(&adcFrame->lock);
     adcFrame->canId = ADC_FRAME_ID;
     adcFrame->isExtended = FALSE;
@@ -347,13 +347,13 @@ gpointer sensorWorkerLoop() {
     adcFrame->dataLength = CAN_DATA_SIZE;
     g_mutex_unlock(&adcFrame->lock);
 
-    workerData.isSensorWorkerRunning = TRUE;
+    appData.isSensorWorkerRunning = TRUE;
     guint shutDownCounter = 0;
 
-    while (!workerData.shutdownRequested) {
-        float errorRate = (float)workerData.sensors.errorCount / workerData.sensors.requestCount;
+    while (!appData.shutdownRequested) {
+        float errorRate = (float)appData.sensors.errorCount / appData.sensors.requestCount;
         if (errorRate > MAX_REQUEST_ERROR_RATE &&
-            g_get_monotonic_time() - workerData.startupTimestamp > MIN_APP_RUNNING_TIME_US) {
+            g_get_monotonic_time() - appData.startupTimestamp > MIN_APP_RUNNING_TIME_US) {
             g_warning("ADC sensors excessive error rate:%2f, shutting down app", errorRate);
             g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
             break;
@@ -361,30 +361,30 @@ gpointer sensorWorkerLoop() {
 
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
 
-        guint32* coolantTempReadingErrorCount = &(workerData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount);
+        guint32* coolantTempReadingErrorCount = &(appData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount);
         if (ignOn &&
-            workerData.wasEngineStarted &&
-            !workerData.canBusRestartRequested &&
+            appData.wasEngineStarted &&
+            !appData.canBusRestartRequested &&
             *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
             g_warning("Coolant temp excessive error count:%d, requesting CAN restart", *coolantTempReadingErrorCount);
             *coolantTempReadingErrorCount = 1;
-            workerData.canBusRestartRequested = TRUE;
+            appData.canBusRestartRequested = TRUE;
         }
 
-        if (workerData.minMaxResetRequested) {
+        if (appData.minMaxResetRequested) {
             resetReadingsMinMax();
             resetMinMaxLabels();
-            workerData.minMaxResetRequested = FALSE;
+            appData.minMaxResetRequested = FALSE;
         }
 
-        SensorReading* pressureReading = &(workerData.sensors.adcReadings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        SensorReading* pressureReading = &(appData.sensors.adcReadings)[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
         const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
-        if (!workerData.wasEngineStarted &&
+        if (!appData.wasEngineStarted &&
             ignOn &&
             !pressureReading->errorCount &&
             pressureReading->value > pressureSensor->base.alertLow) {
-            workerData.wasEngineStarted = TRUE;
+            appData.wasEngineStarted = TRUE;
         }
 
         gint32 engineRpm = getEngineRpm();
@@ -407,7 +407,7 @@ gpointer sensorWorkerLoop() {
 
 #ifndef IS_DEBUG
         shutDownCounter = ignOn == TRUE ? 0 : shutDownCounter + 1;
-        if ((workerData.wasEngineStarted && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
+        if ((appData.wasEngineStarted && shutDownCounter > SHUTDOWN_DELAY_ENGINE_STARTED) ||
             shutDownCounter > SHUTDOWN_DELAY) {
             g_message("Ignition off, requesting system shutdown");
             g_idle_add(shutDown, GUINT_TO_POINTER(SystemShutdown));
@@ -437,12 +437,12 @@ gpointer sensorWorkerLoop() {
 
     g_message(
         "ADC sensors requests:%d, errors:%d, rate:%.4f",
-        workerData.sensors.requestCount,
-        workerData.sensors.errorCount,
-        (float)workerData.sensors.errorCount / workerData.sensors.requestCount);
+        appData.sensors.requestCount,
+        appData.sensors.errorCount,
+        (float)appData.sensors.errorCount / appData.sensors.requestCount);
 
     g_message("Sensor worker shutting down");
-    workerData.isSensorWorkerRunning = FALSE;
+    appData.isSensorWorkerRunning = FALSE;
 
     return NULL;
 }

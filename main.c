@@ -5,7 +5,7 @@
 #include <glib-unix.h>
 
 #include "dataContracts.h"
-#include "workerData.c"
+#include "appData.c"
 #include "ui.c"
 #include "sensorWorker.c"
 #include "canBusWorker.c"
@@ -15,7 +15,7 @@
 
 int main(int argc, char* argv[])
 {
-    workerData.startupTimestamp = g_get_monotonic_time();
+    appData.startupTimestamp = g_get_monotonic_time();
 
     gtk_init(&argc, &argv);
 
@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     gtk_window_fullscreen(GTK_WINDOW(window));
 
-    workerData.builder = builder;
+    appData.builder = builder;
 
     GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, NULL);
     GThread* canBusWorker = g_thread_new("canBusWorker", canBusWorkerLoop, NULL);

@@ -172,7 +172,7 @@ typedef struct {
 
     BluetoothData bluetooth;
     gboolean isBluetoothWorkerRunning;
-} WorkerData;
+} AppData;
 
 typedef struct {
     GtkLabel* label;

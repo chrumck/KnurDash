@@ -5,7 +5,7 @@
 #include<fcntl.h> 
 
 #include "dataContracts.h"
-#include "workerData.c"
+#include "appData.c"
 
 #define BRIGHTNESS_SYSTEM_PATH "/sys/class/backlight/10-0045/brightness"
 #define BRIGHTNESS_INCREMENT 32
@@ -18,7 +18,7 @@ GMutex guiLock;
 
 void requestMinMaxReset()
 {
-    workerData.minMaxResetRequested = TRUE;
+    appData.minMaxResetRequested = TRUE;
 }
 
 void setBrightness(gboolean isUp)
@@ -60,16 +60,16 @@ void setBrightnessUp() { setBrightness(TRUE); }
 
 gboolean shutDown(gpointer data)
 {
-    if (workerData.shutdownRequested) return G_SOURCE_REMOVE;
+    if (appData.shutdownRequested) return G_SOURCE_REMOVE;
 
     guint shutdownType = GPOINTER_TO_UINT(data);
     g_message("KnurDash shutdown request received, type:%d", shutdownType);
 
-    workerData.shutdownRequested = TRUE;
+    appData.shutdownRequested = TRUE;
 
-    while (workerData.isSensorWorkerRunning == TRUE ||
-        workerData.isCanBusWorkerRunning == TRUE ||
-        workerData.isBluetoothWorkerRunning == TRUE) {
+    while (appData.isSensorWorkerRunning == TRUE ||
+        appData.isCanBusWorkerRunning == TRUE ||
+        appData.isBluetoothWorkerRunning == TRUE) {
         while (gtk_events_pending()) gtk_main_iteration();
         g_usleep(100000);
     }

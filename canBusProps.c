@@ -4,7 +4,7 @@
 #include <gtk/gtk.h>
 
 #include "dataContracts.h"
-#include "workerData.c"
+#include "appData.c"
 
 #define BAUD_REGISTER 0x03
 #define BAUD_VALUE 16
@@ -45,7 +45,7 @@ static const CanFrame canFrames[CAN_FRAMES_COUNT] = {
 
 gboolean isFrameTooOld(guint8 frameIndex) {
     const CanFrame* frame = &canFrames[frameIndex];
-    CanFrameState* state = &workerData.canBus.frames[frameIndex];
+    CanFrameState* state = &appData.canBus.frames[frameIndex];
 
     gint64 currentTimestamp = g_get_monotonic_time();
     return state->timestamp + (3 * frame->refreshIntervalMillis * 1000) < currentTimestamp ? TRUE : FALSE;
@@ -54,7 +54,7 @@ gboolean isFrameTooOld(guint8 frameIndex) {
 gdouble getEngineRpm() {
     if (isFrameTooOld(RPM_FRAME_INDEX)) return -1;
 
-    CanFrameState* state = &workerData.canBus.frames[RPM_FRAME_INDEX];
+    CanFrameState* state = &appData.canBus.frames[RPM_FRAME_INDEX];
 
     g_mutex_lock(&state->lock);
     gdouble retVal = (gdouble)((state->data[0] << 8 | state->data[1]) * RPM_SCALING);
@@ -66,7 +66,7 @@ gdouble getEngineRpm() {
 gdouble getCoolantTemp() {
     if (isFrameTooOld(COOLANT_TEMP_FRAME_INDEX)) return -100;
 
-    CanFrameState* state = &workerData.canBus.frames[COOLANT_TEMP_FRAME_INDEX];
+    CanFrameState* state = &appData.canBus.frames[COOLANT_TEMP_FRAME_INDEX];
     g_mutex_lock(&state->lock);
     gdouble retVal = (gdouble)(state->data[0] - COOLANT_TEMP_OFFSET);
     g_mutex_unlock(&state->lock);
