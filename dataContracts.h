@@ -2,6 +2,7 @@
 #define __dataContracts_h
 
 // #define IS_DEBUG
+#define ENABLE_CANBUS TRUE
 
 #include <gtk/gtk.h>
 

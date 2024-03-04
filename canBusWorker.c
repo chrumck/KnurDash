@@ -8,7 +8,7 @@
 #include "ui.c"
 
 #define CANBUS_MAINTENANCE_LOOP_INTERVAL_MS 500
-#define ENABLE_CAN_READ_ERROR_LOGGING FALSE
+#define ENABLE_CAN_READ_ERROR_LOGGING TRUE
 
 #define CAN_CTRL_SWITCH_GPIO_PIN 4
 
@@ -74,7 +74,7 @@ gboolean startCanBus() {
     do {
         if (workerStartRetriesCount > 0) {
             g_warning("Failed to initialize CAN controller, retrying...");
-            if (i2cPiHandle >= 0) gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, FALSE);
+            if (i2cPiHandle >= 0) gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
             g_usleep(I2C_SET_CONFIG_DELAY * 10);
         }
 
@@ -102,13 +102,13 @@ gboolean startCanBus() {
 
         appData.canBus.i2cCanHandle = i2cCanHandle;
 
-        int setCanCtrOnPullUp = set_pull_up_down(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_PUD_DOWN);
-        if (setCanCtrOnPullUp != 0) g_error("Could not set GPIO pin pullup for CAN_CTRL_SWITCH: %d", setCanCtrOnPullUp);
+        int setCanCtrOnPullUp = set_pull_up_down(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_PUD_UP);
+        if (setCanCtrOnPullUp != 0) g_error("Could not set GPIO pin pulldown res for CAN_CTRL_SWITCH: %d", setCanCtrOnPullUp);
 
         int setCanCtrOnPinMode = set_mode(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_OUTPUT);
         if (setCanCtrOnPinMode != 0) g_error("Could not set GPIO pin mode for CAN_CTRL_SWITCH: %d", setCanCtrOnPinMode);
 
-        int setCanCtrlSwitchResult = gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
+        int setCanCtrlSwitchResult = gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, FALSE);
         if (setCanCtrlSwitchResult != 0) {
             g_warning("Failed to switch CAN controller on, GPIO write result:%d", setCanCtrlSwitchResult);
             appData.canBus.errorCount++;
@@ -169,7 +169,7 @@ gboolean restartCanBus() {
 
     g_message("Switching CAN off with i2c handle:%2d", appData.canBus.i2cPiHandle);
 
-    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, FALSE);
+    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
     g_usleep(I2C_SET_CONFIG_DELAY * 10);
 
     g_message("Restarting CAN controller...");
@@ -304,6 +304,12 @@ gboolean getFrameFromCAN(gpointer data) {
 gpointer canBusWorkerLoop() {
     g_message("CANBUS worker starting");
 
+    if (!ENABLE_CANBUS) {
+        g_message("CANBUS disabled, worker idling");
+        while (!appData.shutdownRequested) { g_usleep(I2C_SET_CONFIG_DELAY * 10); }
+        return NULL;
+    }
+
     gboolean started = startCanBus();
     if (!started) return NULL;
 
@@ -336,7 +342,7 @@ gpointer canBusWorkerLoop() {
 
     g_main_loop_unref(mainLoop);
 
-    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, FALSE);
+    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
     i2c_close(appData.canBus.i2cPiHandle, appData.canBus.i2cCanHandle);
     pigpio_stop(appData.canBus.i2cPiHandle);
 

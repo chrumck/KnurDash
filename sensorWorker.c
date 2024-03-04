@@ -300,9 +300,10 @@ void setAdcCanFrame() {
 }
 
 gpointer sensorWorkerLoop() {
-    g_message("Sensor worker waiting for CANBUS Worker to start...");
-
-    while (!appData.isCanBusWorkerRunning && !appData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
+    if (ENABLE_CANBUS) {
+        g_message("Sensor worker waiting for CANBUS Worker to start...");
+        while (!appData.isCanBusWorkerRunning && !appData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
+    }
 
     if (appData.shutdownRequested) {
         g_warning("Sensor worker start aborted");
@@ -362,7 +363,8 @@ gpointer sensorWorkerLoop() {
         gboolean ignOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
 
         guint32* coolantTempReadingErrorCount = &(appData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].errorCount);
-        if (ignOn &&
+        if (ENABLE_CANBUS &&
+            ignOn &&
             appData.wasEngineStarted &&
             !appData.canBusRestartRequested &&
             *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
