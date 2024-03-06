@@ -8,6 +8,7 @@
 
 #define ADC_DEFAULT_CONFIG 0x10
 #define ADC_CONFIG_PGA_X2 0x11
+#define ADC_BIT_RESOLUTION 12
 
 #define VDD_DEFAULT 3350
 #define VDD_ADC 1

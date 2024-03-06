@@ -213,7 +213,7 @@ void readAdcSensor(int adc, int channel) {
     }
 
     const guint32 temp = buf[0] << 8 | buf[1];
-    const gint32 v = signExtend32(temp, 12);
+    const gint32 v = signExtend32(temp, ADC_BIT_RESOLUTION);
 
     if (reading->errorCount &&
         (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) {
