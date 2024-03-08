@@ -55,10 +55,31 @@ typedef struct {
     gdouble precision;
 } SensorBase;
 
+typedef enum {
+    AdcPgaX1 = 0b00,
+    AdcPgaX2 = 0b01,
+    AdcPgaX4 = 0b10,
+    AdcPgaX8 = 0b11,
+    AdcPgaAdaptive = 0b100,
+} AdcPga;
+
+static const guint8 const AdcPgaMultipliers[] = {
+    [AdcPgaX1] = 1,
+    [AdcPgaX2] = 2,
+    [AdcPgaX4] = 4,
+    [AdcPgaX8] = 8,
+};
+
+static const guint16* const AdcPgaLimits[] = {
+    [AdcPgaX2] = 820,
+    [AdcPgaX4] = 410,
+    [AdcPgaX8] = 205,
+};
+
 typedef struct {
     SensorBase base;
 
-    guint8 adcConfig;
+    AdcPga pga;
     gint32 refR;
     gdouble(*convert)(gint32 sensorV, gint32 driveV, gint32 refR);
 } AdcSensor;

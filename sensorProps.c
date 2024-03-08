@@ -7,7 +7,6 @@
 #include "dataContracts.h"
 
 #define ADC_DEFAULT_CONFIG 0x10
-#define ADC_CONFIG_PGA_X2 0x11
 #define ADC_BIT_RESOLUTION 12
 
 #define VDD_DEFAULT 3350
@@ -25,12 +24,17 @@
 
 #define ROTOR_TEMP_ADC 1
 #define ROTOR_TEMP_CHANNEL 1
+#define CALIPER_TEMP_ADC 1
+#define CALIPER_TEMP_CHANNEL 2
 
 #define TEMP_SENSOR_RAW_MIN 30
 #define TEMP_SENSOR_RAW_MAX 2030
 
-#define ROTOR_TEMP_SENSOR_RAW_MIN 350
-#define ROTOR_TEMP_SENSOR_RAW_MAX 2000
+#define ROTOR_TEMP_SENSOR_RAW_MIN 175
+#define ROTOR_TEMP_SENSOR_RAW_MAX 1000
+
+#define CALIPER_TEMP_SENSOR_RAW_MIN 15
+#define CALIPER_TEMP_SENSOR_RAW_MAX 2040
 
 #define PRESS_SENSOR_RAW_MIN 30
 #define PRESS_SENSOR_RAW_MAX 1000
@@ -50,13 +54,13 @@
 #define ROTOR_TEMP_B 62.5
 
 gdouble convertTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
-    const gdouble sensorR = sensorV * refR / (driveV - sensorV);
+    const gdouble sensorR = (gdouble)sensorV * refR / (driveV - sensorV);
     const gdouble logSensorR = log(sensorR);
     return TEMP_A + (TEMP_B * logSensorR) + (TEMP_C * pow(logSensorR, 3));
 }
 
 gdouble convertOilPress(gint32 sensorV, gint32 driveV, gint32 refR) {
-    const gdouble sensorR = sensorV * refR / (driveV - sensorV);
+    const gdouble sensorR = (gdouble)sensorV * refR / (driveV - sensorV);
     const gdouble value = PRESS_A + (PRESS_B * sensorR) + (PRESS_C * pow(sensorR, 2));
     return value < 0 ? 0 : value;
 }
@@ -66,9 +70,14 @@ gdouble convertVdd(gint32 sensorV, gint32 driveV, gint32 refR) {
 }
 
 gdouble convertRotorTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
-    const gdouble sensorI = (gdouble)(sensorV / 2) / (refR / 10);
+    const gdouble sensorI = (gdouble)sensorV / ((gdouble)refR / 10);
     const double value = ROTOR_TEMP_A + (ROTOR_TEMP_B * sensorI);
     return value < 0 ? 0 : value;
+}
+
+gdouble convertCaliperTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
+    // TODO: needs implementation
+    return 0;
 }
 
 const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
@@ -81,7 +90,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
             },
-             .adcConfig = ADC_DEFAULT_CONFIG, .refR = 2012, .convert = convertTemp,
+             .pga = AdcPgaX1, .refR = 2012, .convert = convertTemp,
         },
         {
             .base = {
@@ -91,7 +100,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
             },
-            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 2006, .convert = convertTemp,
+            .pga = AdcPgaX1, .refR = 2006, .convert = convertTemp,
         },
         {
             .base = {
@@ -101,7 +110,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.3,
             },
-            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 1992, .convert = convertTemp,
+            .pga = AdcPgaX1, .refR = 1992, .convert = convertTemp,
         },
         {
             .base = {
@@ -111,7 +120,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = PRESS_SENSOR_RAW_MIN, .rawMax = PRESS_SENSOR_RAW_MAX,
                 .format = "%.1f" , .precision = 0.05,
             },
-            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 465, .convert = convertOilPress,
+            .pga = AdcPgaX1, .refR = 465, .convert = convertOilPress,
         },
     },
     {
@@ -120,13 +129,22 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .base = {
                 .labelId = "rotorTemp", .frameId = "rotorTempFrame", .labelMinId = "rotorTempMin", .labelMaxId = "rotorTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-                .notifyHigh = 600, .warningHigh = 600, .alertHigh = 800,
+                .notifyHigh = 700, .warningHigh = 700, .alertHigh = 900,
                 .rawMin = ROTOR_TEMP_SENSOR_RAW_MIN, .rawMax = ROTOR_TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 5,
             },
-            .adcConfig = ADC_CONFIG_PGA_X2, .refR = 468, .convert = convertRotorTemp,
+            .pga = AdcPgaX2, .refR = 468, .convert = convertRotorTemp,
         },
-        {},
+        {
+            .base = {
+                .labelId = "caliperTemp", .frameId = "caliperTempFrame", .labelMinId = "caliperTempMin", .labelMaxId = "caliperTempMax",
+                .alertLow = -25, .warningLow = -25, .notifyLow = -25,
+                .notifyHigh = 180, .warningHigh = 180, .alertHigh = 220,
+                .rawMin = CALIPER_TEMP_SENSOR_RAW_MIN, .rawMax = CALIPER_TEMP_SENSOR_RAW_MAX,
+                .format = "%.0f" , .precision = 0.5,
+            },
+            .pga = AdcPgaAdaptive, .refR = 468, .convert = convertCaliperTemp,
+        },
         {
             .base = {
                 .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
@@ -134,7 +152,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
                 .rawMin = VDD_RAW_MIN, .rawMax = VDD_RAW_MAX,
                 .format = "%.0f" , .precision = 2,
             },
-            .adcConfig = ADC_DEFAULT_CONFIG, .refR = 0, .convert = convertVdd,
+            .pga = AdcPgaX1, .refR = 0, .convert = convertVdd,
         },
     }
 };

@@ -187,8 +187,8 @@ void readAdcSensor(int adc, int channel) {
 
     sensors->requestCount++;
 
-    guint8 newConfig = sensor->adcConfig | getAdcChannelBits(channel);
-    int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], newConfig);
+    guint8 adcConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel) | sensor->pga;
+    int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], adcConfig);
     if (writeResult != 0) {
         handleSensorReadFault(TRUE);
         g_warning("Could not write config to ADC: %d - ADC:%d, channel:%d", writeResult, adc, channel);
@@ -212,7 +212,7 @@ void readAdcSensor(int adc, int channel) {
         return;
     }
 
-    const guint32 temp = buf[0] << 8 | buf[1];
+    const guint32 temp = (buf[0] << 8 | buf[1]) / AdcPgaMultipliers[sensor->pga];
     const gint32 v = signExtend32(temp, ADC_BIT_RESOLUTION);
 
     if (reading->errorCount &&
