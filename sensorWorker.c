@@ -9,8 +9,8 @@
 #include "canBusProps.c"
 #include "ui.c"
 
-#define SENSOR_WORKER_LOOP_INTERVAL 25e3
-#define ADC_SWITCH_CHANNEL_SLEEP 5e3
+#define SENSOR_WORKER_LOOP_INTERVAL_US 25000
+#define ADC_SWITCH_CHANNEL_SLEEP_US 5000
 #define SHUTDOWN_DELAY 600
 #define SHUTDOWN_DELAY_ENGINE_STARTED 30
 #define OIL_PRESSURE_ALERT_MIN_RPM 1300
@@ -195,7 +195,7 @@ void readAdcSensor(int adc, int channel) {
         return;
     }
 
-    g_usleep(ADC_SWITCH_CHANNEL_SLEEP);
+    g_usleep(ADC_SWITCH_CHANNEL_SLEEP_US);
 
     guint8 buf[3];
     int readResult = i2c_read_device(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], buf, 3);
@@ -302,7 +302,7 @@ void setAdcCanFrame() {
 gpointer sensorWorkerLoop() {
     if (ENABLE_CANBUS) {
         g_message("Sensor worker waiting for CANBUS Worker to start...");
-        while (!appData.isCanBusWorkerRunning && !appData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
+        while (!appData.isCanBusWorkerRunning && !appData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL_US);
     }
 
     if (appData.shutdownRequested) {
@@ -429,7 +429,7 @@ gpointer sensorWorkerLoop() {
 
         readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX, ignOn);
 
-        g_usleep(SENSOR_WORKER_LOOP_INTERVAL);
+        g_usleep(SENSOR_WORKER_LOOP_INTERVAL_US);
     }
 
     gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);

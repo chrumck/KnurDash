@@ -8,13 +8,13 @@
 #include "ui.c"
 
 #define CANBUS_MAINTENANCE_LOOP_INTERVAL_MS 500
-#define ENABLE_CAN_READ_ERROR_LOGGING TRUE
+#define ENABLE_CAN_READ_ERROR_LOGGING FALSE
 
 #define CAN_CTRL_SWITCH_GPIO_PIN 4
 
 #define I2C_ADDRESS 0x25
-#define I2C_REQUEST_DELAY 2e3
-#define I2C_SET_CONFIG_DELAY 100e3
+#define I2C_REQUEST_DELAY_US 2000
+#define I2C_SET_CONFIG_DELAY_US 100000
 
 #define FRAME_LENGTH  16
 
@@ -23,7 +23,7 @@
 #define RESPONSE_NOT_READY_RESPONSE 0x01010102
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
-    g_usleep(I2C_REQUEST_DELAY);
+    g_usleep(I2C_REQUEST_DELAY_US);
 
     int writeResult = i2c_write_byte(piHandle, canHandle, i2cRegister);
     if (writeResult != 0) {
@@ -32,7 +32,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         return;
     }
 
-    g_usleep(I2C_REQUEST_DELAY);
+    g_usleep(I2C_REQUEST_DELAY_US);
 
     guint8 readBuf[MASK_FILTER_LENGTH];
     int readResult = i2c_read_device(piHandle, canHandle, readBuf, MASK_FILTER_LENGTH);
@@ -63,7 +63,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         return;
     }
 
-    g_usleep(I2C_SET_CONFIG_DELAY);
+    g_usleep(I2C_SET_CONFIG_DELAY_US);
 }
 
 gboolean startCanBus() {
@@ -75,7 +75,7 @@ gboolean startCanBus() {
         if (workerStartRetriesCount > 0) {
             g_warning("Failed to initialize CAN controller, retrying...");
             if (i2cPiHandle >= 0) gpio_write(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
-            g_usleep(I2C_SET_CONFIG_DELAY * 10);
+            g_usleep(I2C_SET_CONFIG_DELAY_US * 10);
         }
 
         workerStartRetriesCount++;
@@ -115,7 +115,7 @@ gboolean startCanBus() {
             continue;
         }
 
-        g_usleep(I2C_SET_CONFIG_DELAY * 20);
+        g_usleep(I2C_SET_CONFIG_DELAY_US * 20);
 
         int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
         if (baudValue < 0) {
@@ -133,7 +133,7 @@ gboolean startCanBus() {
             }
         }
 
-        g_usleep(I2C_SET_CONFIG_DELAY);
+        g_usleep(I2C_SET_CONFIG_DELAY_US);
 
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK0_REGISTER, maskValue);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, MASK1_REGISTER, maskValue);
@@ -170,7 +170,7 @@ gboolean restartCanBus() {
     g_message("Switching CAN off with i2c handle:%2d", appData.canBus.i2cPiHandle);
 
     gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
-    g_usleep(I2C_SET_CONFIG_DELAY * 10);
+    g_usleep(I2C_SET_CONFIG_DELAY_US * 10);
 
     g_message("Restarting CAN controller...");
 
@@ -250,7 +250,7 @@ gboolean getFrameFromCAN(gpointer data) {
         handleGetFrameError("Failed request for CAN frame id:0x%x, error:%d", frame->canId, requestResult, NULL);
     }
 
-    g_usleep(I2C_REQUEST_DELAY);
+    g_usleep(I2C_REQUEST_DELAY_US);
 
     if (appData.shutdownRequested) return G_SOURCE_REMOVE;
 
@@ -306,7 +306,7 @@ gpointer canBusWorkerLoop() {
 
     if (!ENABLE_CANBUS) {
         g_message("CANBUS disabled, worker idling");
-        while (!appData.shutdownRequested) { g_usleep(I2C_SET_CONFIG_DELAY * 10); }
+        while (!appData.shutdownRequested) { g_usleep(I2C_SET_CONFIG_DELAY_US * 10); }
         return NULL;
     }
 
