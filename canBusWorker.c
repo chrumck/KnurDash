@@ -146,10 +146,12 @@ gboolean startCanBus() {
     } while (appData.canBus.errorCount && workerStartRetriesCount < 5);
 
     if (appData.canBus.errorCount) {
-        g_warning("Failed to start CANBUS worker, error count: %d", appData.canBus.errorCount);
+        g_warning("Failed to initialize CAN controller, error count: %d. Shutting down...", appData.canBus.errorCount);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
         return FALSE;
     }
+
+    g_message("CANBUS controller initialized.");
 
     return TRUE;
 }
@@ -167,7 +169,7 @@ gboolean restartCanBus() {
     GMainContext* context = g_main_loop_get_context(appData.canBus.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
 
-    g_message("Switching CAN off with i2c handle:%2d", appData.canBus.i2cPiHandle);
+    g_message("Switching CAN controller off with i2c handle:%2d", appData.canBus.i2cPiHandle);
 
     gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
     g_usleep(I2C_SET_CONFIG_DELAY_US * 10);

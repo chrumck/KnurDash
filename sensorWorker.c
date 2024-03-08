@@ -300,16 +300,6 @@ void setAdcCanFrame() {
 }
 
 gpointer sensorWorkerLoop() {
-    if (ENABLE_CANBUS) {
-        g_message("Sensor worker waiting for CANBUS Worker to start...");
-        while (!appData.isCanBusWorkerRunning && !appData.shutdownRequested) g_usleep(SENSOR_WORKER_LOOP_INTERVAL_US);
-    }
-
-    if (appData.shutdownRequested) {
-        g_warning("Sensor worker start aborted");
-        return NULL;
-    }
-
     g_message("Sensor worker starting");
 
     int i2cPiHandle = pigpio_start(NULL, NULL);
