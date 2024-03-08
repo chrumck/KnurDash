@@ -179,20 +179,19 @@ void setSensorReadingAndWidgets(
 
 //-------------------------------------------------------------------------------------------------------------
 
-void readAdcSensor(int adc, int channel) {
-    const AdcSensor* sensor = &adcSensors[adc][channel];
+gboolean readAdc(int adc, int channel, AdcPga pga, guint32* result) {
     SensorData* sensors = &appData.sensors;
     const SensorWidgets* widgets = &sensors->adcWidgets[adc][channel];
     SensorReading* reading = &sensors->adcReadings[adc][channel];
 
     sensors->requestCount++;
 
-    guint8 adcConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel) | sensor->pga;
+    guint8 adcConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel) | pga;
     int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], adcConfig);
     if (writeResult != 0) {
         handleSensorReadFault(TRUE);
         g_warning("Could not write config to ADC: %d - ADC:%d, channel:%d", writeResult, adc, channel);
-        return;
+        return FALSE;
     }
 
     g_usleep(ADC_SWITCH_CHANNEL_SLEEP_US);
@@ -202,37 +201,70 @@ void readAdcSensor(int adc, int channel) {
     if (readResult != 3) {
         handleSensorReadFault(TRUE);
         g_warning("Could not read ADC bytes: %d - ADC:%d, channel:%d", readResult, adc, channel);
-        return;
+        return FALSE;
     }
 
     int receivedChannel = getAdcChannelValue(buf[2]);
     if (receivedChannel != channel) {
         handleSensorReadFault(TRUE);
         g_warning("Received ADC channel:%d does not match required - ADC:%d, channel:%d", receivedChannel, adc, channel);
-        return;
+        return FALSE;
     }
 
-    const guint32 temp = (buf[0] << 8 | buf[1]) / AdcPgaMultipliers[sensor->pga];
-    const gint32 v = signExtend32(temp, ADC_BIT_RESOLUTION);
+    *result = (buf[0] << 8 | buf[1]) / AdcPgaMultipliers[pga];
+
+    return TRUE;
+}
+
+void readAdcSensor(int adc, int channel) {
+    SensorData* sensors = &appData.sensors;
+    const AdcSensor* sensor = &adcSensors[adc][channel];
+    SensorReading* reading = &sensors->adcReadings[adc][channel];
+    const SensorWidgets* widgets = &sensors->adcWidgets[adc][channel];
+
+    AdcPga pga = sensor->pga;
+    guint32 digits;
+
+    if (pga == AdcPgaAdaptive) {
+        pga = AdcPgaX1;
+        if (!readAdc(adc, channel, pga, digits)) { return; }
+
+        if (digits <= AdcPgaLimits[AdcPgaX8]) {
+            pga = AdcPgaX8;
+            if (!readAdc(adc, channel, pga, digits)) { return; }
+        }
+
+        if (digits > AdcPgaLimits[AdcPgaX8] && digits <= AdcPgaLimits[AdcPgaX4]) {
+            pga = AdcPgaX4;
+            if (!readAdc(adc, channel, pga, digits)) { return; }
+        }
+
+        if (digits > AdcPgaLimits[AdcPgaX4] && digits <= AdcPgaLimits[AdcPgaX2]) {
+            pga = AdcPgaX2;
+            if (!readAdc(adc, channel, pga, digits)) { return; }
+        }
+    }
+
+    const gint32 raw = signExtend32(digits, ADC_BIT_RESOLUTION);
 
     if (reading->errorCount &&
-        (v < sensor->base.rawMin + ADC_READING_DEADBAND || v > sensor->base.rawMax - ADC_READING_DEADBAND)) {
+        (raw < sensor->base.rawMin + ADC_READING_DEADBAND || raw > sensor->base.rawMax - ADC_READING_DEADBAND)) {
         reading->errorCount++;
         return;
     }
 
-    if (!reading->errorCount && (v < sensor->base.rawMin || v > sensor->base.rawMax)) {
+    if (!reading->errorCount && (raw < sensor->base.rawMin || raw > sensor->base.rawMax)) {
         handleSensorReadFault(FALSE);
         g_warning(
             "Raw value %d out of bounds: %d~%d - adc:%d, channel:%d ",
-            v, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
+            raw, sensor->base.rawMin, sensor->base.rawMax, adc, channel);
         return;
     }
 
     SensorReading* vddReading = &sensors->adcReadings[VDD_ADC][VDD_CHANNEL];
     const gdouble vdd = !vddReading->errorCount ? vddReading->value : VDD_DEFAULT;
 
-    const gdouble value = sensor->convert(v, (int)vdd, sensor->refR);
+    const gdouble value = sensor->convert(raw, (int)vdd, sensor->refR);
 
     setSensorReadingAndWidgets(value, reading, &sensor->base, widgets);
 }

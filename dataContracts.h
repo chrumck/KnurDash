@@ -70,7 +70,7 @@ static const guint8 const AdcPgaMultipliers[] = {
     [AdcPgaX8] = 8,
 };
 
-static const guint16* const AdcPgaLimits[] = {
+static const guint16 const AdcPgaLimits[] = {
     [AdcPgaX2] = 820,
     [AdcPgaX4] = 410,
     [AdcPgaX8] = 205,
