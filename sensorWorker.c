@@ -275,7 +275,7 @@ void readAdcSensor(int adc, int channel) {
 }
 
 void readCanSensor(guint canSensorIndex, gboolean ignOn) {
-    if (appData.canBusRestartRequested) return;
+    if (!appData.isCanBusWorkerRunning || appData.canBusRestartRequested) return;
 
     const CanSensor* sensor = &canSensors[canSensorIndex];
     SensorData* sensors = &appData.sensors;
