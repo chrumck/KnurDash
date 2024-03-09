@@ -143,7 +143,7 @@ gboolean startCanBus() {
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER3_REGISTER, filter3Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER4_REGISTER, filter4Value);
         setMaskOrFilter(i2cPiHandle, i2cCanHandle, FILTER5_REGISTER, filter5Value);
-    } while (appData.canBus.errorCount && workerStartRetriesCount < 5);
+    } while (appData.canBus.errorCount && !appData.shutdownRequested && workerStartRetriesCount < 5);
 
     if (appData.canBus.errorCount) {
         g_warning("Failed to initialize CAN controller after %d retries. Shutting down...", workerStartRetriesCount);
