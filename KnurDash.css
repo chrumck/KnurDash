@@ -16,12 +16,12 @@ window {
 
 .mainGauge {
     margin: -10px;
-    font-size: 78px;
+    font-size: 75px;
 }
 
 .subGauge {
     margin: -2px;
-    font-size: 35px;
+    font-size: 30px;
 }
 
 .notify {
