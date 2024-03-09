@@ -146,7 +146,7 @@ gboolean startCanBus() {
     } while (appData.canBus.errorCount && workerStartRetriesCount < 5);
 
     if (appData.canBus.errorCount) {
-        g_warning("Failed to initialize CAN controller, error count: %d. Shutting down...", appData.canBus.errorCount);
+        g_warning("Failed to initialize CAN controller after %d retries. Shutting down...", workerStartRetriesCount);
         g_idle_add(shutDown, GUINT_TO_POINTER(AppShutdownDueToErrors));
         return FALSE;
     }
