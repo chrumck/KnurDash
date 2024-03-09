@@ -46,6 +46,11 @@
 #define TEMP_B -39.95
 #define TEMP_C 0.09136
 
+#define CALIPER_TEMP_A 761.89
+#define CALIPER_TEMP_B -137.70
+#define CALIPER_TEMP_C 9.5068
+#define CALIPER_TEMP_D -0.27223
+
 #define PRESS_A -0.2967
 #define PRESS_B 0.02529
 #define PRESS_C 0.0000350
@@ -76,8 +81,9 @@ gdouble convertRotorTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
 }
 
 gdouble convertCaliperTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
-    // TODO: needs implementation
-    return 0;
+    const gdouble sensorR = (gdouble)sensorV * refR / (driveV - sensorV);
+    const gdouble logSensorR = log(sensorR);
+    return CALIPER_TEMP_A + CALIPER_TEMP_B * logSensorR + CALIPER_TEMP_C * pow(logSensorR, 2) + CALIPER_TEMP_D * pow(logSensorR, 3);
 }
 
 const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
@@ -139,11 +145,11 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .base = {
                 .labelId = "caliperTemp", .frameId = "caliperTempFrame", .labelMinId = "caliperTempMin", .labelMaxId = "caliperTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-                .notifyHigh = 180, .warningHigh = 180, .alertHigh = 220,
+                .notifyHigh = 150, .warningHigh = 150, .alertHigh = 200,
                 .rawMin = CALIPER_TEMP_SENSOR_RAW_MIN, .rawMax = CALIPER_TEMP_SENSOR_RAW_MAX,
                 .format = "%.0f" , .precision = 0.5,
             },
-            .pga = AdcPgaAdaptive, .refR = 468, .convert = convertCaliperTemp,
+            .pga = AdcPgaAdaptive, .refR = 20000, .convert = convertCaliperTemp,
         },
         {
             .base = {
