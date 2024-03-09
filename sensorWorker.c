@@ -132,13 +132,14 @@ SensorState getSensorState(const SensorBase* sensor, const gdouble reading) {
     return StateNormal;
 }
 
-#define handleSensorReadFault(_allowSomeErrors)\
+#define handleSensorReadFault(_allowErrors)\
     sensors->errorCount++;\
     reading->errorCount++;\
     reading->value = FAULTY_READING_VALUE;\
-    if (_allowSomeErrors && (reading->errorCount < MIN_ERROR_COUNT || reading->errorCount > MAX_ERROR_COUNT)) return;\
-    setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
-    setFrame(widgets->frame, StateNormal);\
+    if (!_allowErrors || (reading->errorCount > MIN_ERROR_COUNT && reading->errorCount < MAX_ERROR_COUNT)) {\
+        setLabel(widgets->label, FAULTY_READING_LABEL, 0);\
+        setFrame(widgets->frame, StateNormal);\
+    }\
 
 void setSensorReadingAndWidgets(
     gdouble value,
@@ -227,23 +228,25 @@ void readAdcSensor(int adc, int channel) {
 
     if (pga == AdcPgaAdaptive) {
         pga = AdcPgaX1;
-        if (!readAdc(adc, channel, pga, digits)) { return; }
+        if (!readAdc(adc, channel, pga, &digits)) { return; }
 
         if (digits <= AdcPgaLimits[AdcPgaX8]) {
             pga = AdcPgaX8;
-            if (!readAdc(adc, channel, pga, digits)) { return; }
+            if (!readAdc(adc, channel, pga, &digits)) { return; }
         }
 
         if (digits > AdcPgaLimits[AdcPgaX8] && digits <= AdcPgaLimits[AdcPgaX4]) {
             pga = AdcPgaX4;
-            if (!readAdc(adc, channel, pga, digits)) { return; }
+            if (!readAdc(adc, channel, pga, &digits)) { return; }
         }
 
         if (digits > AdcPgaLimits[AdcPgaX4] && digits <= AdcPgaLimits[AdcPgaX2]) {
             pga = AdcPgaX2;
-            if (!readAdc(adc, channel, pga, digits)) { return; }
+            if (!readAdc(adc, channel, pga, &digits)) { return; }
         }
     }
+
+    if (!readAdc(adc, channel, pga, &digits)) { return; }
 
     const gint32 raw = signExtend32(digits, ADC_BIT_RESOLUTION);
 
@@ -436,7 +439,7 @@ gpointer sensorWorkerLoop() {
             g_message("Ignition off, requesting system shutdown");
             g_idle_add(shutDown, GUINT_TO_POINTER(SystemShutdown));
             break;
-        }
+    }
 #endif
 
         readAdcSensor(VDD_ADC, VDD_CHANNEL);
@@ -452,7 +455,7 @@ gpointer sensorWorkerLoop() {
         readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX, ignOn);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL_US);
-    }
+}
 
     gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
     i2c_close(i2cPiHandle, adc0Handle);
