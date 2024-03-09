@@ -115,7 +115,7 @@ gboolean startCanBus() {
             continue;
         }
 
-        g_usleep(I2C_SET_CONFIG_DELAY_US * 20);
+        g_usleep(I2C_SET_CONFIG_DELAY_US * 30);
 
         int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
         if (baudValue < 0) {
@@ -172,7 +172,7 @@ gboolean restartCanBus() {
     g_message("Switching CAN controller off with i2c handle:%2d", appData.canBus.i2cPiHandle);
 
     gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
-    g_usleep(I2C_SET_CONFIG_DELAY_US * 10);
+    g_usleep(I2C_SET_CONFIG_DELAY_US * 20);
 
     g_message("Restarting CAN controller...");
 
