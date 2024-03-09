@@ -208,12 +208,6 @@
             </child>
 
             <child>
-              <packing>
-                <property name="left-attach">0</property>
-                <property name="top-attach">1</property>
-                <property name="height">1</property>
-                <property name="width">2</property>
-              </packing>
               <!-- n-columns=3 n-rows=1 -->
               <object class="GtkGrid" id="coolantTransDiff">
                 <property name="visible">True</property>
@@ -222,10 +216,6 @@
                 <property name="column-homogeneous">True</property>
 
                 <child>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                   <object class="GtkFrame" id="coolantTempFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -310,13 +300,13 @@
                       <class name="gaugeFrame"/>
                     </style>
                   </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">0</property>
+                  </packing>
                 </child>
 
                 <child>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                   <object class="GtkFrame" id="transTempFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -401,13 +391,13 @@
                       <class name="gaugeFrame"/>
                     </style>
                   </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">0</property>
+                  </packing>
                 </child>
 
                 <child>
-                  <packing>
-                    <property name="left-attach">2</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                   <object class="GtkFrame" id="diffTempFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -492,17 +482,22 @@
                       <class name="gaugeFrame"/>
                     </style>
                   </object>
-
+                  <packing>
+                    <property name="left-attach">2</property>
+                    <property name="top-attach">0</property>
+                  </packing>
                 </child>
 
               </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">1</property>
+                <property name="height">1</property>
+                <property name="width">2</property>
+              </packing>
             </child>
 
             <child>
-              <packing>
-                <property name="left-attach">0</property>
-                <property name="top-attach">2</property>
-              </packing>
               <object class="GtkFrame" id="caliperTempFrame">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
@@ -587,6 +582,10 @@
                   <class name="gaugeFrame"/>
                 </style>
               </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">2</property>
+              </packing>
             </child>
 
             <child>
