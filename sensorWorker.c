@@ -328,6 +328,9 @@ void setAdcCanFrame() {
     SensorReading* rotorTemp = &appData.sensors.adcReadings[ROTOR_TEMP_ADC][ROTOR_TEMP_CHANNEL];
     adcFrame->data[4] = rotorTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(rotorTemp->value * ADC_FRAME_ROTOR_TEMP_FACTOR));
 
+    SensorReading* caliperTemp = &appData.sensors.adcReadings[CALIPER_TEMP_ADC][CALIPER_TEMP_CHANNEL];
+    adcFrame->data[5] = caliperTemp->errorCount ? ADC_FRAME_FAULTY_VALUE : (guint8)(round(caliperTemp->value) + ADC_FRAME_CALIPER_TEMP_OFFSET);
+
     adcFrame->timestamp = g_get_monotonic_time();
     adcFrame->btWasSent = FALSE;
 
@@ -439,7 +442,7 @@ gpointer sensorWorkerLoop() {
             g_message("Ignition off, requesting system shutdown");
             g_idle_add(shutDown, GUINT_TO_POINTER(SystemShutdown));
             break;
-    }
+        }
 #endif
 
         readAdcSensor(VDD_ADC, VDD_CHANNEL);
@@ -449,13 +452,14 @@ gpointer sensorWorkerLoop() {
         readAdcSensor(OIL_TEMP_ADC, OIL_TEMP_CHANNEL);
         readAdcSensor(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
         readAdcSensor(ROTOR_TEMP_ADC, ROTOR_TEMP_CHANNEL);
+        readAdcSensor(CALIPER_TEMP_ADC, CALIPER_TEMP_CHANNEL);
 
         setAdcCanFrame();
 
         readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX, ignOn);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL_US);
-}
+    }
 
     gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
     i2c_close(i2cPiHandle, adc0Handle);
