@@ -245,8 +245,10 @@ void readAdcSensor(int adc, int channel) {
             if (!readAdc(adc, channel, pga, &digits)) { return; }
         }
     }
+    else {
+        if (!readAdc(adc, channel, pga, &digits)) { return; }
+    }
 
-    if (!readAdc(adc, channel, pga, &digits)) { return; }
 
     const gint32 raw = signExtend32(digits, ADC_BIT_RESOLUTION);
 
