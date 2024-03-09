@@ -1,13 +1,13 @@
 #ifndef __dataContracts_h
 #define __dataContracts_h
 
-// #define IS_DEBUG
-#define ENABLE_CANBUS TRUE
-
 #include <gtk/gtk.h>
-
 #include "adapter.h"
 #include "application.h"
+
+// #define IS_DEBUG
+
+#define ENABLE_CANBUS TRUE
 
 #define MIN_APP_RUNNING_TIME_US 8e6
 #define MAX_REQUEST_ERROR_RATE 0.50
