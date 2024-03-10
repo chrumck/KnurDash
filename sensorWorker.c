@@ -22,6 +22,7 @@
 
 #define MIN_ERROR_COUNT 5
 #define MAX_ERROR_COUNT 100
+#define MAX_COOLANT_TEMP_READING_ERROR_COUNT 200
 #define FAULTY_READING_LABEL "--"
 #define FAULTY_READING_VALUE (G_MAXDOUBLE - 10e3)
 #define ADC_READING_DEADBAND 10
@@ -397,7 +398,7 @@ gpointer sensorWorkerLoop() {
             ignOn &&
             appData.wasEngineStarted &&
             !appData.canBusRestartRequested &&
-            *coolantTempReadingErrorCount > MAX_ERROR_COUNT) {
+            *coolantTempReadingErrorCount > MAX_COOLANT_TEMP_READING_ERROR_COUNT) {
             g_warning("Coolant temp excessive error count:%d, requesting CAN restart", *coolantTempReadingErrorCount);
             *coolantTempReadingErrorCount = 1;
             appData.canBusRestartRequested = TRUE;
