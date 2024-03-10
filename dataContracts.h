@@ -155,6 +155,7 @@ typedef struct {
 typedef struct {
     int i2cPiHandle;
     int i2cCanHandle;
+    gboolean isControllerPinModeSet;
 
     guint32 requestCount;
     guint32 errorCount;
