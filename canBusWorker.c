@@ -171,7 +171,7 @@ gboolean restartCanBus() {
     }
 
     GMainContext* context = g_main_loop_get_context(appData.canBus.mainLoop);
-    while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
+    while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
     g_message("Switching CAN controller off with i2c handle:%2d", appData.canBus.i2cPiHandle);
 
@@ -199,7 +199,7 @@ gboolean stopCanBusWorker() {
     if (!appData.shutdownRequested) return G_SOURCE_CONTINUE;
 
     GMainContext* context = g_main_loop_get_context(appData.canBus.mainLoop);
-    while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
+    while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
     g_main_loop_quit(appData.canBus.mainLoop);
 
