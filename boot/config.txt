@@ -85,6 +85,3 @@ dtoverlay=gpio-fan,gpiopin=17,temp=70000
 arm_64bit=0
 
 disable_splash=1
-
-# Set CANBUS controller pin to output and off
-gpio=4=op,pu,dh
