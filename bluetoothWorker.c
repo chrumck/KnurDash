@@ -201,7 +201,7 @@ gboolean stopBtWorker() {
     if (!appData.shutdownRequested) return G_SOURCE_CONTINUE;
 
     GMainContext* context = g_main_loop_get_context(appData.bluetooth.mainLoop);
-    while (g_main_context_pending(context)) g_main_context_iteration(context, FALSE);
+    while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
     Adapter* adapter = appData.bluetooth.adapter;
 
