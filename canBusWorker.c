@@ -32,7 +32,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         return;
     }
 
-    g_usleep(I2C_REQUEST_DELAY_US * 10);
+    g_usleep(I2C_REQUEST_DELAY_US);
 
     guint8 readBuf[MASK_FILTER_LENGTH];
     int readResult = i2c_read_device(piHandle, canHandle, readBuf, MASK_FILTER_LENGTH);
@@ -121,7 +121,16 @@ gboolean startCanBus() {
 
         g_usleep(I2C_SET_CONFIG_DELAY_US * 30);
 
-        int baudValue = i2c_read_byte_data(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
+        int writeResult = i2c_write_byte(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
+        if (writeResult != 0) {
+            g_warning("Request to get CAN baud rate failed, register:0x%x, error:%d", BAUD_REGISTER, writeResult);
+            appData.canBus.errorCount++;
+            continue;
+        }
+
+        g_usleep(I2C_REQUEST_DELAY_US);
+
+        int baudValue = i2c_read_byte(i2cPiHandle, i2cCanHandle);
         if (baudValue < 0) {
             g_warning("Could not get CAN baud value: %d", baudValue);
             appData.canBus.errorCount++;
