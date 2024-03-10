@@ -32,7 +32,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
         return;
     }
 
-    g_usleep(I2C_REQUEST_DELAY_US);
+    g_usleep(I2C_REQUEST_DELAY_US * 10);
 
     guint8 readBuf[MASK_FILTER_LENGTH];
     int readResult = i2c_read_device(piHandle, canHandle, readBuf, MASK_FILTER_LENGTH);
