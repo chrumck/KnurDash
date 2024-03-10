@@ -201,6 +201,10 @@ gboolean stopCanBusWorker() {
     GMainContext* context = g_main_loop_get_context(appData.canBus.mainLoop);
     while (g_main_context_pending(context)) g_main_context_iteration(context, TRUE);
 
+    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
+    i2c_close(appData.canBus.i2cPiHandle, appData.canBus.i2cCanHandle);
+    pigpio_stop(appData.canBus.i2cPiHandle);
+
     g_main_loop_quit(appData.canBus.mainLoop);
 
     return G_SOURCE_REMOVE;
@@ -347,10 +351,6 @@ gpointer canBusWorkerLoop() {
     g_main_loop_run(mainLoop);
 
     g_main_loop_unref(mainLoop);
-
-    gpio_write(appData.canBus.i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, TRUE);
-    i2c_close(appData.canBus.i2cPiHandle, appData.canBus.i2cCanHandle);
-    pigpio_stop(appData.canBus.i2cPiHandle);
 
 
     g_message(
