@@ -19,7 +19,6 @@
 #define FRAME_LENGTH  16
 
 #define NO_FRAMES_AVAILABLE_RESPONSE 0x00000000
-#define RECEIVE_REJECTED_RESPONSE 0x01010101
 #define RESPONSE_NOT_READY_RESPONSE 0x01010102
 
 void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value) {
@@ -43,7 +42,7 @@ void setMaskOrFilter(int piHandle, int canHandle, int i2cRegister, guint8* value
     }
 
     guint32 response = readBuf[0] << 24 | readBuf[1] << 16 | readBuf[2] << 8 | readBuf[3];
-    if (response == RECEIVE_REJECTED_RESPONSE || response == RESPONSE_NOT_READY_RESPONSE) {
+    if (response == RESPONSE_NOT_READY_RESPONSE) {
         g_warning("Request rejected when getting CAN mask/filter, register:0x%x, response:%X", i2cRegister, response);
         appData.canBus.errorCount++;
         return;
@@ -284,8 +283,8 @@ gboolean getFrameFromCAN(gpointer data) {
 
     if (receivedFrameId == NO_FRAMES_AVAILABLE_RESPONSE) return G_SOURCE_CONTINUE;
 
-    if (receivedFrameId == RECEIVE_REJECTED_RESPONSE || receivedFrameId == RESPONSE_NOT_READY_RESPONSE) {
-        handleGetFrameError("Got error frame id for CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId, NULL);
+    if (receivedFrameId == RESPONSE_NOT_READY_RESPONSE) {
+        handleGetFrameError("Request rejected when getting CAN frame id:0x%x, received:0x%x", frame->canId, receivedFrameId, NULL);
     }
 
     if (frameData[6] < 0 || frameData[6] > CAN_DATA_SIZE) {
