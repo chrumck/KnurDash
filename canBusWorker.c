@@ -13,7 +13,7 @@
 #define CAN_CTRL_SWITCH_GPIO_PIN 4
 
 #define I2C_ADDRESS 0x25
-#define I2C_REQUEST_DELAY_US 2000
+#define I2C_REQUEST_DELAY_US 1000
 #define I2C_SET_CONFIG_DELAY_US 100000
 
 #define FRAME_LENGTH  16
@@ -119,7 +119,7 @@ gboolean startCanBus() {
             continue;
         }
 
-        g_usleep(I2C_SET_CONFIG_DELAY_US * 30);
+        g_usleep(I2C_SET_CONFIG_DELAY_US * 20);
 
         int writeResult = i2c_write_byte(i2cPiHandle, i2cCanHandle, BAUD_REGISTER);
         if (writeResult != 0) {
