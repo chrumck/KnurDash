@@ -30,7 +30,7 @@
 #define TEMP_SENSOR_RAW_MIN 30
 #define TEMP_SENSOR_RAW_MAX 2030
 
-#define ROTOR_TEMP_SENSOR_RAW_MIN 175
+#define ROTOR_TEMP_SENSOR_RAW_MIN 226 // 50 degC
 #define ROTOR_TEMP_SENSOR_RAW_MAX 1000
 
 #define CALIPER_TEMP_SENSOR_RAW_MIN 15
@@ -122,7 +122,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .base = {
                 .labelId = "oilPress", .frameId = "oilPressFrame", .labelMinId = "oilPressMin", .labelMaxId = "oilPressMax",
                 .alertLow = 0.7, .warningLow = 1.0, .notifyLow = 1.0,
-                .notifyHigh = 5.0, .warningHigh = 5.0, .alertHigh = 5.5,
+                .notifyHigh = 5.5, .warningHigh = 5.5, .alertHigh = 6.0,
                 .rawMin = PRESS_SENSOR_RAW_MIN, .rawMax = PRESS_SENSOR_RAW_MAX,
                 .format = "%.1f" , .precision = 0.05,
             },
