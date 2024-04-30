@@ -40,3 +40,7 @@ CTestTestfile.cmake
 _deps
 build/KnurDash*
 
+#LTSpice
+/LTSpice/**/*.raw
+/LTSpice/**/*.log
+
