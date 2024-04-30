@@ -40,8 +40,8 @@ void onCentralStateChanged(Adapter* adapter, Device* device) {
     g_message("Remote central %s is %s", binc_device_get_address(device), binc_device_get_connection_state_name(device));
 
     ConnectionState state = binc_device_get_connection_state(device);
-    if (state == CONNECTED) binc_adapter_stop_advertising(adapter, appData.bluetooth.adv);
-    else if (state == DISCONNECTED) binc_adapter_start_advertising(adapter, appData.bluetooth.adv);
+    if (state == BINC_CONNECTED) binc_adapter_stop_advertising(adapter, appData.bluetooth.adv);
+    else if (state == BINC_DISCONNECTED) binc_adapter_start_advertising(adapter, appData.bluetooth.adv);
 
 }
 
