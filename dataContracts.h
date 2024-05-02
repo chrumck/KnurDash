@@ -28,6 +28,17 @@
 #define ADC_FRAME_ROTOR_TEMP_FACTOR 0.25
 #define ADC_FRAME_CALIPER_TEMP_OFFSET 50
 
+#define SENSOR_WARNING_ERROR_COUNT 5
+#define SENSOR_CRITICAL_ERROR_COUNT 100
+
+#define COOLANT_TEMP_CAN_SENSOR_INDEX 0
+
+typedef struct {
+    volatile gboolean isIgnOn;
+    volatile gboolean wasEngineStarted;
+    volatile gboolean isEngineRunning;
+} System;
+
 typedef enum {
     AppShutdown = 0,
     SystemShutdown = 1,
@@ -52,6 +63,7 @@ typedef struct {
     gint32 rawMin;
     gint32 rawMax;
 
+    gdouble defaultValue;
     char* format;
     gdouble precision;
 } SensorBase;
@@ -118,8 +130,8 @@ typedef struct {
 } SensorWidgets;
 
 typedef struct {
-    int i2cPiHandle;
-    int i2cAdcHandles[ADC_COUNT];
+    gint i2cPiHandle;
+    gint i2cAdcHandles[ADC_COUNT];
 
     guint32 requestCount;
     guint32 errorCount;
@@ -182,20 +194,20 @@ typedef struct {
 
     gint64 startupTimestamp;
 
-    gboolean minMaxResetRequested;
-    gboolean shutdownRequested;
+    volatile gboolean minMaxResetRequested;
+    volatile gboolean shutdownRequested;
 
-    gboolean wasEngineStarted;
+    System system;
 
     SensorData sensors;
-    gboolean isSensorWorkerRunning;
+    volatile gboolean isSensorWorkerRunning;
 
     CanBusData canBus;
-    gboolean isCanBusWorkerRunning;
-    gboolean canBusRestartRequested;
+    volatile gboolean isCanBusWorkerRunning;
+    volatile gboolean canBusRestartRequested;
 
     BluetoothData bluetooth;
-    gboolean isBluetoothWorkerRunning;
+    volatile gboolean isBluetoothWorkerRunning;
 } AppData;
 
 typedef struct {

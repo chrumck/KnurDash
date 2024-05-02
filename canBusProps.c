@@ -81,7 +81,7 @@ static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
             .alertLow = -30, .warningLow = -30, .notifyLow = 80,
             .notifyHigh = 110, .warningHigh = 110, .alertHigh = 120,
             .rawMin = -40, .rawMax = 215,
-            .format = "%.0f" , .precision = 0.3,
+            .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
         },
             .getValue = getCoolantTemp,
     },
