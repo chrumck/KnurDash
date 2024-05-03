@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <!-- interface-css-provider-path KnurDashUi.css -->
+  <!-- interface-css-provider-path KnurDash.css -->
   <object class="GtkWindow" id="window">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -691,6 +691,7 @@
                   <object class="GtkFrame" id="statusGaugesFrame">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
+                    <property name="label-xalign">0</property>
                     <property name="shadow-type">none</property>
                     <child>
                       <!-- n-columns=1 n-rows=3 -->
@@ -700,14 +701,62 @@
                         <property name="row-homogeneous">True</property>
                         <property name="column-homogeneous">True</property>
 
+                        <child>
+                          <object class="GtkButton" id="transCoolingOn">
+                            <property name="label" translatable="yes">Trans Cooling On</property>
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can-focus">False</property>
+                            <property name="focus-on-click">False</property>
+                            <property name="receives-default">False</property>
+                            <property name="relief">none</property>
+                            <style>
+                              <class name="status"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+
+                        <child>
+                          <object class="GtkButton" id="statusGauge2">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can-focus">True</property>
+                            <property name="focus-on-click">False</property>
+                            <property name="receives-default">False</property>
+                            <property name="relief">none</property>
+                            <style>
+                              <class name="status"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+
+                        <child>
+                          <object class="GtkButton" id="statusGauge3">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="can-focus">True</property>
+                            <property name="focus-on-click">False</property>
+                            <property name="receives-default">False</property>
+                            <property name="relief">none</property>
+                            <style>
+                              <class name="status"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
 
                       </object>
-                      <packing>
-                        <property name="left-attach">0</property>
-                        <property name="top-attach">0</property>
-                        <property name="height">1</property>
-                        <property name="width">1</property>
-                      </packing>
                     </child>
                     <style>
                       <class name="gaugeFrame"/>
@@ -723,7 +772,6 @@
               <packing>
                 <property name="left-attach">0</property>
                 <property name="top-attach">2</property>
-                <property name="height">1</property>
                 <property name="width">2</property>
               </packing>
             </child>
