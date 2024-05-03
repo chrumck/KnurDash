@@ -39,12 +39,14 @@ window {
 
 .status {
     margin: 4px;
-    background: #1f1f1f;
-    color: #1f1f1f;
-    font-size: 17px;
+    background: #101010;
 }
 
-.statusOn {
+.status:insensitive * {
+    color: #101010;
+}
+
+.statusOn:insensitive * {
     color: #f7f7f7;
 }
 
