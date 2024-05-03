@@ -10,6 +10,7 @@
 #include "sensorWorker.c"
 #include "canBusWorker.c"
 #include "bluetoothWorker.c"
+#include "systemWorker.c"
 
 #define FILE_PATH_LENGTH (PATH_MAX + 1)
 
@@ -50,6 +51,7 @@ int main(int argc, char* argv[])
     GThread* sensorWorker = g_thread_new("readAnalogSensors", sensorWorkerLoop, NULL);
     GThread* canBusWorker = g_thread_new("canBusWorker", canBusWorkerLoop, NULL);
     GThread* bluetoothWorker = g_thread_new("bluetoothWorker", bluetoothWorkerLoop, NULL);
+    GThread* systemWorker = g_thread_new("systemWorker", systemWorkerLoop, NULL);
 
     g_unix_signal_add(SIGINT, shutDown, GUINT_TO_POINTER(AppShutdown));
     g_unix_signal_add(SIGTERM, shutDown, GUINT_TO_POINTER(AppShutdown));
@@ -73,6 +75,7 @@ int main(int argc, char* argv[])
     g_thread_join(sensorWorker);
     g_thread_join(canBusWorker);
     g_thread_join(bluetoothWorker);
+    g_thread_join(systemWorker);
 
     g_message("KnurDash app terminated");
 
