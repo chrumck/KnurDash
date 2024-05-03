@@ -22,6 +22,8 @@
 #define TRANS_PUMP_OFF_TEMP_C 70.0
 #define TRANS_PUMP_OFF_MAX_TIME_US 300000000
 #define TRANS_PUMP_OFF_MAX_CYCLES (TRANS_PUMP_OFF_MAX_TIME_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
+#define TRANS_PUMP_OFF_MIN_TIME_US 2000000
+#define TRANS_PUMP_OFF_MIN_CYCLES (TRANS_PUMP_OFF_MIN_TIME_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
 
 gdouble getAdcSensorValue(gint adc, gint channel) {
     SensorReading* reading = &(appData.sensors.adcReadings)[adc][channel];
@@ -31,6 +33,11 @@ gdouble getAdcSensorValue(gint adc, gint channel) {
         reading->value : sensor->base.defaultValue;
 }
 
+#define setTransPumpState(_state)\
+        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, !_state);\
+        *transPumpCounter = 0;\
+        g_idle_add(setTransPumpStatus, GUINT_TO_POINTER(_state));
+
 void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
     (*transPumpCounter)++;
 
@@ -38,16 +45,16 @@ void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
     gdouble transTempValue = getAdcSensorValue(TRANS_TEMP_ADC, TRANS_TEMP_CHANNEL);
 
     if (isTransPumpOn && !appData.system.isEngineRunning) {
-        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, TRUE);
-        *transPumpCounter = 0;
+        setTransPumpState(FALSE);
         return;
     }
 
     if (!appData.system.isEngineRunning) return;
 
+    if (!isTransPumpOn && *transPumpCounter < TRANS_PUMP_OFF_MIN_CYCLES) { return; }
+
     if (!isTransPumpOn && transTempValue >= TRANS_PUMP_ON_TEMP_C) {
-        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
-        *transPumpCounter = 0;
+        setTransPumpState(TRUE);
         return;
     }
 
@@ -56,14 +63,12 @@ void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
     }
 
     if (!isTransPumpOn && transTempValue >= TRANS_PUMP_OFF_TEMP_C && *transPumpCounter > TRANS_PUMP_OFF_MAX_CYCLES) {
-        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
-        *transPumpCounter = 0;
+        setTransPumpState(TRUE);
         return;
     }
 
     if (isTransPumpOn && *transPumpCounter > TRANS_PUMP_ON_MAX_CYCLES) {
-        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, TRUE);
-        *transPumpCounter = 0;
+        setTransPumpState(FALSE)
     }
 }
 

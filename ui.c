@@ -14,6 +14,9 @@
 #define CSS_CLASS_WARNING "warning"
 #define CSS_CLASS_ALERT "alert"
 
+#define WIDGET_ID_TRANS_PUMP_STATUS "transCoolingOn"
+#define CSS_CLASS_STATUS_GAUGE_ON "statusOn"
+
 GMutex guiLock;
 
 void requestMinMaxReset()
@@ -135,6 +138,24 @@ gboolean setFrameClass(gpointer data) {
     if (args->state == StateNotifyLow || args->state == StateNotifyHigh) gtk_style_context_add_class(context, CSS_CLASS_NOTIFY);
     if (args->state == StateWarningLow || args->state == StateWarningHigh) gtk_style_context_add_class(context, CSS_CLASS_WARNING);
     if (args->state == StateAlertLow || args->state == StateAlertHigh) gtk_style_context_add_class(context, CSS_CLASS_ALERT);
+
+    g_mutex_unlock(&guiLock);
+
+    free(data);
+    return FALSE;
+}
+
+gboolean setTransPumpStatus(gpointer data) {
+    gboolean isOn = GPOINTER_TO_UINT(data);
+
+    g_mutex_lock(&guiLock);
+
+    GObject* button = gtk_builder_get_object(appData.builder, WIDGET_ID_TRANS_PUMP_STATUS);
+    GtkStyleContext* context = gtk_widget_get_style_context(GTK_WIDGET(button));
+
+    gboolean hasStatusOnClass = gtk_style_context_has_class(context, CSS_CLASS_STATUS_GAUGE_ON);
+    if (!isOn && hasStatusOnClass) { gtk_style_context_remove_class(context, CSS_CLASS_STATUS_GAUGE_ON); }
+    if (isOn && !hasStatusOnClass) gtk_style_context_add_class(context, CSS_CLASS_STATUS_GAUGE_ON);
 
     g_mutex_unlock(&guiLock);
 
