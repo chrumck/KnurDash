@@ -131,13 +131,13 @@ gboolean setFrameClass(gpointer data) {
     g_mutex_lock(&guiLock);
     GtkStyleContext* context = gtk_widget_get_style_context(GTK_WIDGET(args->frame));
 
-    if (gtk_style_context_has_class(context, CSS_CLASS_NOTIFY)) gtk_style_context_remove_class(context, CSS_CLASS_NOTIFY);
-    if (gtk_style_context_has_class(context, CSS_CLASS_WARNING)) gtk_style_context_remove_class(context, CSS_CLASS_WARNING);
-    if (gtk_style_context_has_class(context, CSS_CLASS_ALERT)) gtk_style_context_remove_class(context, CSS_CLASS_ALERT);
+    if (gtk_style_context_has_class(context, CSS_CLASS_NOTIFY)) { gtk_style_context_remove_class(context, CSS_CLASS_NOTIFY); }
+    if (gtk_style_context_has_class(context, CSS_CLASS_WARNING)) { gtk_style_context_remove_class(context, CSS_CLASS_WARNING); }
+    if (gtk_style_context_has_class(context, CSS_CLASS_ALERT)) { gtk_style_context_remove_class(context, CSS_CLASS_ALERT); }
 
-    if (args->state == StateNotifyLow || args->state == StateNotifyHigh) gtk_style_context_add_class(context, CSS_CLASS_NOTIFY);
-    if (args->state == StateWarningLow || args->state == StateWarningHigh) gtk_style_context_add_class(context, CSS_CLASS_WARNING);
-    if (args->state == StateAlertLow || args->state == StateAlertHigh) gtk_style_context_add_class(context, CSS_CLASS_ALERT);
+    if (args->state == StateNotifyLow || args->state == StateNotifyHigh) { gtk_style_context_add_class(context, CSS_CLASS_NOTIFY); }
+    if (args->state == StateWarningLow || args->state == StateWarningHigh) { gtk_style_context_add_class(context, CSS_CLASS_WARNING); }
+    if (args->state == StateAlertLow || args->state == StateAlertHigh) { gtk_style_context_add_class(context, CSS_CLASS_ALERT); }
 
     g_mutex_unlock(&guiLock);
 
@@ -152,14 +152,13 @@ gboolean setTransPumpStatus(gpointer data) {
 
     GObject* button = gtk_builder_get_object(appData.builder, WIDGET_ID_TRANS_PUMP_STATUS);
     GtkStyleContext* context = gtk_widget_get_style_context(GTK_WIDGET(button));
-
     gboolean hasStatusOnClass = gtk_style_context_has_class(context, CSS_CLASS_STATUS_GAUGE_ON);
+
     if (!isOn && hasStatusOnClass) { gtk_style_context_remove_class(context, CSS_CLASS_STATUS_GAUGE_ON); }
-    if (isOn && !hasStatusOnClass) gtk_style_context_add_class(context, CSS_CLASS_STATUS_GAUGE_ON);
+    if (isOn && !hasStatusOnClass) { gtk_style_context_add_class(context, CSS_CLASS_STATUS_GAUGE_ON); }
 
     g_mutex_unlock(&guiLock);
 
-    free(data);
     return FALSE;
 }
 

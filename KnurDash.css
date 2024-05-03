@@ -42,11 +42,11 @@ window {
     background: #101010;
 }
 
-.status:insensitive * {
+.status:disabled * {
     color: #101010;
 }
 
-.statusOn:insensitive * {
+.statusOn:disabled * {
     color: #f7f7f7;
 }
 
