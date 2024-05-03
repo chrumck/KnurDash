@@ -360,6 +360,8 @@ gpointer sensorWorkerLoop() {
 
     appData.isSensorWorkerRunning = TRUE;
 
+    g_message("Sensor worker started");
+
     while (!appData.shutdownRequested) {
         if (appData.minMaxResetRequested) {
             resetReadingsMinMax();
