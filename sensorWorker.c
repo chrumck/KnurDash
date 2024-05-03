@@ -359,7 +359,6 @@ gpointer sensorWorkerLoop() {
     g_mutex_unlock(&adcFrame->lock);
 
     appData.isSensorWorkerRunning = TRUE;
-
     g_message("Sensor worker started");
 
     while (!appData.shutdownRequested) {
