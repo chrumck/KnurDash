@@ -165,7 +165,7 @@ gpointer systemWorkerLoop() {
     }
 
     gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
-    gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, TRUE);
+    gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
 
     pigpio_stop(i2cPiHandle);
 
