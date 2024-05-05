@@ -320,13 +320,19 @@ gboolean getFrameFromCAN(gpointer data) {
 }
 
 gpointer canBusWorkerLoop() {
-    g_message("CANBUS worker starting");
-
     if (!ENABLE_CANBUS) {
         g_message("CANBUS disabled, worker idling");
-        while (!appData.shutdownRequested) { g_usleep(I2C_SET_CONFIG_DELAY_US * 10); }
+        appData.isCanBusWorkerRunning = TRUE;
+        while (!appData.shutdownRequested) { g_usleep(CANBUS_MAINTENANCE_LOOP_INTERVAL_MS); }
+        appData.isCanBusWorkerRunning = FALSE;
         return NULL;
     }
+
+    while (!appData.shutdownRequested && !appData.isSensorWorkerRunning) { g_usleep(CANBUS_MAINTENANCE_LOOP_INTERVAL_MS); }
+
+    if (appData.shutdownRequested || !appData.isSensorWorkerRunning) { return NULL; }
+
+    g_message("CANBUS worker starting");
 
     gboolean started = startCanBus();
     if (!started) return NULL;
@@ -354,6 +360,7 @@ gpointer canBusWorkerLoop() {
         g_source_unref(frameRefreshSource);
     }
 
+    g_message("CANBUS worker started");
     appData.isCanBusWorkerRunning = TRUE;
 
     g_main_loop_run(mainLoop);
