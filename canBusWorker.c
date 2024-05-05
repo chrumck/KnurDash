@@ -328,9 +328,11 @@ gpointer canBusWorkerLoop() {
         return NULL;
     }
 
-    while (!appData.shutdownRequested && !appData.isSensorWorkerRunning) { g_usleep(CANBUS_MAINTENANCE_LOOP_INTERVAL_MS); }
+    while (!appData.shutdownRequested && (!appData.isSensorWorkerRunning || !appData.isSystemWorkerRunning)) {
+        g_usleep(CANBUS_MAINTENANCE_LOOP_INTERVAL_MS);
+    }
 
-    if (appData.shutdownRequested || !appData.isSensorWorkerRunning) { return NULL; }
+    if (appData.shutdownRequested || !appData.isSensorWorkerRunning || !appData.isSystemWorkerRunning) { return NULL; }
 
     g_message("CANBUS worker starting");
 

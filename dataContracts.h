@@ -198,6 +198,7 @@ typedef struct {
     volatile gboolean shutdownRequested;
 
     System system;
+    volatile gboolean isSystemWorkerRunning;
 
     SensorData sensors;
     volatile gboolean isSensorWorkerRunning;

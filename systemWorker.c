@@ -107,6 +107,9 @@ gpointer systemWorkerLoop() {
     guint shutDownCounter = 0;
     guint transPumpCounter = 0;
 
+    appData.isSystemWorkerRunning = TRUE;
+    g_message("System worker started");
+
     while (!appData.shutdownRequested && appData.isSensorWorkerRunning) {
         float errorRate = (float)appData.sensors.errorCount / appData.sensors.requestCount;
         if (errorRate > MAX_REQUEST_ERROR_RATE &&
@@ -163,6 +166,8 @@ gpointer systemWorkerLoop() {
 #endif
         g_usleep(SYSTEM_WORKER_LOOP_INTERVAL_US);
     }
+
+    appData.isSystemWorkerRunning = FALSE;
 
     gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
     gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
