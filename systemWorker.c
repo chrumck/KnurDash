@@ -34,14 +34,14 @@ gdouble getAdcSensorValue(gint adc, gint channel) {
 }
 
 #define setTransPumpState(_state)\
-        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, !_state);\
+        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, _state);\
         *transPumpCounter = 0;\
         g_idle_add(setTransPumpStatus, GUINT_TO_POINTER(_state));
 
 void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
     (*transPumpCounter)++;
 
-    gboolean isTransPumpOn = gpio_read(i2cPiHandle, TRANS_PUMP_GPIO_PIN) == FALSE;
+    gboolean isTransPumpOn = gpio_read(i2cPiHandle, TRANS_PUMP_GPIO_PIN) == TRUE;
     gdouble transTempValue = getAdcSensorValue(TRANS_TEMP_ADC, TRANS_TEMP_CHANNEL);
 
     if (isTransPumpOn && !appData.system.isEngineRunning) {
@@ -98,10 +98,10 @@ gpointer systemWorkerLoop() {
     gpioResult = set_mode(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_OUTPUT);
     if (gpioResult != 0) g_error("Could not set GPIO pin mode for trans pump: %d", gpioResult);
 
-    gpioResult = set_pull_up_down(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_PUD_UP);
+    gpioResult = set_pull_up_down(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_PUD_DOWN);
     if (gpioResult != 0) g_error("Could not set GPIO pin pulldown for trans pump: %d", gpioResult);
 
-    gpioResult = gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, TRUE);
+    gpioResult = gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
     if (gpioResult != 0) g_error("Could not set GPIO pin state for trans pump: %d", gpioResult);
 
     guint shutDownCounter = 0;

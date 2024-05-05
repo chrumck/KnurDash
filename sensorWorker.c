@@ -346,6 +346,8 @@ gpointer sensorWorkerLoop() {
     if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
     appData.sensors.i2cAdcHandles[1] = adc1Handle;
 
+    g_message("Sensor worker I2C initialized");
+
     resetReadingsValues();
     resetReadingsMinMax();
     setWidgets();
