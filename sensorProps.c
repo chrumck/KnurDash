@@ -1,5 +1,4 @@
-#ifndef __sensorProps_c
-#define __sensorProps_c
+#pragma once
 
 #include <gtk/gtk.h>
 #include <math.h>
@@ -162,5 +161,3 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         },
     }
 };
-
-#endif

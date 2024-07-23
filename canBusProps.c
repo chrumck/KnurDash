@@ -1,5 +1,4 @@
-#ifndef __canBusProps_c
-#define __canBusProps_c
+#pragma once
 
 #include <gtk/gtk.h>
 
@@ -86,5 +85,3 @@ static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
             .getValue = getCoolantTemp,
     },
 };
-
-#endif

@@ -12,6 +12,7 @@
 #include "logger.h"
 
 #include "dataContracts.h"
+#include "helpers.c"
 #include "appData.c"
 #include "sensorProps.c"
 
@@ -252,10 +253,7 @@ gpointer bluetoothWorkerLoop() {
     Adapter* adapter = binc_adapter_get_default(dbusConn);
     appData.bluetooth.adapter = adapter;
 
-    if (adapter == NULL) {
-        g_error("No adapter found");
-        return NULL;
-    }
+    if (adapter == NULL) app_error("No adapter found");
 
     g_message("Bluetooth worker starting, adapter '%s'", binc_adapter_get_path(adapter));
 

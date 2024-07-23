@@ -335,15 +335,15 @@ gpointer sensorWorkerLoop() {
     g_message("Sensor worker starting");
 
     gint i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
+    if (i2cPiHandle < 0)  app_error("Could not connect to pigpiod: %d", i2cPiHandle);
     appData.sensors.i2cPiHandle = i2cPiHandle;
 
     gint adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
-    if (adc0Handle < 0)  g_error("Could not get adc0 handle: %d", adc0Handle);
+    if (adc0Handle < 0)  app_error("Could not get adc0 handle: %d", adc0Handle);
     appData.sensors.i2cAdcHandles[0] = adc0Handle;
 
     gint adc1Handle = i2c_open(i2cPiHandle, 1, ADC1_I2C_ADDRESS, 0);
-    if (adc1Handle < 0)  g_error("Could not get adc1 handle: %d", adc1Handle);
+    if (adc1Handle < 0)  app_error("Could not get adc1 handle: %d", adc1Handle);
     appData.sensors.i2cAdcHandles[1] = adc1Handle;
 
     g_message("Sensor worker I2C initialized");

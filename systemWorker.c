@@ -80,29 +80,29 @@ gpointer systemWorkerLoop() {
     g_message("System worker starting");
 
     gint i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0)  g_error("Could not connect to pigpiod: %d", i2cPiHandle);
+    if (i2cPiHandle < 0)  app_error("Could not connect to pigpiod: %d", i2cPiHandle);
 
     gint gpioResult = 0;
     gpioResult = set_mode(i2cPiHandle, IGN_GPIO_PIN, PI_INPUT);
-    if (gpioResult != 0) g_error("Could not set GPIO pin mode for IGN_IN: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin mode for IGN_IN: %d", gpioResult);
 
     gpioResult = set_pull_up_down(i2cPiHandle, IGN_GPIO_PIN, PI_PUD_DOWN);
-    if (gpioResult != 0) g_error("Could not set GPIO pin pulldown for IGN_IN: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin pulldown for IGN_IN: %d", gpioResult);
 
     gpioResult = set_mode(i2cPiHandle, BUZZER_GPIO_PIN, PI_OUTPUT);
-    if (gpioResult != 0) g_error("Could not set GPIO pin mode for buzzer: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin mode for buzzer: %d", gpioResult);
 
     gpioResult = set_pull_up_down(i2cPiHandle, BUZZER_GPIO_PIN, PI_PUD_OFF);
-    if (gpioResult != 0) g_error("Could not set GPIO pin pulldown for buzzer: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin pulldown for buzzer: %d", gpioResult);
 
     gpioResult = set_mode(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_OUTPUT);
-    if (gpioResult != 0) g_error("Could not set GPIO pin mode for trans pump: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin mode for trans pump: %d", gpioResult);
 
     gpioResult = set_pull_up_down(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_PUD_DOWN);
-    if (gpioResult != 0) g_error("Could not set GPIO pin pulldown for trans pump: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin pulldown for trans pump: %d", gpioResult);
 
     gpioResult = gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
-    if (gpioResult != 0) g_error("Could not set GPIO pin state for trans pump: %d", gpioResult);
+    if (gpioResult != 0) app_error("Could not set GPIO pin state for trans pump: %d", gpioResult);
 
     guint shutDownCounter = 0;
     guint transPumpCounter = 0;

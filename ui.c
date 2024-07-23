@@ -1,5 +1,4 @@
-#ifndef __ui_c
-#define __ui_c
+#pragma once
 
 #include <gtk/gtk.h>
 #include<fcntl.h> 
@@ -161,5 +160,3 @@ gboolean setTransPumpStatus(gpointer data) {
 
     return FALSE;
 }
-
-#endif

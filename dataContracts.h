@@ -1,5 +1,4 @@
-#ifndef __dataContracts_h
-#define __dataContracts_h
+#pragma once
 
 #include <gtk/gtk.h>
 #include "adapter.h"
@@ -220,5 +219,3 @@ typedef struct {
     GtkFrame* frame;
     SensorState state;
 } SetFrameClassArgs;
-
-#endif
