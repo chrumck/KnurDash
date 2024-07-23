@@ -78,7 +78,7 @@ static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
         .base = {
             .labelId = "coolantTemp", .frameId = "coolantTempFrame", .labelMinId = "coolantTempMin", .labelMaxId = "coolantTempMax",
             .alertLow = -30, .warningLow = -30, .notifyLow = 80,
-            .notifyHigh = 110, .warningHigh = 110, .alertHigh = 120,
+            .notifyHigh = 115, .warningHigh = 115, .alertHigh = 120,
             .rawMin = -40, .rawMax = 215,
             .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
         },

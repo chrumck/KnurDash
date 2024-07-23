@@ -91,7 +91,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .base = {
                 .labelId = "transTemp", .frameId = "transTempFrame", .labelMinId = "transTempMin", .labelMaxId = "transTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
+                .notifyHigh = 130, .warningHigh = 130, .alertHigh = 145,
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
             },
@@ -101,7 +101,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .base = {
                 .labelId = "diffTemp", .frameId = "diffTempFrame", .labelMinId = "diffTempMin", .labelMaxId = "diffTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 160,
+                .notifyHigh = 135, .warningHigh = 135, .alertHigh = 150,
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
             },
