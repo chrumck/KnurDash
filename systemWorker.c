@@ -167,7 +167,8 @@ gpointer systemWorkerLoop() {
         gdouble pressureValue = getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
         gdouble engineRpm = getEngineRpm();
 
-        appData.system.isEngineRunning = appData.system.isIgnOn &&
+        appData.system.isEngineRunning =
+            appData.system.isIgnOn &&
             (pressureValue > OIL_PRESSURE_MIN || engineRpm > ENGINE_RPM_MIN);
 
         if (!appData.system.wasEngineStarted && appData.system.isEngineRunning) { appData.system.wasEngineStarted = TRUE; }

@@ -56,10 +56,10 @@ gdouble getEngineRpm() {
     CanFrameState* state = &appData.canBus.frames[RPM_FRAME_INDEX];
 
     g_mutex_lock(&state->lock);
-    gdouble retVal = (gdouble)((state->data[0] << 8 | state->data[1]) * RPM_SCALING);
+    gdouble result = (gdouble)((state->data[0] << 8 | state->data[1]) * RPM_SCALING);
     g_mutex_unlock(&state->lock);
 
-    return retVal;
+    return result;
 }
 
 gdouble getCoolantTemp() {
@@ -67,10 +67,10 @@ gdouble getCoolantTemp() {
 
     CanFrameState* state = &appData.canBus.frames[COOLANT_TEMP_FRAME_INDEX];
     g_mutex_lock(&state->lock);
-    gdouble retVal = (gdouble)(state->data[0] - COOLANT_TEMP_OFFSET);
+    gdouble result = (gdouble)(state->data[0] - COOLANT_TEMP_OFFSET);
     g_mutex_unlock(&state->lock);
 
-    return retVal;
+    return result;
 }
 
 static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
