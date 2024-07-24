@@ -39,21 +39,24 @@ void setBuzzer(gdouble pressureValue, gdouble engineRpm)
 {
     gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
 
-    const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
-
     gboolean shouldBuzzerBeOn =
-        pressureValue < pressureSensor->base.alertLow &&
+        pressureValue < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
         engineRpm > OIL_PRESSURE_BUZZER_ON_ALERT_RPM;
 
-    if (isBuzzerOn && !shouldBuzzerBeOn) {
-        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
-        appData.system.buzzerToggleTimestamp = g_get_monotonic_time();
-    }
+    guint64 currentTimestamp = g_get_monotonic_time();
 
     if (!isBuzzerOn && shouldBuzzerBeOn) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
-        appData.system.buzzerToggleTimestamp = g_get_monotonic_time();
+        appData.system.buzzerToggleTimestamp = currentTimestamp;
+        return;
     }
+
+    if (isBuzzerOn && !shouldBuzzerBeOn) {
+        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
+        appData.system.buzzerToggleTimestamp = currentTimestamp;
+    }
+
+
 }
 
 #define setTransPumpState(_state)\
