@@ -253,7 +253,10 @@ gpointer bluetoothWorkerLoop() {
     Adapter* adapter = binc_adapter_get_default(dbusConn);
     appData.bluetooth.adapter = adapter;
 
-    if (adapter == NULL) app_error("No adapter found");
+    if (adapter == NULL) {
+        logError("BluetoothWorker:no adapter found, shutting down...");
+        return;
+    }
 
     g_message("Bluetooth worker starting, adapter '%s'", binc_adapter_get_path(adapter));
 

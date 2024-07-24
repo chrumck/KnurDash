@@ -103,10 +103,16 @@ gboolean startCanBus() {
 
         if (!appData.canBus.isControllerPinModeSet) {
             int setCanCtrOnPullUp = set_pull_up_down(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_PUD_UP);
-            if (setCanCtrOnPullUp != 0) app_error("Could not set GPIO pin pulldown res for CAN_CTRL_SWITCH: %d", setCanCtrOnPullUp);
+            if (setCanCtrOnPullUp != 0) {
+                logError("Could not set GPIO pin pulldown res for CAN_CTRL_SWITCH: %d", setCanCtrOnPullUp);
+                continue;
+            }
 
             int setCanCtrOnPinMode = set_mode(i2cPiHandle, CAN_CTRL_SWITCH_GPIO_PIN, PI_OUTPUT);
-            if (setCanCtrOnPinMode != 0) app_error("Could not set GPIO pin mode for CAN_CTRL_SWITCH: %d", setCanCtrOnPinMode);
+            if (setCanCtrOnPinMode != 0) {
+                logError("Could not set GPIO pin mode for CAN_CTRL_SWITCH: %d", setCanCtrOnPinMode);
+                continue;
+            }
 
             appData.canBus.isControllerPinModeSet = TRUE;
         }

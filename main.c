@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     GtkCssProvider* cssProvider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(cssProvider, cssFilePath, &error);
 
-    if (error != NULL) app_error("Error loading file: %s\n", error->message);
+    if (error != NULL) logErrorAndKill("Error loading file: %s\n", error->message);
 
     GdkScreen* screen = gdk_screen_get_default();
     gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
     GtkBuilder* builder = gtk_builder_new();
     gtk_builder_add_from_file(builder, uiFilePath, &error);
-    if (error != NULL) app_error("Error loading file: %s\n", error->message);
+    if (error != NULL) logErrorAndKill("Error loading file: %s\n", error->message);
 
     GObject* window = gtk_builder_get_object(builder, "window");
 
