@@ -4,17 +4,19 @@
 #include "sensorProps.c"
 #include "ui.c"
 
-#define SYSTEM_WORKER_LOOP_INTERVAL_US 25000
-#define SHUTDOWN_DELAY 600
-#define SHUTDOWN_DELAY_AFTER_ENGINE_STARTED 30
+#define SYSTEM_WORKER_LOOP_INTERVAL_US 50000
+#define SHUTDOWN_DELAY_US 20000000
+#define SHUTDOWN_DELAY_CYCLES (SHUTDOWN_DELAY_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
+#define SHUTDOWN_DELAY_AFTER_ENGINE_STARTED_US 2000000
+#define SHUTDOWN_DELAY_AFTER_ENGINE_STARTED_CYCLES (SHUTDOWN_DELAY_AFTER_ENGINE_STARTED_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
 
 #define IGN_GPIO_PIN 22
 #define TRANS_PUMP_GPIO_PIN 23
 #define BUZZER_GPIO_PIN 27
 
-#define OIL_PRESSURE_MIN 0.5
-#define OIL_PRESSURE_ALERT_MIN_RPM 1300
-#define ENGINE_RPM_MIN 100
+#define ENGINE_RUNNING_OIL_PRESSURE 0.5
+#define ENGINE_RUNNING_RPM 100
+#define OIL_PRESSURE_BUZZER_ON_ALERT_RPM 1300
 
 #define TRANS_PUMP_ON_TEMP_C 95.0
 #define TRANS_PUMP_ON_MAX_TIME_US 20000000
@@ -36,16 +38,21 @@ gdouble getAdcSensorValue(gint adc, gint channel) {
 void setBuzzer(gdouble pressureValue, gdouble engineRpm)
 {
     gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
+
     const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
 
-    if (isBuzzerOn && (pressureValue >= pressureSensor->base.alertLow || engineRpm < OIL_PRESSURE_ALERT_MIN_RPM)) {
+    gboolean shouldBuzzerBeOn =
+        pressureValue < pressureSensor->base.alertLow &&
+        engineRpm > OIL_PRESSURE_BUZZER_ON_ALERT_RPM;
+
+    if (isBuzzerOn && !shouldBuzzerBeOn) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
+        appData.system.buzzerToggleTimestamp = g_get_monotonic_time();
     }
 
-    if (!isBuzzerOn &&
-        pressureValue < pressureSensor->base.alertLow &&
-        engineRpm > OIL_PRESSURE_ALERT_MIN_RPM) {
+    if (!isBuzzerOn && shouldBuzzerBeOn) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
+        appData.system.buzzerToggleTimestamp = g_get_monotonic_time();
     }
 }
 
@@ -169,7 +176,7 @@ gpointer systemWorkerLoop() {
 
         appData.system.isEngineRunning =
             appData.system.isIgnOn &&
-            (pressureValue > OIL_PRESSURE_MIN || engineRpm > ENGINE_RPM_MIN);
+            (pressureValue > ENGINE_RUNNING_OIL_PRESSURE || engineRpm > ENGINE_RUNNING_RPM);
 
         if (!appData.system.wasEngineStarted && appData.system.isEngineRunning) { appData.system.wasEngineStarted = TRUE; }
 
@@ -190,8 +197,8 @@ gpointer systemWorkerLoop() {
 
 #ifndef IS_DEBUG
         shutDownCounter = appData.system.isIgnOn ? 0 : shutDownCounter + 1;
-        if ((appData.system.wasEngineStarted && shutDownCounter > SHUTDOWN_DELAY_AFTER_ENGINE_STARTED) ||
-            shutDownCounter > SHUTDOWN_DELAY) {
+        if ((appData.system.wasEngineStarted && shutDownCounter > SHUTDOWN_DELAY_AFTER_ENGINE_STARTED_CYCLES) ||
+            shutDownCounter > SHUTDOWN_DELAY_CYCLES) {
             g_message("Ignition off, requesting system shutdown");
             g_idle_add(shutDown, GUINT_TO_POINTER(SystemShutdown));
             break;

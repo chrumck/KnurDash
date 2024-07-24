@@ -38,6 +38,8 @@ typedef struct {
     volatile gboolean isIgnOn;
     volatile gboolean wasEngineStarted;
     volatile gboolean isEngineRunning;
+
+    guint64 buzzerToggleTimestamp;
 } System;
 
 typedef enum {
