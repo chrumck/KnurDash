@@ -177,7 +177,7 @@ gboolean readAdc(int adc, int channel, AdcPga pga, guint32* result) {
     sensors->requestCount++;
 
     guint8 adcConfig = ADC_DEFAULT_CONFIG | getAdcChannelBits(channel) | pga;
-    int writeResult = i2c_write_byte(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], adcConfig);
+    int writeResult = i2c_write_byte(sensors->pigpioHandle, sensors->i2cAdcHandles[adc], adcConfig);
     if (writeResult != 0) {
         handleSensorReadFault(TRUE);
         g_warning("Could not write config to ADC: %d - ADC:%d, channel:%d", writeResult, adc, channel);
@@ -187,7 +187,7 @@ gboolean readAdc(int adc, int channel, AdcPga pga, guint32* result) {
     g_usleep(ADC_SWITCH_CHANNEL_SLEEP_US);
 
     guint8 buf[3];
-    int readResult = i2c_read_device(sensors->i2cPiHandle, sensors->i2cAdcHandles[adc], buf, 3);
+    int readResult = i2c_read_device(sensors->pigpioHandle, sensors->i2cAdcHandles[adc], buf, 3);
     if (readResult != 3) {
         handleSensorReadFault(TRUE);
         g_warning("Could not read ADC bytes: %d - ADC:%d, channel:%d", readResult, adc, channel);
@@ -334,21 +334,21 @@ void setAdcCanFrame() {
 gpointer sensorWorkerLoop() {
     g_message("Sensor worker starting");
 
-    gint i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0) {
-        logError("Could not connect to pigpiod: %d", i2cPiHandle);
+    gint pigpioHandle = pigpio_start(NULL, NULL);
+    if (pigpioHandle < 0) {
+        logError("Could not connect to pigpiod: %d", pigpioHandle);
         return NULL;
     }
-    appData.sensors.i2cPiHandle = i2cPiHandle;
+    appData.sensors.pigpioHandle = pigpioHandle;
 
-    gint adc0Handle = i2c_open(i2cPiHandle, 1, ADC0_I2C_ADDRESS, 0);
+    gint adc0Handle = i2c_open(pigpioHandle, 1, ADC0_I2C_ADDRESS, 0);
     if (adc0Handle < 0) {
         logError("Could not get adc0 handle: %d", adc0Handle);
         return NULL;
     }
     appData.sensors.i2cAdcHandles[0] = adc0Handle;
 
-    gint adc1Handle = i2c_open(i2cPiHandle, 1, ADC1_I2C_ADDRESS, 0);
+    gint adc1Handle = i2c_open(pigpioHandle, 1, ADC1_I2C_ADDRESS, 0);
     if (adc1Handle < 0) {
         logError("Could not get adc1 handle: %d", adc1Handle);
         return NULL;
@@ -397,9 +397,9 @@ gpointer sensorWorkerLoop() {
 
     appData.isSensorWorkerRunning = FALSE;
 
-    i2c_close(i2cPiHandle, adc0Handle);
-    i2c_close(i2cPiHandle, adc1Handle);
-    pigpio_stop(i2cPiHandle);
+    i2c_close(pigpioHandle, adc0Handle);
+    i2c_close(pigpioHandle, adc1Handle);
+    pigpio_stop(pigpioHandle);
 
     g_message(
         "ADC sensors requests:%d, errors:%d, rate:%.4f",

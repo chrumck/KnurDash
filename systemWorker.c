@@ -33,15 +33,33 @@ gdouble getAdcSensorValue(gint adc, gint channel) {
         reading->value : sensor->base.defaultValue;
 }
 
+void setBuzzer(gdouble pressureValue, gdouble engineRpm)
+{
+    gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
+    const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+
+    if (isBuzzerOn && (pressureValue >= pressureSensor->base.alertLow || engineRpm < OIL_PRESSURE_ALERT_MIN_RPM)) {
+        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
+    }
+
+    if (!isBuzzerOn &&
+        pressureValue < pressureSensor->base.alertLow &&
+        engineRpm > OIL_PRESSURE_ALERT_MIN_RPM) {
+        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
+    }
+}
+
 #define setTransPumpState(_state)\
-        gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, _state);\
-        *transPumpCounter = 0;\
+        gpio_write(appData.system.pigpioHandle, TRANS_PUMP_GPIO_PIN, _state);\
+        transPumpCounter = 0;\
         g_idle_add(setTransPumpStatus, GUINT_TO_POINTER(_state));
 
-void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
-    (*transPumpCounter)++;
+void switchTransPumpOnOff() {
+    static guint transPumpCounter = 0;
 
-    gboolean isTransPumpOn = gpio_read(i2cPiHandle, TRANS_PUMP_GPIO_PIN) == TRUE;
+    transPumpCounter++;
+
+    gboolean isTransPumpOn = gpio_read(appData.system.pigpioHandle, TRANS_PUMP_GPIO_PIN) == TRUE;
     gdouble transTempValue = getAdcSensorValue(TRANS_TEMP_ADC, TRANS_TEMP_CHANNEL);
 
     if (isTransPumpOn && !appData.system.isEngineRunning) {
@@ -51,7 +69,7 @@ void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
 
     if (!appData.system.isEngineRunning) return;
 
-    if (!isTransPumpOn && *transPumpCounter < TRANS_PUMP_OFF_MIN_CYCLES) { return; }
+    if (!isTransPumpOn && transPumpCounter < TRANS_PUMP_OFF_MIN_CYCLES) { return; }
 
     if (!isTransPumpOn && transTempValue >= TRANS_PUMP_ON_TEMP_C) {
         setTransPumpState(TRUE);
@@ -62,12 +80,12 @@ void switchTransPumpOnOff(gint i2cPiHandle, guint* transPumpCounter) {
         return;
     }
 
-    if (!isTransPumpOn && transTempValue >= TRANS_PUMP_OFF_TEMP_C && *transPumpCounter > TRANS_PUMP_OFF_MAX_CYCLES) {
+    if (!isTransPumpOn && transTempValue >= TRANS_PUMP_OFF_TEMP_C && transPumpCounter > TRANS_PUMP_OFF_MAX_CYCLES) {
         setTransPumpState(TRUE);
         return;
     }
 
-    if (isTransPumpOn && *transPumpCounter > TRANS_PUMP_ON_MAX_CYCLES) {
+    if (isTransPumpOn && transPumpCounter > TRANS_PUMP_ON_MAX_CYCLES) {
         setTransPumpState(FALSE)
     }
 }
@@ -79,57 +97,58 @@ gpointer systemWorkerLoop() {
 
     g_message("System worker starting");
 
-    gint i2cPiHandle = pigpio_start(NULL, NULL);
-    if (i2cPiHandle < 0) {
-        logError("Could not connect to pigpiod: %d", i2cPiHandle);
+    gint pigpioHandle = pigpio_start(NULL, NULL);
+    if (pigpioHandle < 0) {
+        logError("Could not connect to pigpiod: %d", pigpioHandle);
         return NULL;
     }
 
+    appData.system.pigpioHandle = pigpioHandle;
+
     gint gpioResult = 0;
-    gpioResult = set_mode(i2cPiHandle, IGN_GPIO_PIN, PI_INPUT);
+    gpioResult = set_mode(pigpioHandle, IGN_GPIO_PIN, PI_INPUT);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin mode for IGN_IN: %d", gpioResult);
         return NULL;
     }
 
-    gpioResult = set_pull_up_down(i2cPiHandle, IGN_GPIO_PIN, PI_PUD_DOWN);
+    gpioResult = set_pull_up_down(pigpioHandle, IGN_GPIO_PIN, PI_PUD_DOWN);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin pulldown for IGN_IN: %d", gpioResult);
         return NULL;
     }
 
-    gpioResult = set_mode(i2cPiHandle, BUZZER_GPIO_PIN, PI_OUTPUT);
+    gpioResult = set_mode(pigpioHandle, BUZZER_GPIO_PIN, PI_OUTPUT);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin mode for buzzer: %d", gpioResult);
         return NULL;
     }
 
-    gpioResult = set_pull_up_down(i2cPiHandle, BUZZER_GPIO_PIN, PI_PUD_OFF);
+    gpioResult = set_pull_up_down(pigpioHandle, BUZZER_GPIO_PIN, PI_PUD_OFF);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin pulldown for buzzer: %d", gpioResult);
         return NULL;
     }
 
-    gpioResult = set_mode(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_OUTPUT);
+    gpioResult = set_mode(pigpioHandle, TRANS_PUMP_GPIO_PIN, PI_OUTPUT);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin mode for trans pump: %d", gpioResult);
         return NULL;
     }
 
-    gpioResult = set_pull_up_down(i2cPiHandle, TRANS_PUMP_GPIO_PIN, PI_PUD_DOWN);
+    gpioResult = set_pull_up_down(pigpioHandle, TRANS_PUMP_GPIO_PIN, PI_PUD_DOWN);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin pulldown for trans pump: %d", gpioResult);
         return NULL;
     }
 
-    gpioResult = gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
+    gpioResult = gpio_write(pigpioHandle, TRANS_PUMP_GPIO_PIN, FALSE);
     if (gpioResult != 0) {
         logError("Could not set GPIO pin state for trans pump: %d", gpioResult);
         return NULL;
     }
 
     guint shutDownCounter = 0;
-    guint transPumpCounter = 0;
 
     appData.isSystemWorkerRunning = TRUE;
     g_message("System worker started");
@@ -143,7 +162,7 @@ gpointer systemWorkerLoop() {
             break;
         }
 
-        appData.system.isIgnOn = gpio_read(i2cPiHandle, IGN_GPIO_PIN);
+        appData.system.isIgnOn = gpio_read(pigpioHandle, IGN_GPIO_PIN);
 
         gdouble pressureValue = getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
         gdouble engineRpm = getEngineRpm();
@@ -164,20 +183,9 @@ gpointer systemWorkerLoop() {
             appData.canBusRestartRequested = TRUE;
         }
 
-        gboolean isBuzzerOn = gpio_read(i2cPiHandle, BUZZER_GPIO_PIN) == TRUE;
-        const AdcSensor* pressureSensor = &adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL];
+        setBuzzer(pressureValue, engineRpm);
 
-        if (isBuzzerOn && (pressureValue >= pressureSensor->base.alertLow || engineRpm < OIL_PRESSURE_ALERT_MIN_RPM)) {
-            gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
-        }
-
-        if (!isBuzzerOn &&
-            pressureValue < pressureSensor->base.alertLow &&
-            engineRpm > OIL_PRESSURE_ALERT_MIN_RPM) {
-            gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, TRUE);
-        }
-
-        switchTransPumpOnOff(i2cPiHandle, &transPumpCounter);
+        switchTransPumpOnOff();
 
 #ifndef IS_DEBUG
         shutDownCounter = appData.system.isIgnOn ? 0 : shutDownCounter + 1;
@@ -193,10 +201,10 @@ gpointer systemWorkerLoop() {
 
     appData.isSystemWorkerRunning = FALSE;
 
-    gpio_write(i2cPiHandle, BUZZER_GPIO_PIN, FALSE);
-    gpio_write(i2cPiHandle, TRANS_PUMP_GPIO_PIN, FALSE);
+    gpio_write(pigpioHandle, BUZZER_GPIO_PIN, FALSE);
+    gpio_write(pigpioHandle, TRANS_PUMP_GPIO_PIN, FALSE);
 
-    pigpio_stop(i2cPiHandle);
+    pigpio_stop(pigpioHandle);
 
     g_message("System worker shutting down");
 

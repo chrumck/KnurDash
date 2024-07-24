@@ -33,6 +33,8 @@
 #define COOLANT_TEMP_CAN_SENSOR_INDEX 0
 
 typedef struct {
+    gint pigpioHandle;
+
     volatile gboolean isIgnOn;
     volatile gboolean wasEngineStarted;
     volatile gboolean isEngineRunning;
@@ -129,7 +131,7 @@ typedef struct {
 } SensorWidgets;
 
 typedef struct {
-    gint i2cPiHandle;
+    gint pigpioHandle;
     gint i2cAdcHandles[ADC_COUNT];
 
     guint32 requestCount;
@@ -164,7 +166,7 @@ typedef struct {
 } CanFrameState;
 
 typedef struct {
-    int i2cPiHandle;
+    int pigpioHandle;
     int i2cCanHandle;
     gboolean isControllerPinModeSet;
 

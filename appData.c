@@ -5,6 +5,7 @@
 #include "dataContracts.h"
 
 static AppData appData = {
-    .canBus = {.i2cPiHandle = -1, .i2cCanHandle = -1},
-    .sensors = {.i2cPiHandle = -1, .i2cAdcHandles = {-1, -1}}
+    .system = {.pigpioHandle = -1},
+    .canBus = {.pigpioHandle = -1, .i2cCanHandle = -1},
+    .sensors = {.pigpioHandle = -1, .i2cAdcHandles = {-1, -1}}
 };

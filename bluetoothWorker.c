@@ -255,7 +255,7 @@ gpointer bluetoothWorkerLoop() {
 
     if (adapter == NULL) {
         logError("BluetoothWorker:no adapter found, shutting down...");
-        return;
+        return NULL;
     }
 
     g_message("Bluetooth worker starting, adapter '%s'", binc_adapter_get_path(adapter));
