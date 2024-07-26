@@ -85,13 +85,21 @@ gdouble convertCaliperTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
     return CALIPER_TEMP_A + CALIPER_TEMP_B * logSensorR + CALIPER_TEMP_C * pow(logSensorR, 2) + CALIPER_TEMP_D * pow(logSensorR, 3);
 }
 
+gdouble getAdcSensorValue(gint adc, gint channel) {
+    SensorReading* reading = &(appData.sensors.adcReadings)[adc][channel];
+    const AdcSensor* sensor = &adcSensors[adc][channel];
+
+    return reading->errorCount < SENSOR_WARNING_ERROR_COUNT ?
+        reading->value : sensor->base.defaultValue;
+}
+
 const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
     {
         {
             .base = {
                 .labelId = "transTemp", .frameId = "transTempFrame", .labelMinId = "transTempMin", .labelMaxId = "transTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-                .notifyHigh = 130, .warningHigh = 130, .alertHigh = 145,
+                .notifyHigh = 130, .warningHigh = 130, .alertHigh = 140,
                 .rawMin = TEMP_SENSOR_RAW_MIN, .rawMax = TEMP_SENSOR_RAW_MAX,
                 .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
             },
@@ -151,7 +159,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .pga = AdcPgaAdaptive, .refR = 20000, .convert = convertCaliperTemp,
         },
         {
-            .base = {
+            .base = { // reference voltage for sensors, not shown in UI
                 .alertLow = VDD_RAW_MIN * 2, .warningLow = VDD_RAW_MIN * 2, .notifyLow = VDD_RAW_MIN * 2,
                 .notifyHigh = VDD_RAW_MAX * 2, .warningHigh = VDD_RAW_MAX * 2, .alertHigh = VDD_RAW_MAX * 2,
                 .rawMin = VDD_RAW_MIN, .rawMax = VDD_RAW_MAX,

@@ -16,7 +16,7 @@
 
 #define ENGINE_RUNNING_OIL_PRESSURE 0.5
 #define ENGINE_RUNNING_RPM 100
-#define OIL_PRESSURE_BUZZER_ON_ALERT_RPM 1300
+#define OIL_PRESSURE_BUZZER_ON_RPM 1300
 
 #define TRANS_PUMP_ON_TEMP_C 95.0
 #define TRANS_PUMP_ON_MAX_TIME_US 20000000
@@ -27,21 +27,9 @@
 #define TRANS_PUMP_OFF_MIN_TIME_US 2000000
 #define TRANS_PUMP_OFF_MIN_CYCLES (TRANS_PUMP_OFF_MIN_TIME_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
 
-gdouble getAdcSensorValue(gint adc, gint channel) {
-    SensorReading* reading = &(appData.sensors.adcReadings)[adc][channel];
-    const AdcSensor* sensor = &adcSensors[adc][channel];
-
-    return reading->errorCount < SENSOR_WARNING_ERROR_COUNT ?
-        reading->value : sensor->base.defaultValue;
-}
-
-void setBuzzer(gdouble pressureValue, gdouble engineRpm)
+void setBuzzer(gboolean shouldBuzzerBeOn)
 {
     gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
-
-    gboolean shouldBuzzerBeOn =
-        pressureValue < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
-        engineRpm > OIL_PRESSURE_BUZZER_ON_ALERT_RPM;
 
     guint64 currentTimestamp = g_get_monotonic_time();
 
@@ -70,7 +58,7 @@ void switchTransPumpOnOff() {
     transPumpCounter++;
 
     gboolean isTransPumpOn = gpio_read(appData.system.pigpioHandle, TRANS_PUMP_GPIO_PIN) == TRUE;
-    gdouble transTempValue = getAdcSensorValue(TRANS_TEMP_ADC, TRANS_TEMP_CHANNEL);
+    gdouble transTemp = getAdcSensorValue(TRANS_TEMP_ADC, TRANS_TEMP_CHANNEL);
 
     if (isTransPumpOn && !appData.system.isEngineRunning) {
         setTransPumpState(FALSE);
@@ -81,16 +69,16 @@ void switchTransPumpOnOff() {
 
     if (!isTransPumpOn && transPumpCounter < TRANS_PUMP_OFF_MIN_CYCLES) { return; }
 
-    if (!isTransPumpOn && transTempValue >= TRANS_PUMP_ON_TEMP_C) {
+    if (!isTransPumpOn && transTemp >= TRANS_PUMP_ON_TEMP_C) {
         setTransPumpState(TRUE);
         return;
     }
 
-    if (isTransPumpOn && transTempValue >= TRANS_PUMP_ON_TEMP_C) {
+    if (isTransPumpOn && transTemp >= TRANS_PUMP_ON_TEMP_C) {
         return;
     }
 
-    if (!isTransPumpOn && transTempValue >= TRANS_PUMP_OFF_TEMP_C && transPumpCounter > TRANS_PUMP_OFF_MAX_CYCLES) {
+    if (!isTransPumpOn && transTemp >= TRANS_PUMP_OFF_TEMP_C && transPumpCounter > TRANS_PUMP_OFF_MAX_CYCLES) {
         setTransPumpState(TRUE);
         return;
     }
@@ -174,12 +162,12 @@ gpointer systemWorkerLoop() {
 
         appData.system.isIgnOn = gpio_read(pigpioHandle, IGN_GPIO_PIN);
 
-        gdouble pressureValue = getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
         gdouble engineRpm = getEngineRpm();
+        gdouble oilPressure = getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL);
 
         appData.system.isEngineRunning =
             appData.system.isIgnOn &&
-            (pressureValue > ENGINE_RUNNING_OIL_PRESSURE || engineRpm > ENGINE_RUNNING_RPM);
+            (oilPressure > ENGINE_RUNNING_OIL_PRESSURE || engineRpm > ENGINE_RUNNING_RPM);
 
         if (!appData.system.wasEngineStarted && appData.system.isEngineRunning) { appData.system.wasEngineStarted = TRUE; }
 
@@ -194,7 +182,11 @@ gpointer systemWorkerLoop() {
             appData.canBusRestartRequested = TRUE;
         }
 
-        setBuzzer(pressureValue, engineRpm);
+        gboolean shouldBuzzerBeOn =
+            oilPressure < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
+            engineRpm > OIL_PRESSURE_BUZZER_ON_RPM;
+
+        setBuzzer(shouldBuzzerBeOn);
 
         switchTransPumpOnOff();
 
