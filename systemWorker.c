@@ -38,8 +38,7 @@ gboolean getShouldBuzzerBeOn() {
     return
         appData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].state == StateAlertHigh ||
         appData.sensors.adcReadings[CALIPER_TEMP_ADC][CALIPER_TEMP_CHANNEL].state == StateAlertHigh ||
-        (getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL) < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
-            getEngineRpm() > OIL_PRESSURE_BUZZER_ON_RPM);
+        getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL) < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow;
 }
 
 gboolean getShouldBuzzerChirp() {
@@ -69,7 +68,8 @@ void setBuzzer()
     buzzerLastToggleCycles++;
 
     gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
-    gboolean shouldBuzzerBeOn = getShouldBuzzerBeOn();
+    gboolean shouldBuzzerRun = appData.system.isIgnOn && getEngineRpm() > OIL_PRESSURE_BUZZER_ON_RPM;
+    gboolean shouldBuzzerBeOn = shouldBuzzerRun && getShouldBuzzerBeOn();
 
     if (shouldBuzzerBeOn) {
         if (!isBuzzerOn) gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
@@ -85,7 +85,8 @@ void setBuzzer()
         return;
     }
 
-    if (getShouldBuzzerChirp() &&
+    if (shouldBuzzerRun &&
+        getShouldBuzzerChirp() &&
         buzzerChirpCount >= BUZZER_CHIRP_COUNT_PER_CYCLE &&
         buzzerLastToggleCycles >= BUZZER_CHIRP_CYCLE_CYCLES) {
         buzzerChirpCount = 0;
