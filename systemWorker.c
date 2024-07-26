@@ -80,8 +80,8 @@ void setBuzzer(gdouble engineRpm, gdouble oilPressure)
     }
 
     if (getShouldBuzzerChirp() &&
-        buzzerChirpCount == BUZZER_CHIRP_COUNT_PER_CYCLE &&
-        buzzerLastToggleCycles > BUZZER_CHIRP_CYCLE_CYCLES) {
+        buzzerChirpCount >= BUZZER_CHIRP_COUNT_PER_CYCLE &&
+        buzzerLastToggleCycles >= BUZZER_CHIRP_CYCLE_CYCLES) {
         buzzerChirpCount = 0;
     }
 
