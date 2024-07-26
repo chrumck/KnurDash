@@ -5,7 +5,7 @@
 #include "canBusProps.c"
 #include "ui.c"
 
-#define SYSTEM_WORKER_LOOP_INTERVAL_US 50000
+#define SYSTEM_WORKER_LOOP_INTERVAL_US 30000
 #define SHUTDOWN_DELAY_US 20000000
 #define SHUTDOWN_DELAY_CYCLES (SHUTDOWN_DELAY_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
 #define SHUTDOWN_DELAY_AFTER_ENGINE_STARTED_US 2000000
@@ -19,10 +19,11 @@
 #define ENGINE_RUNNING_RPM 100
 #define OIL_PRESSURE_BUZZER_ON_RPM 1300
 
-#define BUZZER_CHIRP_COUNT_PER_CYCLE 5
-#define BUZZER_CHIRP_ON_US 100000
-#define BUZZER_CHIRP_OFF_US 100000
-#define BUZZER_CHIRP_CYCLE_US 4000000
+#define BUZZER_CHIRP_COUNT_PER_CYCLE 6
+#define BUZZER_CHIRP_ON_CYCLES 1
+#define BUZZER_CHIRP_OFF_CYCLES 1
+#define BUZZER_CHIRP_CYCLE_SECONDS 6
+#define BUZZER_CHIRP_CYCLE_CYCLES (BUZZER_CHIRP_CYCLE_SECONDS * 1000000 / SYSTEM_WORKER_LOOP_INTERVAL_US)
 
 #define TRANS_PUMP_ON_TEMP_C 95.0
 #define TRANS_PUMP_ON_MAX_TIME_US 20000000
@@ -36,15 +37,15 @@
 gboolean getShouldBuzzerChirp() {
     for (guint i = 0; i < ADC_COUNT; i++) for (guint j = 0; j < ADC_CHANNEL_COUNT; j++)
     {
-        SensorReading* reading = &appData.sensors.adcReadings[i][j];
-        SensorBase* sensor = &adcSensors[i][j].base;
+        const SensorReading* reading = &appData.sensors.adcReadings[i][j];
+        const SensorBase* sensor = &adcSensors[i][j].base;
         if (reading->state < StateNotifyLow || reading->state > StateNotifyHigh) return TRUE;
     }
 
     for (guint i = 0; i < CAN_SENSORS_COUNT; i++)
     {
-        SensorReading* reading = &appData.sensors.canReadings[i];
-        SensorBase* sensor = &canSensors[i].base;
+        const SensorReading* reading = &appData.sensors.canReadings[i];
+        const SensorBase* sensor = &canSensors[i].base;
         if (reading->state < StateNotifyLow || reading->state > StateNotifyHigh) return TRUE;
     }
 
@@ -54,9 +55,10 @@ gboolean getShouldBuzzerChirp() {
 void setBuzzer(gdouble engineRpm, gdouble oilPressure)
 {
     static gboolean wasBuzzerOn = FALSE;
-    static guint64 buzzerLastToggleUs = 0;
+    static guint64 buzzerLastToggleCycles = BUZZER_CHIRP_CYCLE_CYCLES;
     static guint8 buzzerChirpCount = BUZZER_CHIRP_COUNT_PER_CYCLE;
 
+    buzzerLastToggleCycles++;
     gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
 
     gboolean shouldBuzzerBeOn =
@@ -72,31 +74,30 @@ void setBuzzer(gdouble engineRpm, gdouble oilPressure)
     if (!shouldBuzzerBeOn && wasBuzzerOn) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
         wasBuzzerOn = FALSE;
-        buzzerLastToggleUs = g_get_monotonic_time();
+        buzzerLastToggleCycles = 0;
         buzzerChirpCount = BUZZER_CHIRP_COUNT_PER_CYCLE;
         return;
     }
 
-    gboolean shouldBuzzerChirp = getShouldBuzzerChirp();
-    guint64 timeSinceLastToggleUs = g_get_monotonic_time() - buzzerLastToggleUs;
-
-    if (shouldBuzzerChirp &&
+    if (getShouldBuzzerChirp() &&
         buzzerChirpCount == BUZZER_CHIRP_COUNT_PER_CYCLE &&
-        timeSinceLastToggleUs > BUZZER_CHIRP_CYCLE_US) {
+        buzzerLastToggleCycles > BUZZER_CHIRP_CYCLE_CYCLES) {
         buzzerChirpCount = 0;
     }
 
     if (buzzerChirpCount >= BUZZER_CHIRP_COUNT_PER_CYCLE) return;
 
-    if (!isBuzzerOn && timeSinceLastToggleUs > BUZZER_CHIRP_OFF_US) {
+    if (!isBuzzerOn && buzzerLastToggleCycles >= BUZZER_CHIRP_OFF_CYCLES) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
-        buzzerLastToggleUs = g_get_monotonic_time();
+        buzzerLastToggleCycles = 0;
+        return;
     }
 
-    if (isBuzzerOn && timeSinceLastToggleUs > BUZZER_CHIRP_ON_US) {
+    if (isBuzzerOn && buzzerLastToggleCycles >= BUZZER_CHIRP_ON_CYCLES) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
-        buzzerLastToggleUs = g_get_monotonic_time();
+        buzzerLastToggleCycles = 0;
         buzzerChirpCount++;
+        return;
     }
 }
 

@@ -5,7 +5,6 @@
 #include "application.h"
 
 // #define IS_DEBUG
-
 #define ENABLE_CANBUS TRUE
 
 #define MIN_APP_RUNNING_TIME_US 8000000
