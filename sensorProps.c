@@ -85,14 +85,6 @@ gdouble convertCaliperTemp(gint32 sensorV, gint32 driveV, gint32 refR) {
     return CALIPER_TEMP_A + CALIPER_TEMP_B * logSensorR + CALIPER_TEMP_C * pow(logSensorR, 2) + CALIPER_TEMP_D * pow(logSensorR, 3);
 }
 
-gdouble getAdcSensorValue(gint adc, gint channel) {
-    SensorReading* reading = &(appData.sensors.adcReadings)[adc][channel];
-    const AdcSensor* sensor = &adcSensors[adc][channel];
-
-    return reading->errorCount < SENSOR_WARNING_ERROR_COUNT ?
-        reading->value : sensor->base.defaultValue;
-}
-
 const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
     {
         {
@@ -169,3 +161,11 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
         },
     }
 };
+
+gdouble getAdcSensorValue(gint adc, gint channel) {
+    SensorReading* reading = &(appData.sensors.adcReadings)[adc][channel];
+    const AdcSensor* sensor = &adcSensors[adc][channel];
+
+    return reading->errorCount < SENSOR_WARNING_ERROR_COUNT ?
+        reading->value : sensor->base.defaultValue;
+}
