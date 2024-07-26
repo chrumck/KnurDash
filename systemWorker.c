@@ -34,6 +34,14 @@
 #define TRANS_PUMP_OFF_MIN_TIME_US 2000000
 #define TRANS_PUMP_OFF_MIN_CYCLES (TRANS_PUMP_OFF_MIN_TIME_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
 
+gboolean getShouldBuzzerBeOn() {
+    return
+        appData.sensors.canReadings[COOLANT_TEMP_CAN_SENSOR_INDEX].state == StateAlertHigh ||
+        appData.sensors.adcReadings[CALIPER_TEMP_ADC][CALIPER_TEMP_CHANNEL].state == StateAlertHigh ||
+        (getAdcSensorValue(OIL_PRESS_ADC, OIL_PRESS_CHANNEL) < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
+            getEngineRpm() > OIL_PRESSURE_BUZZER_ON_RPM);
+}
+
 gboolean getShouldBuzzerChirp() {
     for (guint i = 0; i < ADC_COUNT; i++) for (guint j = 0; j < ADC_CHANNEL_COUNT; j++)
     {
@@ -52,18 +60,16 @@ gboolean getShouldBuzzerChirp() {
     return FALSE;
 }
 
-void setBuzzer(gdouble engineRpm, gdouble oilPressure)
+void setBuzzer()
 {
     static gboolean wasBuzzerOn = FALSE;
     static guint64 buzzerLastToggleCycles = BUZZER_CHIRP_CYCLE_CYCLES;
     static guint8 buzzerChirpCount = BUZZER_CHIRP_COUNT_PER_CYCLE;
 
     buzzerLastToggleCycles++;
-    gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
 
-    gboolean shouldBuzzerBeOn =
-        oilPressure < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
-        engineRpm > OIL_PRESSURE_BUZZER_ON_RPM;
+    gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
+    gboolean shouldBuzzerBeOn = getShouldBuzzerBeOn();
 
     if (shouldBuzzerBeOn) {
         if (!isBuzzerOn) gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
@@ -236,7 +242,7 @@ gpointer systemWorkerLoop() {
             appData.canBusRestartRequested = TRUE;
         }
 
-        setBuzzer(engineRpm, oilPressure);
+        setBuzzer();
 
         switchTransPumpOnOff();
 
