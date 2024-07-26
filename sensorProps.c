@@ -142,7 +142,7 @@ const AdcSensor adcSensors[ADC_COUNT][ADC_CHANNEL_COUNT] = {
             .base = {
                 .labelId = "rotorTemp", .frameId = "rotorTempFrame", .labelMinId = "rotorTempMin", .labelMaxId = "rotorTempMax",
                 .alertLow = -25, .warningLow = -25, .notifyLow = -25,
-                .notifyHigh = 700, .warningHigh = 700, .alertHigh = 900,
+                .notifyHigh = 800, .warningHigh = 800, .alertHigh = 900,
                 .rawMin = ROTOR_TEMP_SENSOR_RAW_MIN, .rawMax = ROTOR_TEMP_SENSOR_RAW_MAX,
                 .defaultValue = 10.0, .format = "%.0f" , .precision = 5,
             },

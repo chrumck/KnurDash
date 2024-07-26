@@ -2,6 +2,7 @@
 
 #include "dataContracts.h"
 #include "sensorProps.c"
+#include "canBusProps.c"
 #include "ui.c"
 
 #define SYSTEM_WORKER_LOOP_INTERVAL_US 50000
@@ -18,6 +19,11 @@
 #define ENGINE_RUNNING_RPM 100
 #define OIL_PRESSURE_BUZZER_ON_RPM 1300
 
+#define BUZZER_CHIRP_COUNT_PER_CYCLE 5
+#define BUZZER_CHIRP_ON_US 100000
+#define BUZZER_CHIRP_OFF_US 100000
+#define BUZZER_CHIRP_CYCLE_US 4000000
+
 #define TRANS_PUMP_ON_TEMP_C 95.0
 #define TRANS_PUMP_ON_MAX_TIME_US 20000000
 #define TRANS_PUMP_ON_MAX_CYCLES (TRANS_PUMP_ON_MAX_TIME_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
@@ -27,24 +33,71 @@
 #define TRANS_PUMP_OFF_MIN_TIME_US 2000000
 #define TRANS_PUMP_OFF_MIN_CYCLES (TRANS_PUMP_OFF_MIN_TIME_US / SYSTEM_WORKER_LOOP_INTERVAL_US)
 
-void setBuzzer(gboolean shouldBuzzerBeOn)
+gboolean getShouldBuzzerChirp() {
+    for (guint i = 0; i < ADC_COUNT; i++) for (guint j = 0; j < ADC_CHANNEL_COUNT; j++)
+    {
+        SensorReading* reading = &appData.sensors.adcReadings[i][j];
+        SensorBase* sensor = &adcSensors[i][j].base;
+        if (reading->state < StateNotifyLow || reading->state > StateNotifyHigh) return TRUE;
+    }
+
+    for (guint i = 0; i < CAN_SENSORS_COUNT; i++)
+    {
+        SensorReading* reading = &appData.sensors.canReadings[i];
+        SensorBase* sensor = &canSensors[i].base;
+        if (reading->state < StateNotifyLow || reading->state > StateNotifyHigh) return TRUE;
+    }
+
+    return FALSE;
+}
+
+void setBuzzer(gdouble engineRpm, gdouble oilPressure)
 {
+    static gboolean wasBuzzerOn = FALSE;
+    static guint64 buzzerLastToggleUs = 0;
+    static guint8 buzzerChirpCount = BUZZER_CHIRP_COUNT_PER_CYCLE;
+
     gboolean isBuzzerOn = gpio_read(appData.system.pigpioHandle, BUZZER_GPIO_PIN) == TRUE;
 
-    guint64 currentTimestamp = g_get_monotonic_time();
+    gboolean shouldBuzzerBeOn =
+        oilPressure < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
+        engineRpm > OIL_PRESSURE_BUZZER_ON_RPM;
 
-    if (!isBuzzerOn && shouldBuzzerBeOn) {
-        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
-        appData.system.buzzerToggleTimestamp = currentTimestamp;
+    if (shouldBuzzerBeOn) {
+        if (!isBuzzerOn) gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
+        if (!wasBuzzerOn) wasBuzzerOn = TRUE;
         return;
     }
 
-    if (isBuzzerOn && !shouldBuzzerBeOn) {
+    if (!shouldBuzzerBeOn && wasBuzzerOn) {
         gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
-        appData.system.buzzerToggleTimestamp = currentTimestamp;
+        wasBuzzerOn = FALSE;
+        buzzerLastToggleUs = g_get_monotonic_time();
+        buzzerChirpCount = BUZZER_CHIRP_COUNT_PER_CYCLE;
+        return;
     }
 
+    gboolean shouldBuzzerChirp = getShouldBuzzerChirp();
+    guint64 timeSinceLastToggleUs = g_get_monotonic_time() - buzzerLastToggleUs;
 
+    if (shouldBuzzerChirp &&
+        buzzerChirpCount == BUZZER_CHIRP_COUNT_PER_CYCLE &&
+        timeSinceLastToggleUs > BUZZER_CHIRP_CYCLE_US) {
+        buzzerChirpCount = 0;
+    }
+
+    if (buzzerChirpCount >= BUZZER_CHIRP_COUNT_PER_CYCLE) return;
+
+    if (!isBuzzerOn && timeSinceLastToggleUs > BUZZER_CHIRP_OFF_US) {
+        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, TRUE);
+        buzzerLastToggleUs = g_get_monotonic_time();
+    }
+
+    if (isBuzzerOn && timeSinceLastToggleUs > BUZZER_CHIRP_ON_US) {
+        gpio_write(appData.system.pigpioHandle, BUZZER_GPIO_PIN, FALSE);
+        buzzerLastToggleUs = g_get_monotonic_time();
+        buzzerChirpCount++;
+    }
 }
 
 #define setTransPumpState(_state)\
@@ -182,11 +235,7 @@ gpointer systemWorkerLoop() {
             appData.canBusRestartRequested = TRUE;
         }
 
-        gboolean shouldBuzzerBeOn =
-            oilPressure < adcSensors[OIL_PRESS_ADC][OIL_PRESS_CHANNEL].base.alertLow &&
-            engineRpm > OIL_PRESSURE_BUZZER_ON_RPM;
-
-        setBuzzer(shouldBuzzerBeOn);
+        setBuzzer(engineRpm, oilPressure);
 
         switchTransPumpOnOff();
 
