@@ -1,4 +1,4 @@
-# KnurDash - DIY Racing Data Logger with [RaceChrono](https://racechrono.com/) Integration
+# KnurDash - Racing Data Logger with [RaceChrono](https://racechrono.com/) Integration
 
 <p align="center">
     <img src="./photos/PXL_20230903_184507723.NIGHT.jpg" alt="KnurDash" style="height: 70%; width:70%;"/>
@@ -6,12 +6,12 @@
 
 ## Description
 
-The aim of this project was to build a racing logger for my ND2 Mazda MX-5 and integrate the following functionality into one unit:
+A racing logger for an ND2 Mazda MX-5, integrating wide ranging functionality into one unit:
 
-- Read analog sensors (oil pressure and temperature, rotor temperature)
-- Read CANBUS data (coolant and intake temperature, RPM, etc.)
-- Display data in a clear and aesthetically pleasing way
-- Make data available via Bluetooth as [RaceChrono DIY BLE device](https://github.com/aollin/racechrono-ble-diy-device)
+- Reading analog sensors (oil pressure and temperature, rotor temperature)
+- Reading CANBUS data (coolant and intake temperature, RPM, etc.)
+- Displaying data in a clear and aesthetically pleasing way
+- Making data available via Bluetooth as [RaceChrono DIY BLE device](https://github.com/aollin/racechrono-ble-diy-device)
 
 ---
 
