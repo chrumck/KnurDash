@@ -60,7 +60,71 @@
       ],
       "drc_exclusions": [
         [
+          "lib_footprint_mismatch|54610000|93726000|673a67cb-3db0-40e0-9404-37586c35f725|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|54610000|96647000|1d6f858c-b56a-4266-bad5-249c5ee2d43c|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|59436000|89472887|322b17a9-d460-434d-bac3-35bd4e79901c|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|63119000|93917887|b070ed73-2f22-4b23-91a4-0c3b09eee602|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|63373000|75692000|6c3d4e65-2185-42ee-8db1-7a0153f28b28|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|67183000|84709000|a350a14c-1c3c-4a4f-9728-234014319b70|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|69342000|78232000|9440979e-b54a-45b6-8435-7fe3992faf50|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|72390000|78232000|d29e4180-1052-4614-9651-d37a7de2d64a|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|75184000|78232000|9efc7ddf-0325-43e2-9471-d355e742adeb|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|76962000|84709000|de859b1f-692b-4866-8d09-d3d3fa4c0e1b|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|81529000|66548000|14c839fa-4cf0-4474-810d-7f34d02c6e0f|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
           "lib_footprint_mismatch|82250000|78740000|dbf35ae2-e838-4ec3-8488-aca8120f52ae|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|87503000|81153000|d839bb44-54ce-4eb9-9567-cf1dd422dee7|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|87503000|84201000|008c74e3-74a3-4db7-a133-024027a80ede|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|87503000|87249000|045d0f9e-ff67-49e0-9246-6cc30eeba9d2|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|96520000|87249000|84f10546-8982-4d15-be73-710e2812a6fc|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_mismatch|97282000|67056000|cd4cc54a-e6ba-4b57-8874-b2ff5f50b987|00000000-0000-0000-0000-000000000000",
           ""
         ],
         [
@@ -124,6 +188,7 @@
         "solder_mask_bridge": "error",
         "starved_thermal": "error",
         "text_height": "error",
+        "text_on_edge_cuts": "error",
         "text_thickness": "error",
         "through_hole_pad_without_hole": "error",
         "too_many_vias": "error",
@@ -256,6 +321,10 @@
   },
   "erc": {
     "erc_exclusions": [
+      [
+        "lib_symbol_mismatch|1397000|800100|14e3abb4-63af-433d-abcb-a87223e5491e|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
       [
         "lib_symbol_mismatch|2120900|393700|8362a24d-1e27-4c3a-ac51-94762694be8a|00000000-0000-0000-0000-000000000000|||",
         ""
@@ -464,7 +533,7 @@
       "no_connect_dangling": "warning",
       "pin_not_connected": "error",
       "pin_not_driven": "error",
-      "pin_to_pin": "warning",
+      "pin_to_pin": "error",
       "power_pin_not_driven": "error",
       "same_local_global_label": "warning",
       "similar_label_and_power": "warning",
@@ -549,7 +618,7 @@
       "plot": "Gerber/",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "../../../../_temp/KnurCAN_V2.step",
       "svg": "",
       "vrml": ""
     },
