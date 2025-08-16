@@ -126,7 +126,7 @@ gboolean startCanBus() {
             continue;
         }
 
-        g_usleep(I2C_SET_CONFIG_DELAY_US * 20);
+        g_usleep(I2C_SET_CONFIG_DELAY_US * 10);
 
         int writeResult = i2c_write_byte(pigpioHandle, i2cCanHandle, BAUD_REGISTER);
         if (writeResult != 0) {
