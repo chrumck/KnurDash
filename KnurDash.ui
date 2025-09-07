@@ -20,12 +20,13 @@
         <property name="row-homogeneous">True</property>
         <property name="column-homogeneous">True</property>
         <child>
-          <!-- n-columns=2 n-rows=3 -->
+          <!-- n-columns=3 n-rows=3 -->
           <object class="GtkGrid" id="gauges">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="row-homogeneous">True</property>
             <property name="column-homogeneous">True</property>
+
             <child>
               <object class="GtkFrame" id="oilPressFrame">
                 <property name="visible">True</property>
@@ -101,7 +102,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="xpad">5</property>
-                    <property name="label" translatable="yes">Oil Pressure (bar)</property>
+                    <property name="label" translatable="yes">Oil (bar)</property>
                     <style>
                       <class name="gaugeFrameLabel"/>
                     </style>
@@ -116,6 +117,7 @@
                 <property name="top-attach">0</property>
               </packing>
             </child>
+
             <child>
               <object class="GtkFrame" id="oilTempFrame">
                 <property name="visible">True</property>
@@ -191,7 +193,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="xpad">5</property>
-                    <property name="label" translatable="yes">Oil Temp (°C)</property>
+                    <property name="label" translatable="yes">Oil (°C)</property>
                     <style>
                       <class name="gaugeFrameLabel"/>
                     </style>
@@ -208,31 +210,43 @@
             </child>
 
             <child>
-              <!-- n-columns=3 n-rows=1 -->
-              <object class="GtkGrid" id="coolantTransDiff">
+              <object class="GtkFrame" id="coolantTempFrame">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="row-homogeneous">True</property>
-                <property name="column-homogeneous">True</property>
-
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
                 <child>
-                  <object class="GtkFrame" id="coolantTempFrame">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="coolantTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
+                        <property name="homogeneous">True</property>
                         <child>
-                          <object class="GtkLabel" id="coolantTemp">
+                          <object class="GtkLabel" id="coolantTempMin">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">--</property>
                             <style>
-                              <class name="mainGauge"/>
+                              <class name="subGauge"/>
                             </style>
                           </object>
                           <packing>
@@ -242,287 +256,88 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="homogeneous">True</property>
-                            <child>
-                              <object class="GtkLabel" id="coolantTempMin">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="coolantTempMax">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="label">
-                      <object class="GtkLabel">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="xpad">5</property>
-                        <property name="label" translatable="yes">Coolant Temp (°C)</property>
-                        <style>
-                          <class name="gaugeFrameLabel"/>
-                        </style>
-                      </object>
-                    </child>
-                    <style>
-                      <class name="gaugeFrame"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">0</property>
-                  </packing>
-                </child>
-
-                <child>
-                  <object class="GtkFrame" id="transTempFrame">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <object class="GtkLabel" id="transTemp">
+                          <object class="GtkLabel" id="coolantTempMax">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">--</property>
                             <style>
-                              <class name="mainGauge"/>
+                              <class name="subGauge"/>
                             </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="homogeneous">True</property>
-                            <child>
-                              <object class="GtkLabel" id="transTempMin">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="transTempMax">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
                             <property name="position">1</property>
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
-                    <child type="label">
-                      <object class="GtkLabel">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="xpad">5</property>
-                        <property name="label" translatable="yes">Trans Temp (°C)</property>
-                        <style>
-                          <class name="gaugeFrameLabel"/>
-                        </style>
-                      </object>
-                    </child>
-                    <style>
-                      <class name="gaugeFrame"/>
-                    </style>
                   </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                 </child>
-
-                <child>
-                  <object class="GtkFrame" id="diffTempFrame">
+                <child type="label">
+                  <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <object class="GtkLabel" id="diffTemp">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">--</property>
-                            <style>
-                              <class name="mainGauge"/>
-                            </style>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="homogeneous">True</property>
-                            <child>
-                              <object class="GtkLabel" id="diffTempMin">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="diffTempMax">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="label">
-                      <object class="GtkLabel">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="xpad">5</property>
-                        <property name="label" translatable="yes">Diff Temp (°C)</property>
-                        <style>
-                          <class name="gaugeFrameLabel"/>
-                        </style>
-                      </object>
-                    </child>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Coolant (°C)</property>
                     <style>
-                      <class name="gaugeFrame"/>
+                      <class name="gaugeFrameLabel"/>
                     </style>
                   </object>
-                  <packing>
-                    <property name="left-attach">2</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                 </child>
-
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
               </object>
               <packing>
-                <property name="left-attach">0</property>
-                <property name="top-attach">1</property>
-                <property name="height">1</property>
-                <property name="width">2</property>
+                <property name="left-attach">2</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
 
             <child>
-              <!-- n-columns=3 n-rows=1 -->
-              <object class="GtkGrid" id="brakeTempsStatusGauges">
+              <object class="GtkFrame" id="intakeAirTempFrame">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="row-homogeneous">True</property>
-                <property name="column-homogeneous">True</property>
-
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
                 <child>
-                  <object class="GtkFrame" id="caliperTempFrame">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="intakeAirTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
+                        <property name="homogeneous">True</property>
                         <child>
-                          <object class="GtkLabel" id="caliperTemp">
+                          <object class="GtkLabel" id="intakeAirTempMin">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">--</property>
                             <style>
-                              <class name="mainGauge"/>
+                              <class name="subGauge"/>
                             </style>
                           </object>
                           <packing>
@@ -532,40 +347,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox">
+                          <object class="GtkLabel" id="intakeAirTempMax">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="homogeneous">True</property>
-                            <child>
-                              <object class="GtkLabel" id="caliperTempMin">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="caliperTempMax">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -574,46 +362,73 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
-                    <child type="label">
-                      <object class="GtkLabel">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="xpad">5</property>
-                        <property name="label" translatable="yes">Caliper Temp (°C)</property>
-                        <style>
-                          <class name="gaugeFrameLabel"/>
-                        </style>
-                      </object>
-                    </child>
-                    <style>
-                      <class name="gaugeFrame"/>
-                    </style>
                   </object>
-                  <packing>
-                    <property name="left-attach">0</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                 </child>
-
-                <child>
-                  <object class="GtkFrame" id="rotorTempFrame">
+                <child type="label">
+                  <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Intake Air (°C)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
+              </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">1</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkFrame" id="transTempFrame">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="transTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
+                        <property name="homogeneous">True</property>
                         <child>
-                          <object class="GtkLabel" id="rotorTemp">
+                          <object class="GtkLabel" id="transTempMin">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">--</property>
                             <style>
-                              <class name="mainGauge"/>
+                              <class name="subGauge"/>
                             </style>
                           </object>
                           <packing>
@@ -623,40 +438,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox">
+                          <object class="GtkLabel" id="transTempMax">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="homogeneous">True</property>
-                            <child>
-                              <object class="GtkLabel" id="rotorTempMin">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="rotorTempMax">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label" translatable="yes">--</property>
-                                <style>
-                                  <class name="subGauge"/>
-                                </style>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -665,104 +453,377 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
-                    <child type="label">
-                      <object class="GtkLabel">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="xpad">5</property>
-                        <property name="label" translatable="yes">Rotor Temp (°C)</property>
-                        <style>
-                          <class name="gaugeFrameLabel"/>
-                        </style>
-                      </object>
-                    </child>
-                    <style>
-                      <class name="gaugeFrame"/>
-                    </style>
                   </object>
-                  <packing>
-                    <property name="left-attach">1</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                 </child>
-
-                <child>
-                  <object class="GtkFrame" id="statusGaugesFrame">
+                <child type="label">
+                  <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label-xalign">0</property>
-                    <property name="shadow-type">none</property>
-                    <child>
-                      <!-- n-columns=1 n-rows=2 -->
-                      <object class="GtkGrid" id="statusGaugesGrid">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="row-homogeneous">True</property>
-                        <property name="column-homogeneous">True</property>
-
-                        <child>
-                          <object class="GtkButton" id="transCoolingOn">
-                            <property name="visible">True</property>
-                            <property name="sensitive">False</property>
-                            <property name="can-focus">False</property>
-                            <property name="focus-on-click">False</property>
-                            <property name="receives-default">False</property>
-                            <property name="relief">none</property>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="label">Trans Cooling
-ON</property>
-                                <property name="justify">center</property>
-                              </object>
-                            </child>
-                            <style>
-                              <class name="status"/>
-                            </style>
-                          </object>
-                          <packing>
-                            <property name="left-attach">0</property>
-                            <property name="top-attach">0</property>
-                          </packing>
-                        </child>
-
-                        <child>
-                          <object class="GtkButton" id="statusGauge2">
-                            <property name="visible">True</property>
-                            <property name="sensitive">False</property>
-                            <property name="can-focus">True</property>
-                            <property name="focus-on-click">False</property>
-                            <property name="receives-default">False</property>
-                            <property name="relief">none</property>
-                            <style>
-                              <class name="status"/>
-                            </style>
-                          </object>
-                          <packing>
-                            <property name="left-attach">0</property>
-                            <property name="top-attach">1</property>
-                          </packing>
-                        </child>
-
-                      </object>
-                    </child>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Trans (°C)</property>
                     <style>
-                      <class name="gaugeFrame"/>
+                      <class name="gaugeFrameLabel"/>
                     </style>
                   </object>
-                  <packing>
-                    <property name="left-attach">2</property>
-                    <property name="top-attach">0</property>
-                  </packing>
                 </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
+              </object>
+              <packing>
+                <property name="left-attach">1</property>
+                <property name="top-attach">1</property>
+              </packing>
+            </child>
 
+            <child>
+              <object class="GtkFrame" id="diffTempFrame">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="diffTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="diffTempMin">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="diffTempMax">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Diff (°C)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
+              </object>
+              <packing>
+                <property name="left-attach">2</property>
+                <property name="top-attach">1</property>
+              </packing>
+            </child>
+
+
+            <child>
+              <object class="GtkFrame" id="caliperTempFrame">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="caliperTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="caliperTempMin">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="caliperTempMax">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Caliper (°C)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
               </object>
               <packing>
                 <property name="left-attach">0</property>
                 <property name="top-attach">2</property>
-                <property name="width">2</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkFrame" id="rotorTempFrame">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel" id="rotorTemp">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">--</property>
+                        <style>
+                          <class name="mainGauge"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="rotorTempMin">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="rotorTempMax">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">--</property>
+                            <style>
+                              <class name="subGauge"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Rotor (°C)</property>
+                    <style>
+                      <class name="gaugeFrameLabel"/>
+                    </style>
+                  </object>
+                </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
+              </object>
+              <packing>
+                <property name="left-attach">1</property>
+                <property name="top-attach">2</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkFrame" id="statusGaugesFrame">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
+                <child>
+                  <!-- n-columns=1 n-rows=2 -->
+                  <object class="GtkGrid" id="statusGaugesGrid">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="row-homogeneous">True</property>
+                    <property name="column-homogeneous">True</property>
+
+                    <child>
+                      <object class="GtkButton" id="transCoolingOn">
+                        <property name="visible">True</property>
+                        <property name="sensitive">False</property>
+                        <property name="can-focus">False</property>
+                        <property name="focus-on-click">False</property>
+                        <property name="receives-default">False</property>
+                        <property name="relief">none</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label">Trans Cooling
+ON</property>
+                            <property name="justify">center</property>
+                          </object>
+                        </child>
+                        <style>
+                          <class name="status"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+
+                    <child>
+                      <object class="GtkButton" id="statusGauge2">
+                        <property name="visible">True</property>
+                        <property name="sensitive">False</property>
+                        <property name="can-focus">True</property>
+                        <property name="focus-on-click">False</property>
+                        <property name="receives-default">False</property>
+                        <property name="relief">none</property>
+                        <style>
+                          <class name="status"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">1</property>
+                      </packing>
+                    </child>
+
+                  </object>
+                </child>
+                <style>
+                  <class name="gaugeFrame"/>
+                </style>
+              </object>
+              <packing>
+                <property name="left-attach">2</property>
+                <property name="top-attach">2</property>
               </packing>
             </child>
 
@@ -773,6 +834,7 @@ ON</property>
             <property name="width">2</property>
           </packing>
         </child>
+
         <child>
           <object class="GtkBox" id="buttons">
             <property name="visible">True</property>

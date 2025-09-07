@@ -20,10 +20,17 @@
 #define GET_FRAME_REGISTER 0x40
 
 #define RPM_FRAME_INDEX 2
+#define RPM_FRAME_BYTE0_INDEX 0
+#define RPM_FRAME_BYTE1_INDEX 1
 #define RPM_SCALING 0.25
 
 #define COOLANT_TEMP_FRAME_INDEX 3
+#define COOLANT_TEMP_BYTE_INDEX 0
 #define COOLANT_TEMP_OFFSET 40
+
+#define INTAKE_AIR_TEMP_FRAME_INDEX 4
+#define INTAKE_AIR_TEMP_BYTE_INDEX 4
+#define INTAKE_AIR_TEMP_OFFSET 40
 
 #define MASK_FILTER_LENGTH  6 // the last byte in mask/filter is the checksum
 guint8 maskValue[MASK_FILTER_LENGTH] = { 0x0, 0x0, 0x0, 0x07, 0xFF, 0xFA };
@@ -56,7 +63,7 @@ gdouble getEngineRpm() {
     CanFrameState* state = &appData.canBus.frames[RPM_FRAME_INDEX];
 
     g_mutex_lock(&state->lock);
-    gdouble result = (gdouble)((state->data[0] << 8 | state->data[1]) * RPM_SCALING);
+    gdouble result = (gdouble)((state->data[RPM_FRAME_BYTE0_INDEX] << 8 | state->data[RPM_FRAME_BYTE1_INDEX]) * RPM_SCALING);
     g_mutex_unlock(&state->lock);
 
     return result;
@@ -67,7 +74,18 @@ gdouble getCoolantTemp() {
 
     CanFrameState* state = &appData.canBus.frames[COOLANT_TEMP_FRAME_INDEX];
     g_mutex_lock(&state->lock);
-    gdouble result = (gdouble)(state->data[0] - COOLANT_TEMP_OFFSET);
+    gdouble result = (gdouble)(state->data[COOLANT_TEMP_BYTE_INDEX] - COOLANT_TEMP_OFFSET);
+    g_mutex_unlock(&state->lock);
+
+    return result;
+}
+
+gdouble getIntakeAirTemp() {
+    if (isFrameTooOld(INTAKE_AIR_TEMP_FRAME_INDEX)) return -100;
+
+    CanFrameState* state = &appData.canBus.frames[INTAKE_AIR_TEMP_FRAME_INDEX];
+    g_mutex_lock(&state->lock);
+    gdouble result = (gdouble)(state->data[INTAKE_AIR_TEMP_BYTE_INDEX] - INTAKE_AIR_TEMP_OFFSET);
     g_mutex_unlock(&state->lock);
 
     return result;
@@ -83,5 +101,15 @@ static const CanSensor canSensors[CAN_SENSORS_COUNT] = {
             .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
         },
             .getValue = getCoolantTemp,
+    },
+    {
+        .base = {
+            .labelId = "intakeAirTemp", .frameId = "intakeAirTempFrame", .labelMinId = "intakeAirTempMin", .labelMaxId = "intakeAirTempMax",
+            .alertLow = -30, .warningLow = -30, .notifyLow = -30,
+            .notifyHigh = 70, .warningHigh = 70, .alertHigh = 90,
+            .rawMin = -40, .rawMax = 215,
+            .defaultValue = 10.0, .format = "%.0f" , .precision = 0.3,
+        },
+            .getValue = getIntakeAirTemp,
     },
 };
