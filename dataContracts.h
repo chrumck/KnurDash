@@ -30,6 +30,7 @@
 #define SENSOR_CRITICAL_ERROR_COUNT 100
 
 #define COOLANT_TEMP_CAN_SENSOR_INDEX 0
+#define INTAKE_AIR_TEMP_CAN_SENSOR_INDEX 1
 
 typedef struct {
     gint pigpioHandle;

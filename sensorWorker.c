@@ -391,6 +391,7 @@ gpointer sensorWorkerLoop() {
         setAdcCanFrame();
 
         readCanSensor(COOLANT_TEMP_CAN_SENSOR_INDEX);
+        readCanSensor(INTAKE_AIR_TEMP_CAN_SENSOR_INDEX);
 
         g_usleep(SENSOR_WORKER_LOOP_INTERVAL_US);
     }
