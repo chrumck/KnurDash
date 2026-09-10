@@ -126,25 +126,68 @@ void removeSource(GMainContext* context, CanFrameState* frame) {
     frame->btNotifyingSourceId = 0;
 }
 
-#define getNotifyInterval(_receivedData)\
+// NOTHING IN THIS CALLBACK MAY ANSWER WITH AN ATT ERROR, and every return below used to.
+//
+// RaceChrono asks EVERY DIY device for EVERY packet ID it has a channel definition for, not only
+// the ones that device publishes - so this box is asked for box 2's IDs and box 2 is asked for
+// these. Entering the logging regime it writes `deny all` and then one `allow single` per
+// configured channel, as a burst inside one second, and REFUSING ONE MAKES IT ABANDON THE REST.
+// Everything behind the refusal is then left with no notify source, the preceding deny-all having
+// already destroyed them all, so those channels freeze on the phone while this device still looks
+// connected and perfectly healthy.
+//
+// Captured on box 2 (KnurLogger) 2026-09-10, which cost that rig its first road test. The burst,
+// in order: 0x7F0, 0x420, 0x600, 0x601, 0x202, 0x602, 0x603, 0x78, 0x4FA. Applied to THIS dash,
+// whose frames are 0x7F0 (ADC), 0x78, 0x86, 0x202, 0x420 and 0x4FA, that produces exactly the
+// symptom the owner reported from the car - some readouts live and some frozen:
+//
+//     0x7F0  accepted -> LIVE
+//     0x420  accepted -> LIVE
+//     0x600  not ours -> REFUSED, and RaceChrono abandons everything after this point
+//     0x202  never subscribed -> FROZEN
+//     0x78   never subscribed -> FROZEN
+//     0x4FA  never subscribed -> FROZEN
+//
+// So the frozen gauges were not a CAN fault, a sensor fault or a link fault: they were the three
+// frames that happened to sit behind an unknown packet ID in RaceChrono's subscription order. An
+// unknown packet ID is normal traffic here, not an error.
+// (0x86 has no channel definition on the phone at all, so it is absent from the burst entirely -
+// under an honoured filter a frame nobody subscribes to is never sent.)
+//
+// CAN-bus test mode does NOT exercise this path: it sends `allow all`, which carries no packet IDs
+// and cannot be refused. Only the logging regime does.
+#define clampNotifyInterval(_receivedData)\
     guint16 notifyInterval = _receivedData[1] << 8 | _receivedData[2];\
     if (notifyInterval < BLUETOOTH_NOTIFY_INTERVAL_MIN || notifyInterval > BLUETOOTH_NOTIFY_INTERVAL_MAX) {\
-        g_warning("Received invalid BT notify interval:%d", notifyInterval);\
-        return BLUEZ_ERROR_REJECTED;\
+        guint16 clamped = notifyInterval < BLUETOOTH_NOTIFY_INTERVAL_MIN\
+            ? BLUETOOTH_NOTIFY_INTERVAL_MIN : BLUETOOTH_NOTIFY_INTERVAL_MAX;\
+        g_warning("BT notify interval:%d out of range, using:%d", notifyInterval, clamped);\
+        notifyInterval = clamped;\
     }\
 
 const char* onCharWrite(const Application* app, const char* address, const char* serviceId, const char* charId, GByteArray* received) {
     if (!g_str_equal(serviceId, SERVICE_ID) || !g_str_equal(charId, CHAR_ID_FILTER)) return BLUEZ_ERROR_NOT_PERMITTED;
-    if (received->len != 1 && received->len != 3 && received->len != 7) return BLUEZ_ERROR_REJECTED;
-    if (received->len == 1 && received->data[0] != RACECHRONO_DENY_ALL) return BLUEZ_ERROR_REJECTED;
-    if (received->len == 3 && received->data[0] != RACECHRONO_ALLOW_ALL) return BLUEZ_ERROR_REJECTED;
-    if (received->len == 7 && received->data[0] != RACECHRONO_ALLOW_SINGLE) return BLUEZ_ERROR_REJECTED;
+    if (received->len < 1) return BLUEZ_ERROR_REJECTED;
 
-    g_message("Received BT write request, command:%d, data length:%d", received->data[0], received->len);
+    guint8 command = received->data[0];
+
+    // Lengths are minima rather than equalities, matching the reference DIY implementation. Every
+    // command RaceChrono was observed to send matched exactly, so this is not the fault above - but
+    // equality would refuse a future revision that appends a field, for no benefit.
+    gboolean isDenyAll = command == RACECHRONO_DENY_ALL;
+    gboolean isAllowAll = command == RACECHRONO_ALLOW_ALL && received->len >= 3;
+    gboolean isAllowSingle = command == RACECHRONO_ALLOW_SINGLE && received->len >= 7;
+
+    if (!isDenyAll && !isAllowAll && !isAllowSingle) {
+        g_warning("BT filter command:%d length:%d not understood, ignoring", command, received->len);
+        return NULL;
+    }
+
+    g_message("Received BT write request, command:%d, data length:%d", command, received->len);
 
     GMainContext* context = g_main_loop_get_context(appData.bluetooth.mainLoop);
 
-    if (received->len == 1) {
+    if (isDenyAll) {
         g_message("BT request to deny all");
 
         removeSource(context, &appData.canBus.adcFrame);
@@ -153,9 +196,9 @@ const char* onCharWrite(const Application* app, const char* address, const char*
         return NULL;
     }
 
-    getNotifyInterval(received->data);
+    clampNotifyInterval(received->data);
 
-    if (received->len == 3) {
+    if (isAllowAll) {
         g_message("BT request to allow all, interval: %dms", notifyInterval);
 
         removeSource(context, &appData.canBus.adcFrame);
@@ -172,8 +215,8 @@ const char* onCharWrite(const Application* app, const char* address, const char*
     for (guint i = 0; i < CAN_FRAMES_COUNT; i++) if (frameId == appData.canBus.frames[i].canId) frame = &appData.canBus.frames[i];
 
     if (frame == NULL) {
-        g_warning("No frame found for BT notify request:0x%x, rejecting request", frameId);
-        return BLUEZ_ERROR_REJECTED;
+        g_warning("No frame found for BT notify request:0x%x, ignoring", frameId);
+        return NULL;
     }
 
     g_message("BT request to allow single, interval:%d, frame:0x%x", notifyInterval, frame->canId);
